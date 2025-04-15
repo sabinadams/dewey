@@ -3,7 +3,6 @@ import { BrowserRouter, useRoutes, Route, Navigate, useLocation } from 'react-ro
 import { Suspense } from 'react';
 import routes from '~react-pages';
 import LoadingSpinner from './components/LoadingSpinner';
-import "./App.css";
 
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/auth'];

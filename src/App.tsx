@@ -1,38 +1,34 @@
-import { ClerkProvider, useAuth } from '@clerk/clerk-react';
-import { BrowserRouter, useRoutes, Navigate, useLocation } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
+import { BrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import { Suspense } from 'react';
-import routes from '~react-pages';
 import LoadingSpinner from './components/LoadingSpinner';
 import { TitleBar } from './components/TitleBar';
-// Public routes that don't require authentication
-const publicRoutes = ['/', '/auth'];
+import { useAuth } from '@clerk/clerk-react';
+import { AppLayout } from './components/AppLayout';
 
-function RoutesComponent() {
+// Public routes that don't require authentication
+const publicRoutes = ['/sign-in'];
+
+function RoutesGuard() {
   const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
-  const element = useRoutes(routes);
 
   if (!isLoaded) {
     return <LoadingSpinner />;
   }
 
-  // Redirect authenticated users away from auth pages
-  if (isSignedIn && location.pathname === '/auth') {
-    return <Navigate to="/" replace />;
+  // Allow access to public routes even when not signed in
+  if (publicRoutes.some(route => location.pathname.startsWith(route))) {
+    return <AppLayout />;
   }
 
-  // Allow access to public routes
-  if (publicRoutes.includes(location.pathname)) {
-    return element;
-  }
-
-  // Redirect to auth if not authenticated
+  // Redirect to sign-in if not authenticated
   if (!isSignedIn) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
   // Show protected routes if authenticated
-  return element;
+  return <AppLayout />;
 }
 
 function AppContent() {
@@ -40,7 +36,7 @@ function AppContent() {
     <div className="min-h-screen bg-white">
       <TitleBar />
       <Suspense fallback={<LoadingSpinner />}>
-        <RoutesComponent />
+        <RoutesGuard />
       </Suspense>
     </div>
   );

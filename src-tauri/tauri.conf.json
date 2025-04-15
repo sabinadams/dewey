@@ -13,12 +13,17 @@
     "macOSPrivateApi": true,
     "windows": [
       {
+        
         "title": "dewey",
         "width": 800,
         "height": 600,
         "transparent": true,
+        "titleBarStyle": "Overlay",
         "decorations": false,
-        "resizable": true
+        "resizable": true,
+        "minimizable": true,
+        "closable": true,
+        "maximizable": true
       }
     ],
     "security": {

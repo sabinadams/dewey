@@ -3,7 +3,7 @@ import { BrowserRouter, useRoutes, Navigate, useLocation } from 'react-router-do
 import { Suspense } from 'react';
 import routes from '~react-pages';
 import LoadingSpinner from './components/LoadingSpinner';
-
+import { TitleBar } from './components/TitleBar';
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/auth'];
 
@@ -38,6 +38,7 @@ function RoutesComponent() {
 function AppContent() {
   return (
     <div className="min-h-screen bg-white">
+      <TitleBar />
       <Suspense fallback={<LoadingSpinner />}>
         <RoutesComponent />
       </Suspense>

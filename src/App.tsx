@@ -1,5 +1,5 @@
 import { ClerkProvider, useAuth } from '@clerk/clerk-react';
-import { BrowserRouter, useRoutes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, useRoutes, Navigate, useLocation } from 'react-router-dom';
 import { Suspense } from 'react';
 import routes from '~react-pages';
 import LoadingSpinner from './components/LoadingSpinner';

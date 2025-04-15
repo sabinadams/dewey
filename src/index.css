@@ -1,3 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities; 
+@import "tailwindcss";
+
+body, html, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #f0f0f0;
+  border-radius: 0.5rem;
+}
+
+.titlebar-drag {
+    -webkit-app-region: drag;
+}
+button, .no-drag {
+    -webkit-app-region: no-drag;
+}

@@ -17,6 +17,11 @@ function RoutesComponent() {
     return <LoadingSpinner />;
   }
 
+  // Redirect authenticated users away from auth pages
+  if (isSignedIn && location.pathname === '/auth') {
+    return <Navigate to="/" replace />;
+  }
+
   // Allow access to public routes
   if (publicRoutes.includes(location.pathname)) {
     return element;

@@ -1,7 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 
 export default function IndexPage() {
+  const { isSignedIn } = useAuth();
+
+  if (isSignedIn) {
+    return (
+      <div className="p-8">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Dewey</h1>
+        <p className="text-lg text-gray-600">
+          Your personal knowledge management system
+        </p>
+        {/* Add your authenticated content here */}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <h1 className="text-4xl font-bold mb-8">Welcome to Dewey</h1>

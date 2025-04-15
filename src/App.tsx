@@ -33,7 +33,7 @@ function RoutesGuard() {
 
 function AppContent() {
   return (
-    <div className="min-h-screen bg-zinc-900">
+    <div className="flex-1 flex flex-col">
       <TitleBar />
       <Suspense fallback={<LoadingSpinner />}>
         <RoutesGuard />
@@ -48,7 +48,9 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
-        <AppContent />
+        <div className="min-h-screen bg-zinc-900 flex flex-col">
+          <AppContent />
+        </div>
       </BrowserRouter>
     </ClerkProvider>
   );

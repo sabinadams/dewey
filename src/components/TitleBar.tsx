@@ -1,11 +1,10 @@
 import { Window } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { type as getOSType } from '@tauri-apps/plugin-os';
-
+import { useState } from 'react';
+import useOs from '../lib/hooks/useOs';
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
-    <div className="flex gap-1.5 order-first pl-2">
+    <div className="flex gap-1.5 order-first px-1.5">
       <button 
         onClick={() => win.close()}
         className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600"
@@ -55,23 +54,13 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
 
 export function TitleBar() {
   const win = Window.getCurrent();
-
-  const [isMac, setIsMac] = useState(false);
-
-  useEffect(() => {
-    const detectOS = async () => {
-      const osType = await getOSType();
-      setIsMac(osType === 'macos'); // macOS
-    };
-  
-    detectOS();
-  }, []);
+  const { isMac } = useOs();
 
   return (
     <div 
       data-tauri-drag-region 
-      className={`absolute top-0 left-0 h-10 px-2 flex items-center justify-between select-none ${
-        isMac ? 'bg-transparent' : 'bg-zinc-900'
+      className={`h-10 px-2 flex items-center justify-between select-none ${
+        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-zinc-900 w-full'
       }`}
     >
       {isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}

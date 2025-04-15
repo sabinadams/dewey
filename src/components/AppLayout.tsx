@@ -6,17 +6,13 @@ export function AppLayout() {
   const element = useRoutes(routes);
 
   return (
-    <div className="flex h-[calc(100vh)] justify-center">
+    <div className="flex flex-1">
       {/* Sidebar Navigation */}
-      <aside className="mt-8 p-4">
-        <div className="space-y-6">
-          <Navigation />
-        </div>
-      </aside>
+      <Navigation />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-2 pl-0 h-full">
-        <div className="rounded-lg bg-white h-full">
+      <main className="flex-1 flex flex-col p-2 pl-0">
+        <div className="rounded-lg bg-white flex-1">
           {element}
         </div>
       </main>

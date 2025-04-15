@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-
+import useOs from '../lib/hooks/useOs';
 interface NavItemProps {
   to: string;
   children: React.ReactNode;
@@ -10,10 +10,9 @@ function NavItem({ to, children }: NavItemProps) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `block px-4 py-2 rounded transition-colors ${
-          isActive 
-            ? 'bg-zinc-700 text-white' 
-            : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+        `block px-4 py-2 rounded transition-colors ${isActive
+          ? 'bg-zinc-700 text-white'
+          : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
         }`
       }
     >
@@ -23,12 +22,17 @@ function NavItem({ to, children }: NavItemProps) {
 }
 
 export function Navigation() {
+  const { isMac } = useOs();
   return (
-    <nav className="space-y-1">
-      <NavItem to="/">H</NavItem>
-      <NavItem to="/dashboard">D</NavItem>
-      <NavItem to="/settings">S</NavItem>
-      {/* Add more navigation items as needed */}
-    </nav>
+    <aside className={`p-4 ${isMac ? 'mt-10' : ''}`}>
+      <div className="space-y-6">
+        <nav className="space-y-1">
+          <NavItem to="/">H</NavItem>
+          <NavItem to="/dashboard">D</NavItem>
+          <NavItem to="/settings">S</NavItem>
+        </nav>
+      </div>
+    </aside>
+
   );
 } 

@@ -33,7 +33,7 @@ function RoutesGuard() {
 
 function AppContent() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-zinc-900">
       <TitleBar />
       <Suspense fallback={<LoadingSpinner />}>
         <RoutesGuard />

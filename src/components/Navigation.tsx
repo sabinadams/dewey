@@ -25,9 +25,9 @@ function NavItem({ to, children }: NavItemProps) {
 export function Navigation() {
   return (
     <nav className="space-y-1">
-      <NavItem to="/">Home</NavItem>
-      <NavItem to="/dashboard">Dashboard</NavItem>
-      <NavItem to="/settings">Settings</NavItem>
+      <NavItem to="/">H</NavItem>
+      <NavItem to="/dashboard">D</NavItem>
+      <NavItem to="/settings">S</NavItem>
       {/* Add more navigation items as needed */}
     </nav>
   );

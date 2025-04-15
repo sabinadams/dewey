@@ -70,7 +70,7 @@ export function TitleBar() {
   return (
     <div 
       data-tauri-drag-region 
-      className={`h-10 px-4 flex items-center justify-between select-none ${
+      className={`absolute top-0 left-0 h-10 px-2 flex items-center justify-between select-none ${
         isMac ? 'bg-transparent' : 'bg-zinc-900'
       }`}
     >

@@ -1,10 +1,26 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function IndexPage() {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Welcome to Dewey</h1>
-      <p className="mt-4">Your personal knowledge management system</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <h1 className="text-4xl font-bold mb-8">Welcome to Dewey</h1>
+      <p className="text-lg text-gray-600 mb-8">Your personal knowledge management system</p>
+      
+      <div className="space-x-4">
+        <Link 
+          to="/auth?mode=signin"
+          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Sign In
+        </Link>
+        <Link 
+          to="/auth?mode=signup"
+          className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          Sign Up
+        </Link>
+      </div>
     </div>
   );
 } 

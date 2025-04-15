@@ -1,25 +1,54 @@
-import { HashRouter, useRoutes } from 'react-router-dom';
+import { ClerkProvider, useAuth } from '@clerk/clerk-react';
+import { BrowserRouter, useRoutes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense } from 'react';
 import routes from '~react-pages';
+import LoadingSpinner from './components/LoadingSpinner';
 import "./App.css";
 
-function Routes() {
+// Public routes that don't require authentication
+const publicRoutes = ['/', '/auth'];
+
+function RoutesComponent() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const location = useLocation();
   const element = useRoutes(routes);
+
+  if (!isLoaded) {
+    return <LoadingSpinner />;
+  }
+
+  // Allow access to public routes
+  if (publicRoutes.includes(location.pathname)) {
+    return element;
+  }
+
+  // Redirect to auth if not authenticated
+  if (!isSignedIn) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show protected routes if authenticated
+  return element;
+}
+
+function AppContent() {
   return (
-    <Suspense fallback={<div className="p-4">Loading...</div>}>
-      {element}
-    </Suspense>
+    <div className="min-h-screen bg-white">
+      <Suspense fallback={<LoadingSpinner />}>
+        <RoutesComponent />
+      </Suspense>
+    </div>
   );
 }
 
-function App() {
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+export default function App() {
   return (
-    <HashRouter>
-      <main className="bg-white rounded-xl w-full h-full min-h-screen">
-        <Routes />
-      </main>
-    </HashRouter>
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ClerkProvider>
   );
 }
-
-export default App;

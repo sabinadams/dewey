@@ -1,18 +1,22 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { HashRouter, useRoutes } from 'react-router-dom';
+import { Suspense } from 'react';
+import routes from '~react-pages';
 import "./App.css";
 
-const Home = lazy(() => import('./pages/index'));
+function Routes() {
+  const element = useRoutes(routes);
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      {element}
+    </Suspense>
+  );
+}
 
 function App() {
   return (
     <HashRouter>
-      <main className="bg-white rounded-2xl w-full h-full min-h-screen">
-        <Suspense fallback={<div className="p-4">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </Suspense>
+      <main className="bg-white rounded-xl w-full h-full min-h-screen">
+        <Routes />
       </main>
     </HashRouter>
   );

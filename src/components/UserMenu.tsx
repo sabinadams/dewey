@@ -42,7 +42,7 @@ export function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-zinc-50 border-zinc-200">
+      <DropdownMenuContent align="start" className="bg-zinc-50 border-zinc-200">
         <DropdownMenuLabel>
           <p className="font-medium text-zinc-900">{user.firstName} {user.lastName}</p>
           <p className="text-sm text-zinc-500">{user.email}</p>

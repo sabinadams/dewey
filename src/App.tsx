@@ -1,5 +1,5 @@
 import { ClerkProvider } from '@clerk/clerk-react';
-import { BrowserRouter, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, useLocation, useRoutes } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
 import LoadingSpinner from './components/LoadingSpinner';
 import { TitleBar } from './components/TitleBar';
@@ -9,17 +9,20 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { detectOS } from './store/slices/systemSlice';
 import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from './store/slices/authSlice';
 import { AuthError } from './components/AuthError';
+import routes from '~react-pages';
 
 // Public routes that don't require authentication
-const publicRoutes = ['/sign-in'];
+const publicRoutes = ['/auth'];
 
 function RoutesGuard() {
   const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const { isLoaded: isUserLoaded, user } = useUser();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { returnTo } = useAppSelector(state => state.auth);
+  const { returnTo, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const element = useRoutes(routes);
 
+  // Handle auth state changes
   useEffect(() => {
     if (isAuthLoaded && isUserLoaded) {
       if (isSignedIn && user) {
@@ -31,45 +34,42 @@ function RoutesGuard() {
           imageUrl: user.imageUrl || undefined,
           username: user.username || undefined
         }));
-        // Clear returnTo after successful auth
-        if (returnTo) {
-          dispatch(setReturnTo(null));
-        }
       } else {
         dispatch(setUnauthenticated());
       }
     } else {
       dispatch(setLoading(true));
     }
-  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch, returnTo]);
+  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
 
-  if (!isAuthLoaded || !isUserLoaded) {
+  // Handle loading state
+  if (isLoading || !isAuthLoaded || !isUserLoaded) {
     return <LoadingSpinner />;
   }
 
   // Allow access to public routes even when not signed in
   if (publicRoutes.some(route => location.pathname.startsWith(route))) {
-    return <AppLayout />;
+    return element;
   }
 
   // Redirect to sign-in if not authenticated
-  if (!isSignedIn) {
+  if (!isAuthenticated) {
     // Store the current path to return to after auth
-    if (location.pathname !== '/sign-in') {
+    if (!location.pathname.startsWith('/auth')) {
       dispatch(setReturnTo(location.pathname));
     }
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
+    return <Navigate to="/auth?mode=signin" replace />;
   }
 
   // If we have a returnTo path and we're authenticated, redirect there
-  if (returnTo && isSignedIn) {
+  if (returnTo && isAuthenticated) {
     const path = returnTo;
     dispatch(setReturnTo(null));
     return <Navigate to={path} replace />;
   }
 
   // Show protected routes if authenticated
-  return <AppLayout />;
+  return <AppLayout>{element}</AppLayout>;
 }
 
 function AppContent() {

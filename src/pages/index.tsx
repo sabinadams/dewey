@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
 import { useAppSelector } from '../store/hooks';
 
 export default function IndexPage() {
-  const { isSignedIn } = useAuth();
-  const user = useAppSelector(state => state.auth.user);
-  if (isSignedIn) {
+  const { isAuthenticated, user } = useAppSelector(state => state.auth);
+
+  if (isAuthenticated) {
     return (
       <div className="p-8">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Dewey, {user?.firstName}</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          Welcome{user?.firstName ? `, ${user.firstName}` : ' to Dewey'}
+        </h1>
         <p className="text-lg text-gray-600">
           Your personal knowledge management system
         </p>

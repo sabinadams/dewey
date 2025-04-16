@@ -28,6 +28,7 @@ export function Projects() {
     const loadProjects = async () => {
         try {
             const userProjects = await invoke<Project[]>('get_user_projects', { userId });
+            console.log(userProjects);
             setProjects(userProjects);
         } catch (error) {
             console.error('Failed to load projects:', error);

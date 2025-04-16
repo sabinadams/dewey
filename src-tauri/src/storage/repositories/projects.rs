@@ -14,8 +14,8 @@ pub struct Project {
 pub async fn create(pool: &SqlitePool, name: &str, user_id: &str) -> AppResult<i64> {
     let result = sqlx::query(
         r#"
-        INSERT INTO projects (name, user_id)
-        VALUES (?, ?)
+        INSERT INTO projects (name, user_id, created_at, updated_at)
+        VALUES (?, ?, unixepoch(), unixepoch())
         RETURNING id
         "#
     )

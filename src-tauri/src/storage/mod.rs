@@ -1,7 +1,9 @@
 use crate::error::AppResult;
-use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::Path;
 use std::sync::Arc;
+use std::str::FromStr;
+use tracing::info;
 
 pub mod repositories;
 
@@ -11,10 +13,21 @@ pub struct LocalStorage {
 
 impl LocalStorage {
     pub async fn new<P: AsRef<Path>>(path: P) -> AppResult<Self> {
-        let database_url = format!("sqlite:{}", path.as_ref().to_string_lossy());
-        let pool = SqlitePool::connect(&database_url).await?;
+        // Ensure parent directory exists
+        if let Some(parent) = path.as_ref().parent() {
+            std::fs::create_dir_all(parent)?;
+            info!("Created directory: {:?}", parent);
+        }
+
+        let options = SqliteConnectOptions::from_str(&format!("sqlite://{}", path.as_ref().display()))?
+            .create_if_missing(true)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .foreign_keys(true);
+
+        let pool = SqlitePool::connect_with(options).await?;
         
-        // Ensure the database is initialized
+        info!("Initializing database schema...");
+        // Initialize schema
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS projects (
@@ -29,6 +42,7 @@ impl LocalStorage {
         .execute(&pool)
         .await?;
         
+        info!("Database initialization complete");
         Ok(Self {
             pool: Arc::new(pool),
         })

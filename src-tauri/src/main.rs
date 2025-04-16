@@ -9,6 +9,7 @@ use dewey_lib::{
 };
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
+use directories::ProjectDirs;
 
 fn setup_logging() {
     FmtSubscriber::builder()
@@ -26,14 +27,18 @@ async fn main() {
     setup_logging();
     info!("Starting Dewey application...");
 
-    let app_dir = dirs::data_local_dir()
-        .ok_or_else(|| AppError::Config("Failed to get local data directory".into()))
+    let app_dir = ProjectDirs::from("com", "dewey", "dewey")
+        .ok_or_else(|| AppError::Config("Failed to get app data directory".into()))
         .unwrap()
-        .join("dewey");
+        .data_dir()
+        .to_path_buf();
     
-    std::fs::create_dir_all(&app_dir).unwrap();
+    if let Err(e) = std::fs::create_dir_all(&app_dir) {
+        error!("Failed to create application directory: {}", e);
+        panic!("Failed to create application directory: {}", e);
+    }
+
     let db_path = app_dir.join("dewey.db");
-    
     info!("Using database at: {:?}", db_path);
     
     let storage = match LocalStorage::new(&db_path).await {

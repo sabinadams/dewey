@@ -1,112 +1,103 @@
 use crate::error::AppResult;
-use crate::storage::models::Project;
-use sqlx::{Pool, Sqlite};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, SqlitePool};
 
-pub struct ProjectRepository<'a> {
-    pool: &'a Pool<Sqlite>,
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Project {
+    pub id: i64,
+    pub name: String,
+    pub user_id: String,
+    pub created_at: i64,
+    pub updated_at: i64,
 }
 
-impl<'a> ProjectRepository<'a> {
-    pub fn new(pool: &'a Pool<Sqlite>) -> Self {
-        Self { pool }
-    }
+pub async fn create(pool: &SqlitePool, name: &str, user_id: &str) -> AppResult<i64> {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO projects (name, user_id, created_at, updated_at)
+        VALUES (?, ?, unixepoch(), unixepoch())
+        "#
+    )
+    .bind(name)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
 
-    pub async fn create(&self, name: &str, user_id: &str) -> AppResult<i64> {
-        let project = sqlx::query_as!(
-            Project,
-            r#"
-            INSERT INTO projects (name, user_id)
-            VALUES (?, ?)
-            RETURNING *
-            "#,
-            name,
-            user_id
-        )
-        .fetch_one(self.pool)
-        .await?;
+    Ok(result.last_insert_rowid())
+}
 
-        Ok(project.id)
-    }
+pub async fn get_by_user(pool: &SqlitePool, user_id: &str) -> AppResult<Vec<Project>> {
+    let projects = sqlx::query_as::<_, Project>(
+        r#"
+        SELECT id, name, user_id, created_at, updated_at
+        FROM projects
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        "#
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await?;
 
-    pub async fn get_by_id(&self, id: i64, user_id: &str) -> AppResult<Option<Project>> {
-        let project = sqlx::query_as!(
-            Project,
-            r#"
-            SELECT * FROM projects 
-            WHERE id = ? AND user_id = ?
-            "#,
-            id,
-            user_id
-        )
-        .fetch_optional(self.pool)
-        .await?;
+    Ok(projects)
+}
 
-        Ok(project)
-    }
+pub async fn update(pool: &SqlitePool, id: i64, name: &str) -> AppResult<()> {
+    sqlx::query(
+        r#"
+        UPDATE projects
+        SET name = ?, updated_at = unixepoch()
+        WHERE id = ?
+        "#
+    )
+    .bind(name)
+    .bind(id)
+    .execute(pool)
+    .await?;
 
-    pub async fn get_user_projects(&self, user_id: &str) -> AppResult<Vec<Project>> {
-        let projects = sqlx::query_as!(
-            Project,
-            r#"
-            SELECT * FROM projects 
-            WHERE user_id = ? 
-            ORDER BY updated_at DESC
-            "#,
-            user_id
-        )
-        .fetch_all(self.pool)
-        .await?;
+    Ok(())
+}
 
-        Ok(projects)
-    }
+pub async fn delete(pool: &SqlitePool, id: i64) -> AppResult<()> {
+    sqlx::query(
+        r#"
+        DELETE FROM projects
+        WHERE id = ?
+        "#
+    )
+    .bind(id)
+    .execute(pool)
+    .await?;
 
-    pub async fn update(&self, project: &Project) -> AppResult<()> {
-        let now = chrono::Utc::now().timestamp();
-        
-        sqlx::query!(
-            r#"
-            UPDATE projects 
-            SET name = ?,
-                updated_at = ?
-            WHERE id = ? AND user_id = ?
-            "#,
-            project.name,
-            now,
-            project.id,
-            project.user_id
-        )
-        .execute(self.pool)
-        .await?;
+    Ok(())
+}
 
-        Ok(())
-    }
+pub async fn get_by_id(pool: &SqlitePool, id: i64, user_id: &str) -> AppResult<Option<Project>> {
+    let project = sqlx::query_as::<_, Project>(
+        r#"
+        SELECT id, name, user_id, created_at, updated_at
+        FROM projects 
+        WHERE id = ? AND user_id = ?
+        "#
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await?;
 
-    pub async fn delete(&self, project_id: i64, user_id: &str) -> AppResult<bool> {
-        let result = sqlx::query!(
-            r#"
-            DELETE FROM projects 
-            WHERE id = ? AND user_id = ?
-            "#,
-            project_id,
-            user_id
-        )
-        .execute(self.pool)
-        .await?;
+    Ok(project)
+}
 
-        Ok(result.rows_affected() > 0)
-    }
+pub async fn exists(pool: &SqlitePool, project_id: i64, user_id: &str) -> AppResult<bool> {
+    let exists = sqlx::query_scalar::<_, bool>(
+        r#"
+        SELECT EXISTS(SELECT 1 FROM projects WHERE id = ? AND user_id = ?)
+        "#
+    )
+    .bind(project_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
 
-    pub async fn exists(&self, project_id: i64, user_id: &str) -> AppResult<bool> {
-        let exists = sqlx::query_scalar!(
-            r#"
-            SELECT EXISTS(SELECT 1 FROM projects WHERE id = ? AND user_id = ?)
-            "#,
-            project_id,
-            user_id
-        )
-        .fetch_one(self.pool)
-        .await?;
-
-        Ok(exists)
-    }
+    Ok(exists)
 } 

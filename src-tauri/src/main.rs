@@ -2,17 +2,17 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
-mod database;
 mod error;
+mod storage;
 
-use database::SqliteDatabase;
 use error::{AppError, AppResult};
+use storage::LocalStorage;
 use std::sync::Arc;
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub struct AppState {
-    db: Arc<SqliteDatabase>,
+    db: Arc<sqlx::Pool<sqlx::Sqlite>>,
 }
 
 fn setup_logging() {
@@ -26,7 +26,8 @@ fn setup_logging() {
         .init();
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     setup_logging();
     info!("Starting Dewey application...");
 
@@ -35,10 +36,13 @@ fn main() {
         .unwrap()
         .join("dewey");
     
-    info!("Using application directory: {:?}", app_dir);
+    std::fs::create_dir_all(&app_dir).unwrap();
+    let db_path = app_dir.join("dewey.db");
     
-    let db = match SqliteDatabase::new(&app_dir) {
-        Ok(db) => db,
+    info!("Using database at: {:?}", db_path);
+    
+    let storage = match LocalStorage::new(&db_path).await {
+        Ok(storage) => storage,
         Err(e) => {
             error!("Failed to initialize database: {}", e);
             panic!("Failed to initialize database: {}", e);
@@ -46,7 +50,7 @@ fn main() {
     };
 
     let app_state = AppState {
-        db: Arc::new(db),
+        db: storage.pool(),
     };
 
     info!("Initializing Tauri application...");

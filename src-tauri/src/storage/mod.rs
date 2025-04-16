@@ -1,15 +1,12 @@
-use crate::error::AppResult;
-use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
+use crate::error::{AppError, AppResult};
+use sqlx::{migrate::MigrateError, sqlite::SqlitePool, Pool, Sqlite};
 use std::path::Path;
+use std::sync::Arc;
 
-pub mod models;
 pub mod repositories;
 
-use repositories::ProjectRepository;
-
 pub struct LocalStorage {
-    pool: Pool<Sqlite>,
-    pub projects: ProjectRepository<'static>,
+    pool: Arc<Pool<Sqlite>>,
 }
 
 impl LocalStorage {
@@ -18,14 +15,17 @@ impl LocalStorage {
         let pool = SqlitePool::connect(&database_url).await?;
         
         // Run migrations
-        sqlx::migrate!("./migrations").run(&pool).await?;
-
-        // Convert pool to static reference for repositories
-        let pool_ref = Box::leak(Box::new(pool));
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .map_err(|e: MigrateError| AppError::Config(e.to_string()))?;
         
         Ok(Self {
-            pool: pool_ref.clone(),
-            projects: ProjectRepository::new(pool_ref),
+            pool: Arc::new(pool),
         })
+    }
+
+    pub fn pool(&self) -> Arc<Pool<Sqlite>> {
+        self.pool.clone()
     }
 } 

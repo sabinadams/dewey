@@ -95,7 +95,8 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
-        <div className="min-h-screen bg-zinc-900 flex flex-col">
+        <div className="fixed inset-0 bg-zinc-900" /> {/* Fixed background layer */}
+        <div className="relative min-h-screen flex flex-col">
           <AppContent />
           <AuthError />
         </div>

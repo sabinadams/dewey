@@ -49,8 +49,6 @@ export function Navigation() {
         </div>
       </nav>
 
-      <Separator className="my-4" />
-
       {/* User Menu */}
       <div className="justify-center mb-3">
         <UserMenu />

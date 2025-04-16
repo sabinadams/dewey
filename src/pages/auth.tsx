@@ -27,6 +27,22 @@ export default function AuthPage() {
     setError('');
   }, [searchParams]);
 
+  // Handle OAuth redirect cleanup
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && oauthLoading) {
+        // If we return to the page and OAuth was in progress, it was likely cancelled
+        setOAuthLoading(null);
+        setError('Authentication was cancelled');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [oauthLoading]);
+
   const handleOAuthSignIn = async (provider: 'oauth_github' | 'oauth_google') => {
     try {
       setOAuthLoading(provider);
@@ -36,9 +52,9 @@ export default function AuthPage() {
         throw new Error("Sign in is not initialized");
       }
 
-      const result = await signIn.authenticateWithRedirect({
+      await signIn.authenticateWithRedirect({
         strategy: provider,
-        redirectUrl: '/auth/callback',
+        redirectUrl: window.location.origin + '/auth/callback',
         redirectUrlComplete: '/',
       });
     } catch (err) {

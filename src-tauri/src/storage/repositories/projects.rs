@@ -11,16 +11,15 @@ impl<'a> ProjectRepository<'a> {
         Self { pool }
     }
 
-    pub async fn create(&self, name: &str, description: Option<&str>, user_id: &str) -> AppResult<i64> {
+    pub async fn create(&self, name: &str, user_id: &str) -> AppResult<i64> {
         let project = sqlx::query_as!(
             Project,
             r#"
-            INSERT INTO projects (name, description, user_id)
-            VALUES (?, ?, ?)
+            INSERT INTO projects (name, user_id)
+            VALUES (?, ?)
             RETURNING *
             "#,
             name,
-            description,
             user_id
         )
         .fetch_one(self.pool)
@@ -67,13 +66,11 @@ impl<'a> ProjectRepository<'a> {
         sqlx::query!(
             r#"
             UPDATE projects 
-            SET name = ?, 
-                description = ?,
+            SET name = ?,
                 updated_at = ?
             WHERE id = ? AND user_id = ?
             "#,
             project.name,
-            project.description,
             now,
             project.id,
             project.user_id

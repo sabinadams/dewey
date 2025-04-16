@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { AppDispatch } from '@/store'
 
 interface UserInfo {
   id: string
@@ -67,5 +68,10 @@ export const {
   setError,
   setReturnTo
 } = authSlice.actions
+
+// Thunk action to handle authentication
+export const authenticateUser = (userInfo: UserInfo) => (dispatch: AppDispatch) => {
+  dispatch(setAuthenticated(userInfo))
+}
 
 export default authSlice.reducer 

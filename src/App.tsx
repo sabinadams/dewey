@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { detectOS } from '@/store/slices/systemSlice';
 import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from '@/store/slices/authSlice';
+import { fetchProjects } from '@/store/slices/projectsSlice';
 import { AuthError } from '@/components/AuthError';
 import routes from '~react-pages';
 
@@ -34,6 +35,8 @@ function RoutesGuard() {
           imageUrl: user.imageUrl || undefined,
           username: user.username || undefined
         }));
+        // Fetch projects when we determine the user is signed in
+        dispatch(fetchProjects(user.id));
       } else {
         dispatch(setUnauthenticated());
       }

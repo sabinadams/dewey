@@ -24,7 +24,7 @@ export default function AuthCallback() {
   }, [handleRedirectCallback, navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-900">
+    <div className="flex-1 flex items-center justify-center">
       <LoadingSpinner />
     </div>
   );

@@ -108,7 +108,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-900">
+    <div className="flex-1 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center text-zinc-900">

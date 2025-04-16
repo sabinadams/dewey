@@ -49,7 +49,7 @@ function RoutesGuard() {
 
   // Allow access to public routes even when not signed in
   if (publicRoutes.some(route => location.pathname.startsWith(route))) {
-    return element;
+    return element ?? <LoadingSpinner />;
   }
 
   // Redirect to sign-in if not authenticated
@@ -95,8 +95,7 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
-        <div className="fixed inset-0 bg-zinc-900" /> {/* Fixed background layer */}
-        <div className="relative min-h-screen flex flex-col">
+        <div className="bg-zinc-900 relative min-h-screen flex flex-col rounded-lg overflow-hidden">
           <AppContent />
           <AuthError />
         </div>

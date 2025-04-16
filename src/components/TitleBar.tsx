@@ -1,6 +1,7 @@
 import { Window } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
-import useOs from '../lib/hooks/useOs';
+import { useAppSelector } from '../store/hooks';
+
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
     <div className="flex gap-1.5 order-first px-1.5">
@@ -53,7 +54,7 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
 
 export function TitleBar() {
   const win = Window.getCurrent();
-  const { isMac } = useOs();
+  const { isMac } = useAppSelector(state => state.system);
 
   return (
     <div 

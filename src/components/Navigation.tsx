@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import useOs from '../lib/hooks/useOs';
+import { useAppSelector } from '../store/hooks';
 import * as DeweyLogo from '../assets/dewey.svg';
 
 interface NavItemProps {
@@ -24,7 +24,7 @@ function NavItem({ to, children }: NavItemProps) {
 }
 
 export function Navigation() {
-  const { isMac } = useOs();
+  const { isMac } = useAppSelector(state => state.system);
   return (
     <aside className={`px-4 ${isMac ? 'mt-10' : ''}`}>
       <div className="space-y-6">

@@ -59,8 +59,8 @@ export function TitleBar() {
   return (
     <div 
       data-tauri-drag-region 
-      className={`h-10 px-2 flex items-center justify-between select-none ${
-        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-zinc-900 w-full'
+      className={`h-10 px-2 flex items-center justify-between select-none w-full ${
+        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-zinc-900'
       }`}
     >
       {isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}

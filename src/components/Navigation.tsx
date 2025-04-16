@@ -59,7 +59,7 @@ export function Navigation() {
   };
 
   return (
-    <aside className={`min-w-18 flex flex-col ${isMac ? 'mt-10 h-[calc(100vh-2.5rem)]' : 'h-screen'}`}>
+    <aside className={`min-w-18 flex flex-col ${isMac ? 'mt-10 ' : ''} h-[calc(100vh-2.5rem)]`}>
       {/* Top Section with Logo */}
       <div className="shrink-0 grid place-items-center pb-2">
         <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />

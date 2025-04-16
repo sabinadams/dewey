@@ -1,14 +1,14 @@
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter, Navigate, useLocation, useRoutes } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
-import LoadingSpinner from './components/LoadingSpinner';
-import { TitleBar } from './components/TitleBar';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { TitleBar } from '@/components/TitleBar';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { AppLayout } from './components/AppLayout';
-import { useAppDispatch, useAppSelector } from './store/hooks';
-import { detectOS } from './store/slices/systemSlice';
-import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from './store/slices/authSlice';
-import { AuthError } from './components/AuthError';
+import { AppLayout } from '@/components/AppLayout';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { detectOS } from '@/store/slices/systemSlice';
+import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from '@/store/slices/authSlice';
+import { AuthError } from '@/components/AuthError';
 import routes from '~react-pages';
 
 // Public routes that don't require authentication

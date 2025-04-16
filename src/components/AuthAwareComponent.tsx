@@ -1,5 +1,5 @@
-import { useAppSelector } from '../store/hooks';
-import LoadingSpinner from './LoadingSpinner';
+import { useAppSelector } from '@/store/hooks';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface AuthAwareComponentProps {
   children: React.ReactNode;

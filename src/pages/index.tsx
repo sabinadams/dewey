@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAppSelector } from '../store/hooks';
+import { useAppSelector } from '@/store/hooks';
 
 export default function IndexPage() {
   const { isAuthenticated, user } = useAppSelector(state => state.auth);

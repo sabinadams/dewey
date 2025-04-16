@@ -1,5 +1,4 @@
 use thiserror::Error;
-use sqlx;
 
 #[derive(Error, Debug)]
 pub enum AppError {

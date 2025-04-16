@@ -1,22 +1,17 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod commands;
-mod error;
-mod storage;
-
-use error::{AppError, AppResult};
-use storage::LocalStorage;
-use std::sync::Arc;
+use dewey_lib::{
+    commands,
+    error::AppError,
+    storage::LocalStorage,
+    AppState,
+};
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
-pub struct AppState {
-    db: Arc<sqlx::Pool<sqlx::Sqlite>>,
-}
-
 fn setup_logging() {
-    let subscriber = FmtSubscriber::builder()
+    FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .with_target(false)
         .with_thread_ids(true)

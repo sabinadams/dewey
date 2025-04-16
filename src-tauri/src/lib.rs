@@ -1,15 +1,14 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+pub mod commands;
+pub mod error;
+pub mod storage;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_os::init())
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
+pub use error::{AppError, AppResult};
+pub use storage::LocalStorage;
+
+use sqlx::SqlitePool;
+use std::sync::Arc;
+
+#[derive(Debug)]
+pub struct AppState {
+    pub db: Arc<SqlitePool>,
+} 

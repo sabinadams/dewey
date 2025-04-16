@@ -1,6 +1,6 @@
 use crate::error::AppResult;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, SqlitePool};
+use sqlx::{FromRow, Row, SqlitePool};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Project {
@@ -14,16 +14,17 @@ pub struct Project {
 pub async fn create(pool: &SqlitePool, name: &str, user_id: &str) -> AppResult<i64> {
     let result = sqlx::query(
         r#"
-        INSERT INTO projects (name, user_id, created_at, updated_at)
-        VALUES (?, ?, unixepoch(), unixepoch())
+        INSERT INTO projects (name, user_id)
+        VALUES (?, ?)
+        RETURNING id
         "#
     )
     .bind(name)
     .bind(user_id)
-    .execute(pool)
+    .fetch_one(pool)
     .await?;
 
-    Ok(result.last_insert_rowid())
+    Ok(result.get(0))
 }
 
 pub async fn get_by_user(pool: &SqlitePool, user_id: &str) -> AppResult<Vec<Project>> {
@@ -89,7 +90,7 @@ pub async fn get_by_id(pool: &SqlitePool, id: i64, user_id: &str) -> AppResult<O
 }
 
 pub async fn exists(pool: &SqlitePool, project_id: i64, user_id: &str) -> AppResult<bool> {
-    let exists = sqlx::query_scalar::<_, bool>(
+    let exists = sqlx::query_scalar(
         r#"
         SELECT EXISTS(SELECT 1 FROM projects WHERE id = ? AND user_id = ?)
         "#

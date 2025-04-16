@@ -59,16 +59,16 @@ export function Navigation() {
   };
 
   return (
-    <aside className={`w-[72px] flex flex-col ${isMac ? 'mt-10' : 'mt-0'}`}>
+    <aside className={`min-w-18 flex flex-col ${isMac ? 'mt-10 h-[calc(100vh-2.5rem)]' : 'h-screen'}`}>
       {/* Top Section with Logo */}
-      <div className="grid place-items-center pb-2">
+      <div className="shrink-0 grid place-items-center pb-2">
         <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />
       </div>
 
       {/* Projects Navigation */}
-      <nav className="flex-1 min-h-0">
-        <ScrollArea>
-          <div className="grid auto-rows-max justify-items-center gap-2 py-2">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="grid auto-rows-max justify-items-center gap-2 p-2">
             {projects.map(project => (
               <NavItem
                 key={project.id}
@@ -98,10 +98,10 @@ export function Navigation() {
             </TooltipProvider>
           </div>
         </ScrollArea>
-      </nav>
+      </div>
 
       {/* User Menu */}
-      <div className="grid place-items-center py-4">
+      <div className="shrink-0 grid place-items-center py-4">
         <UserMenu />
       </div>
     </aside>

@@ -28,7 +28,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="block w-10 h-10 rounded-lg hover:bg-zinc-800 transition-colors p-1">
+        <button className="w-10 h-10 rounded-lg hover:bg-zinc-800 transition-colors p-1">
           {user.imageUrl ? (
             <img 
               src={user.imageUrl} 

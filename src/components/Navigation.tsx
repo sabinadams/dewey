@@ -36,13 +36,13 @@ export function Navigation() {
   return (
     <aside className={`p-4 pt-0 flex flex-col ${isMac ? 'mt-10' : ''}`}>
       {/* Top Section with Logo */}
-      <div className="justify-center mb-4">
+      <div className="flex justify-center mb-4">
         <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 flex flex-col items-center">
-        <div className="space-y-2">
+      <nav className="flex-1 flex flex-col">
+        <div className="flex flex-col items-center space-y-2">
           <NavItem to="/" icon={<Home size={20} />} label="Home" />
           <NavItem to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
           <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" />
@@ -50,7 +50,7 @@ export function Navigation() {
       </nav>
 
       {/* User Menu */}
-      <div className="justify-center mb-3">
+      <div className="flex justify-center mb-3">
         <UserMenu />
       </div>
     </aside>

@@ -1,9 +1,19 @@
 use crate::error::AppResult;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 mod sqlite;
 pub use sqlite::SqliteDatabase;
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Project {
+    pub id: i64,
+    pub name: String,
+    pub user_id: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DatabaseType {

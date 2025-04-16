@@ -1,44 +1,18 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod commands;
 mod database;
 mod error;
 
-use database::{Database, Project};
+use database::SqliteDatabase;
 use error::{AppError, AppResult};
 use std::sync::Arc;
-use tauri::State;
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
-struct AppState {
-    db: Arc<Database>,
-}
-
-#[tauri::command]
-async fn get_user_projects(
-    user_id: String,
-    state: State<'_, AppState>,
-) -> AppResult<Vec<Project>> {
-    info!("Fetching projects for user: {}", user_id);
-    state
-        .db
-        .get_user_projects(&user_id)
-        .map_err(AppError::from)
-}
-
-#[tauri::command]
-async fn create_project(
-    name: String,
-    description: Option<String>,
-    user_id: String,
-    state: State<'_, AppState>,
-) -> AppResult<i64> {
-    info!("Creating new project '{}' for user: {}", name, user_id);
-    state
-        .db
-        .create_project(&name, description.as_deref(), &user_id)
-        .map_err(AppError::from)
+pub struct AppState {
+    db: Arc<SqliteDatabase>,
 }
 
 fn setup_logging() {
@@ -63,7 +37,7 @@ fn main() {
     
     info!("Using application directory: {:?}", app_dir);
     
-    let db = match Database::new(&app_dir) {
+    let db = match SqliteDatabase::new(&app_dir) {
         Ok(db) => db,
         Err(e) => {
             error!("Failed to initialize database: {}", e);
@@ -81,7 +55,10 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .manage(app_state)
-        .invoke_handler(tauri::generate_handler![get_user_projects, create_project])
+        .invoke_handler(tauri::generate_handler![
+            commands::get_user_projects,
+            commands::create_project
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

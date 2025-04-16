@@ -1,40 +1,76 @@
 use crate::error::AppResult;
-use super::{DatabaseConnection, QueryExecutor, SchemaIntrospection, ColumnInfo, Relationship};
+use super::{DatabaseConnection, QueryExecutor, SchemaIntrospection, ColumnInfo, Relationship, Project};
 use async_trait::async_trait;
-use rusqlite::{Connection, params};
+use sqlx::{SqlitePool, Pool, Sqlite, Row};
 use std::path::Path;
-use std::sync::Mutex;
 
+#[derive(Debug)]
 pub struct SqliteDatabase {
-    connection: Mutex<Option<Connection>>,
+    pool: Option<Pool<Sqlite>>,
     path: String,
 }
 
 impl SqliteDatabase {
     pub fn new<P: AsRef<Path>>(path: P) -> AppResult<Self> {
         Ok(Self {
-            connection: Mutex::new(None),
-            path: path.as_ref().to_string_lossy().to_string(),
+            pool: None,
+            path: format!("sqlite:{}", path.as_ref().to_string_lossy()),
         })
+    }
+
+    pub async fn create_project(&self, name: &str, user_id: &str) -> AppResult<i64> {
+        let pool = self.pool.as_ref().unwrap();
+        let result = sqlx::query!(
+            r#"
+            INSERT INTO projects (name, user_id)
+            VALUES (?, ?)
+            "#,
+            name,
+            user_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(result.last_insert_rowid())
+    }
+
+    pub async fn get_user_projects(&self, user_id: &str) -> AppResult<Vec<Project>> {
+        let pool = self.pool.as_ref().unwrap();
+        let projects = sqlx::query_as!(
+            Project,
+            r#"
+            SELECT id, name, user_id, created_at, updated_at
+            FROM projects
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(projects)
     }
 }
 
 #[async_trait]
 impl DatabaseConnection for SqliteDatabase {
     async fn connect(&self) -> AppResult<()> {
-        let conn = Connection::open(&self.path)?;
-        *self.connection.lock().unwrap() = Some(conn);
+        let pool = SqlitePool::connect(&self.path).await?;
+        self.pool = Some(pool);
         Ok(())
     }
 
     async fn disconnect(&self) -> AppResult<()> {
-        *self.connection.lock().unwrap() = None;
+        if let Some(pool) = &self.pool {
+            pool.close().await;
+        }
         Ok(())
     }
 
     async fn test_connection(&self) -> AppResult<bool> {
-        if let Some(conn) = &*self.connection.lock().unwrap() {
-            conn.execute("SELECT 1", [])?;
+        if let Some(pool) = &self.pool {
+            sqlx::query("SELECT 1").execute(pool).await?;
             Ok(true)
         } else {
             Ok(false)
@@ -45,43 +81,37 @@ impl DatabaseConnection for SqliteDatabase {
 #[async_trait]
 impl QueryExecutor for SqliteDatabase {
     async fn execute_query(&self, query: &str) -> AppResult<Vec<serde_json::Value>> {
-        let conn = self.connection.lock().unwrap();
-        let conn = conn.as_ref().unwrap();
+        let pool = self.pool.as_ref().unwrap();
+        let rows = sqlx::query(query)
+            .fetch_all(pool)
+            .await?;
         
-        let mut stmt = conn.prepare(query)?;
-        let column_names: Vec<String> = stmt.column_names().into_iter().map(String::from).collect();
-        
-        let rows = stmt.query_map([], |row| {
-            let mut map = serde_json::Map::new();
-            for (i, column_name) in column_names.iter().enumerate() {
-                let value: rusqlite::types::Value = row.get(i)?;
-                map.insert(column_name.clone(), convert_sqlite_value_to_json(value));
-            }
-            Ok(serde_json::Value::Object(map))
-        })?;
-
         let mut results = Vec::new();
         for row in rows {
-            results.push(row?);
+            let mut map = serde_json::Map::new();
+            for (i, column) in row.columns().iter().enumerate() {
+                let value: Option<String> = row.try_get(i)?;
+                map.insert(
+                    column.name().to_string(),
+                    value.map_or(serde_json::Value::Null, |v| serde_json::Value::String(v)),
+                );
+            }
+            results.push(serde_json::Value::Object(map));
         }
         
         Ok(results)
     }
 
     async fn explain_query(&self, query: &str) -> AppResult<String> {
-        let conn = self.connection.lock().unwrap();
-        let conn = conn.as_ref().unwrap();
+        let pool = self.pool.as_ref().unwrap();
+        let rows = sqlx::query(&format!("EXPLAIN QUERY PLAN {}", query))
+            .fetch_all(pool)
+            .await?;
         
-        let mut stmt = conn.prepare(&format!("EXPLAIN QUERY PLAN {}", query))?;
         let mut explanation = String::new();
-        
-        let rows = stmt.query_map([], |row| {
-            let detail: String = row.get(3)?;
-            Ok(detail)
-        })?;
-
         for row in rows {
-            explanation.push_str(&row?);
+            let detail: String = row.try_get(3)?;
+            explanation.push_str(&detail);
             explanation.push('\n');
         }
         
@@ -92,89 +122,61 @@ impl QueryExecutor for SqliteDatabase {
 #[async_trait]
 impl SchemaIntrospection for SqliteDatabase {
     async fn get_tables(&self) -> AppResult<Vec<String>> {
-        let conn = self.connection.lock().unwrap();
-        let conn = conn.as_ref().unwrap();
-        
-        let mut stmt = conn.prepare(
+        let pool = self.pool.as_ref().unwrap();
+        let rows = sqlx::query(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-        )?;
+        )
+        .fetch_all(pool)
+        .await?;
         
-        let tables = stmt.query_map([], |row| row.get(0))?;
         let mut table_names = Vec::new();
-        
-        for table in tables {
-            table_names.push(table?);
+        for row in rows {
+            table_names.push(row.try_get(0)?);
         }
         
         Ok(table_names)
     }
 
     async fn get_columns(&self, table: &str) -> AppResult<Vec<ColumnInfo>> {
-        let conn = self.connection.lock().unwrap();
-        let conn = conn.as_ref().unwrap();
-        
-        let mut stmt = conn.prepare(&format!("PRAGMA table_info({})", table))?;
-        let columns = stmt.query_map([], |row| {
-            Ok(ColumnInfo {
-                name: row.get(1)?,
-                data_type: row.get(2)?,
-                is_nullable: row.get(3)? == 0,
-                is_primary: row.get(5)? == 1,
-            })
-        })?;
+        let pool = self.pool.as_ref().unwrap();
+        let rows = sqlx::query(&format!("PRAGMA table_info({})", table))
+            .fetch_all(pool)
+            .await?;
         
         let mut column_info = Vec::new();
-        for column in columns {
-            column_info.push(column?);
+        for row in rows {
+            column_info.push(ColumnInfo {
+                name: row.try_get(1)?,
+                data_type: row.try_get(2)?,
+                is_nullable: row.try_get::<i32, _>(3)? == 0,
+                is_primary: row.try_get::<i32, _>(5)? == 1,
+            });
         }
         
         Ok(column_info)
     }
 
     async fn get_relationships(&self) -> AppResult<Vec<Relationship>> {
-        // For SQLite, we'll need to parse the foreign key constraints
-        // This is a simplified implementation
-        let conn = self.connection.lock().unwrap();
-        let conn = conn.as_ref().unwrap();
-        
-        let mut relationships = Vec::new();
+        let pool = self.pool.as_ref().unwrap();
         let tables = self.get_tables().await?;
+        let mut relationships = Vec::new();
         
         for table in tables {
-            let mut stmt = conn.prepare(&format!("PRAGMA foreign_key_list({})", table))?;
-            let foreign_keys = stmt.query_map([], |row| {
-                Ok(Relationship {
-                    table_from: table.clone(),
-                    column_from: row.get(3)?,
-                    table_to: row.get(2)?,
-                    column_to: row.get(4)?,
-                    relationship_type: super::RelationType::ManyToOne, // Simplified
-                })
-            })?;
+            let rows = sqlx::query(&format!("PRAGMA foreign_key_list({})", table))
+                .fetch_all(pool)
+                .await?;
             
-            for fk in foreign_keys {
-                relationships.push(fk?);
+            for row in rows {
+                relationships.push(Relationship {
+                    table_from: table.clone(),
+                    column_from: row.try_get(3)?,
+                    table_to: row.try_get(2)?,
+                    column_to: row.try_get(4)?,
+                    relationship_type: super::RelationType::ManyToOne, // Simplified
+                });
             }
         }
         
         Ok(relationships)
-    }
-}
-
-fn convert_sqlite_value_to_json(value: rusqlite::types::Value) -> serde_json::Value {
-    match value {
-        rusqlite::types::Value::Null => serde_json::Value::Null,
-        rusqlite::types::Value::Integer(i) => serde_json::Value::Number(i.into()),
-        rusqlite::types::Value::Real(f) => {
-            if let Some(n) = serde_json::Number::from_f64(f) {
-                serde_json::Value::Number(n)
-            } else {
-                serde_json::Value::Null
-            }
-        },
-        rusqlite::types::Value::Text(s) => serde_json::Value::String(s),
-        rusqlite::types::Value::Blob(b) => {
-            serde_json::Value::String(base64::encode(&b))
-        },
     }
 } 

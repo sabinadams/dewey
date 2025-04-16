@@ -6,7 +6,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-1">
       {/* Sidebar Navigation */}
       <Navigation />
 

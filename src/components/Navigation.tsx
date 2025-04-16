@@ -27,9 +27,9 @@ function NavItem({ to, children }: NavItemProps) {
 export function Navigation() {
   const { isMac } = useAppSelector(state => state.system);
   return (
-    <aside className={`px-4 flex flex-col ${isMac ? 'mt-10' : ''}`}>
+    <aside className={`p-4 pt-0 flex flex-col ${isMac ? 'mt-10' : ''}`}>
       {/* Top Section with Logo */}
-      <div className="py-4 flex justify-center">
+      <div className="flex justify-center mb-4">
         <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />
       </div>
 
@@ -43,9 +43,7 @@ export function Navigation() {
       </nav>
 
       {/* User Menu */}
-      <div className="py-4">
-        <UserMenu />
-      </div>
+      <UserMenu />
     </aside>
   );
 } 

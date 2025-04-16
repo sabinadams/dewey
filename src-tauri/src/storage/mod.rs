@@ -26,23 +26,8 @@ impl LocalStorage {
 
         let pool = SqlitePool::connect_with(options).await?;
         
-        info!("Initializing database schema...");
-        // Initialize schema
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS projects (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                user_id TEXT NOT NULL,
-                created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-                updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-            )
-            "#
-        )
-        .execute(&pool)
-        .await?;
+        info!("Connected to database - migrations will be handled by SQLx");
         
-        info!("Database initialization complete");
         Ok(Self {
             pool: Arc::new(pool),
         })

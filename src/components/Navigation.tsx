@@ -5,7 +5,7 @@ import { UserMenu } from '@/components/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from './ui/scroll-area';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { createProject } from '@/store/slices/projectsSlice';
 import { useAuth } from '@clerk/clerk-react';
 import { basename } from '@tauri-apps/api/path';
@@ -22,18 +22,17 @@ interface NavItemProps {
   icon?: React.ReactNode;
   label: string;
   imageSrc?: string;
+  active?: boolean;
 }
 
-function NavItem({ to, label, imageSrc }: NavItemProps) {
+function NavItem({ to, label, imageSrc, active }: NavItemProps) {
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     async function loadIconUrl() {
-      console.log('Raw imageSrc:', imageSrc);
       if (imageSrc) {
         const parts = imageSrc.split(/[/\\]/);
         const filename = parts[parts.length - 1];
-        console.log('Icon filename:', filename);
         if (filename) {
           setIconUrl(`icon://${filename}`);
         }
@@ -47,24 +46,30 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          'w-10 h-10 grid place-items-center rounded-lg transition-colors',
-          'hover:bg-zinc-200 dark:hover:bg-zinc-800',
-          isActive && 'bg-zinc-200 dark:bg-zinc-800'
+          buttonVariants({
+            variant: "ghost",
+            size: "icon",
+            className: cn(
+              'w-10 h-10 p-0 grid place-items-center rounded-lg transition-colors',
+              'data-[state=active]:bg-accent data-[state=active]:text-accent-foreground',
+              isActive && 'bg-accent text-accent-foreground'
+            )
+          })
         )
       }
     >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="grid place-items-center w-6 h-6">
+            <div className="grid place-items-center w-8 h-8">
               {iconUrl ? (
                 <img 
                   src={iconUrl} 
                   alt={label} 
-                  className="w-6 h-6 rounded"
+                  className="w-8 h-8 rounded"
                 />
               ) : (
-                <Folder size={20} className="text-zinc-50" />
+                <Folder size={20} className="text-foreground" />
               )}
             </div>
           </TooltipTrigger>
@@ -90,16 +95,22 @@ export function Navigation() {
   };
 
   return (
-    <aside className={`min-w-18 flex flex-col ${isMac ? 'mt-10 ' : ''} h-[calc(100vh-2.5rem)]`}>
+    <aside 
+      className={cn(
+        "min-w-18 flex flex-col",
+        isMac ? "mt-10" : "",
+        "h-[calc(100vh-2.5rem)]"
+      )}
+    >
       {/* Top Section with Logo */}
-      <div className="shrink-0 grid place-items-center pb-2">
+      <div className="shrink-0 grid place-items-center pb-2 pt-2">
         <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />
       </div>
 
       {/* Projects Navigation */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="grid auto-rows-max justify-items-center gap-2 p-2">
+          <div className="grid auto-rows-max justify-items-center gap-3 p-2">
             {projects.map(project => (
               <NavItem
                 key={project.id}
@@ -117,9 +128,7 @@ export function Navigation() {
                     className="grid place-items-center w-10 h-10"
                     onClick={handleCreateProject}
                   >
-                    <div className="grid place-items-center w-6 h-6">
-                      <Plus size={20} />
-                    </div>
+                    <Plus size={20} className="text-foreground" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">

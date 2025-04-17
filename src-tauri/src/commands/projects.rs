@@ -1,5 +1,5 @@
-use crate::storage::repositories::projects::{Project, ProjectRepository};
-use crate::storage::icon::IconGenerator;
+use crate::services::storage::repositories::projects::{Project, ProjectRepository};
+use crate::services::storage::icon::IconGenerator;
 use crate::AppState;
 use tauri::State;
 use tracing::{info, error};

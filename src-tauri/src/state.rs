@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::path::PathBuf;
 
 use crate::error::AppError;
-use crate::storage::LocalStorage;
+use crate::services::storage::LocalStorage;
 
 use tracing::{info, error};
 use directories::ProjectDirs;

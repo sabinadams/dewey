@@ -50,4 +50,4 @@ impl IconGenerator {
     pub fn get_icon_path(&self, filename: &str) -> PathBuf {
         self.icons_dir.join(filename)
     }
-}
+} 

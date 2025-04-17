@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useEffect, useState } from 'react';
 
 interface NavItemProps {
   to: string;
@@ -24,8 +25,23 @@ interface NavItemProps {
 }
 
 function NavItem({ to, label, imageSrc }: NavItemProps) {
-  const iconUrl = imageSrc ? `icon://${basename(imageSrc)}` : undefined;
-  console.log(iconUrl);
+  const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    async function loadIconUrl() {
+      console.log('Raw imageSrc:', imageSrc);
+      if (imageSrc) {
+        const parts = imageSrc.split(/[/\\]/);
+        const filename = parts[parts.length - 1];
+        console.log('Icon filename:', filename);
+        if (filename) {
+          setIconUrl(`icon://${filename}`);
+        }
+      }
+    }
+    loadIconUrl();
+  }, [imageSrc]);
+
   return (
     <NavLink
       to={to}
@@ -48,7 +64,7 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
                   className="w-6 h-6 rounded"
                 />
               ) : (
-                <Folder size={20} />
+                <Folder size={20} className="text-zinc-50" />
               )}
             </div>
           </TooltipTrigger>

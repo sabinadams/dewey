@@ -29,7 +29,7 @@ async fn main() {
     setup_logging();
     info!("Starting Dewey application...");
 
-    let app_dir = ProjectDirs::from("com", "dewey", "dewey")
+    let app_dir = ProjectDirs::from("com", "dewey", "app")
         .ok_or_else(|| AppError::Config("Failed to get app data directory".into()))
         .unwrap()
         .data_dir()
@@ -43,7 +43,7 @@ async fn main() {
     let db_path = app_dir.join("dewey.db");
     info!("Using database at: {:?}", db_path);
     
-    let storage = match LocalStorage::new(&db_path).await {
+    let storage = match LocalStorage::new(&db_path, app_dir).await {
         Ok(storage) => storage,
         Err(e) => {
             error!("Failed to initialize database: {}", e);

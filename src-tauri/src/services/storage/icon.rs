@@ -1,8 +1,9 @@
 use std::path::PathBuf;
-use std::fs;
 use hex;
 use identicon_rs::Identicon;
 use crate::error::{AppError, AppResult};
+use crate::constants;
+use crate::utils;
 use super::LocalStorage;
 
 /// Generates and manages project icons using identicons
@@ -12,9 +13,8 @@ pub struct IconGenerator {
 
 impl IconGenerator {
     pub fn new() -> AppResult<Self> {
-        let icons_dir = LocalStorage::get_app_dir().join("icons");
-        fs::create_dir_all(&icons_dir)
-            .map_err(AppError::Io)?;
+        let icons_dir = LocalStorage::get_app_dir().join(constants::ICONS_DIR);
+        utils::ensure_dir_exists(&icons_dir)?;
         
         Ok(Self { icons_dir })
     }
@@ -32,7 +32,7 @@ impl IconGenerator {
         
         // Generate and save the identicon
         let path_str = file_path.to_str()
-            .ok_or_else(|| AppError::IconGeneration("Invalid file path".to_string()))?;
+            .ok_or_else(|| AppError::IconGeneration(constants::INVALID_FILE_PATH.to_string()))?;
             
         Identicon::new(&hex_seed)
             .set_border(0)

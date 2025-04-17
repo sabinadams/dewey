@@ -4,28 +4,16 @@
 use dewey_lib::{
     commands,
     state,
+    utils,
 };
-use tracing::{info, error, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing::{info, error};
 
 mod protocols;
-
-/// Set up the logging system with appropriate configuration
-fn setup_logging() {
-    FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_file(true)
-        .with_line_number(true)
-        .pretty()
-        .init();
-}
 
 #[tokio::main]
 async fn main() {
     // Initialize logging first
-    setup_logging();
+    utils::setup_logging();
     info!("Starting Dewey application...");
 
     // Initialize app state

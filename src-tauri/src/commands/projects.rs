@@ -1,9 +1,10 @@
 use crate::services::storage::repositories::projects::{Project, ProjectRepository};
 use crate::services::storage::icon::IconGenerator;
 use crate::AppState;
+use crate::utils;
+use crate::constants;
 use tauri::State;
 use tracing::{info, error};
-use std::time::{SystemTime, UNIX_EPOCH};
 use blake3;
 
 /// Command to fetch all projects for a user
@@ -33,15 +34,8 @@ pub async fn create_project(
 ) -> Result<i64, String> {
     info!("Creating new project '{}' for user: {}", name, user_id);
     
-    // Generate a unique seed for the icon
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_nanos()
-        .to_string();
-    
-    let seed_string = format!("{}:{}:{}", timestamp, name, user_id);
-    let hash = blake3::hash(seed_string.as_bytes());
+    // Generate a unique hash for the icon
+    let hash = blake3::hash(utils::generate_unique_hash(&[&name, &user_id]).as_bytes());
     
     // Create and save the icon
     let icon_generator = IconGenerator::new()
@@ -89,7 +83,7 @@ pub async fn update_project(
         })?;
     
     if !exists {
-        return Err("Project not found or does not belong to user".into());
+        return Err(constants::PROJECT_NOT_FOUND.into());
     }
     
     // Update the project
@@ -121,7 +115,7 @@ pub async fn delete_project(
         })?;
     
     if !exists {
-        return Err("Project not found or does not belong to user".into());
+        return Err(constants::PROJECT_NOT_FOUND.into());
     }
     
     // Delete the project

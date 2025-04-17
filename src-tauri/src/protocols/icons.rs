@@ -7,6 +7,8 @@ use tauri::{
 use std::fs;
 use tracing::{debug, error};
 use urlencoding::decode;
+use dewey_lib::constants;
+use dewey_lib::utils;
 
 /// Handle custom icon URI requests to serve project icons
 /// 
@@ -24,7 +26,7 @@ pub fn icon_protocol<R: tauri::Runtime>(
         Ok(decoded) => decoded.trim_end_matches('/').to_string(),
         Err(e) => {
             error!("Failed to decode icon URI '{}': {}", icon_uri, e);
-            return response_not_found();
+            return utils::response_not_found();
         }
     };
     
@@ -32,10 +34,10 @@ pub fn icon_protocol<R: tauri::Runtime>(
     
     // Get icons directory from the app data directory
     let base_path = match ctx.app_handle().path().app_data_dir() {
-        Ok(path) => path.join("icons"),
+        Ok(path) => path.join(constants::ICONS_DIR),
         Err(e) => {
             error!("Failed to get app data directory: {}", e);
-            return response_not_found();
+            return utils::response_not_found();
         }
     };
     
@@ -46,35 +48,17 @@ pub fn icon_protocol<R: tauri::Runtime>(
         Ok(data) => {
             debug!("Successfully served icon: {}", icon_name);
             Response::builder()
-                .header("Content-Type", "image/png")
-                .header("Cache-Control", "public, max-age=31536000")
+                .header("Content-Type", constants::PNG_CONTENT_TYPE)
+                .header("Cache-Control", constants::ICON_CACHE_CONTROL)
                 .body(data)
                 .unwrap_or_else(|e| {
                     error!("Failed to build response: {}", e);
-                    response_server_error()
+                    utils::response_server_error()
                 })
         },
         Err(e) => {
             error!("Failed to read icon at {:?}: {}", full_path, e);
-            response_not_found()
+            utils::response_not_found()
         }
     }
-}
-
-/// Create a 404 Not Found response
-fn response_not_found() -> Response<Vec<u8>> {
-    Response::builder()
-        .status(404)
-        .header("Content-Type", "text/plain")
-        .body("Icon not found".as_bytes().to_vec())
-        .unwrap_or_else(|_| Response::new(Vec::new()))
-}
-
-/// Create a 500 Server Error response
-fn response_server_error() -> Response<Vec<u8>> {
-    Response::builder()
-        .status(500)
-        .header("Content-Type", "text/plain")
-        .body("Server error".as_bytes().to_vec())
-        .unwrap_or_else(|_| Response::new(Vec::new()))
 }

@@ -1,4 +1,7 @@
 use crate::error::AppResult;
+use crate::constants;
+use crate::utils;
+
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -37,17 +40,17 @@ impl LocalStorage {
 
         // Ensure parent directory exists
         if let Some(parent) = path.as_ref().parent() {
-            std::fs::create_dir_all(parent)?;
+            utils::ensure_dir_exists(&parent.to_path_buf())?;
             debug!("Created directory: {:?}", parent);
         }
 
         // Configure and connect to the SQLite database
-        let db_path_str = format!("sqlite://{}", path.as_ref().display());
+        let db_path_str = format!("{}{}", constants::SQLITE_URI_PREFIX, path.as_ref().display());
         debug!("Connecting to database at: {}", db_path_str);
         
         let options = SqliteConnectOptions::from_str(&db_path_str)?
             .create_if_missing(true)
-            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .journal_mode(constants::DEFAULT_JOURNAL_MODE)
             .foreign_keys(true);
 
         let pool = SqlitePool::connect_with(options).await?;
@@ -77,6 +80,6 @@ impl LocalStorage {
     /// 
     /// This is available after LocalStorage has been initialized
     pub fn get_app_dir() -> &'static PathBuf {
-        APP_DIR.get().expect("App directory not initialized")
+        APP_DIR.get().expect(constants::APP_DIR_NOT_INITIALIZED)
     }
 } 

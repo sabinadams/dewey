@@ -3,14 +3,10 @@
 
 use dewey_lib::{
     commands,
-    error::AppError,
-    storage::LocalStorage,
-    AppState,
+    state,
 };
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
-use directories::ProjectDirs;
-use std::path::PathBuf;
 
 mod protocols;
 
@@ -26,49 +22,19 @@ fn setup_logging() {
         .init();
 }
 
-/// Get the application data directory
-fn get_app_dir() -> Result<PathBuf, AppError> {
-    ProjectDirs::from("com", "dewey", "app")
-        .ok_or_else(|| AppError::Config("Failed to get app data directory".into()))
-        .map(|dirs| dirs.data_dir().to_path_buf())
-}
-
 #[tokio::main]
 async fn main() {
     // Initialize logging first
     setup_logging();
     info!("Starting Dewey application...");
 
-    // Get app directory
-    let app_dir = match get_app_dir() {
-        Ok(dir) => dir,
+    // Initialize app state
+    let app_state = match state::initialize_app_state().await {
+        Ok(state) => state,
         Err(e) => {
-            error!("Failed to determine app directory: {}", e);
-            panic!("Failed to determine app directory: {}", e);
+            error!("Failed to initialize application state: {}", e);
+            panic!("Failed to initialize application state: {}", e);
         }
-    };
-    
-    // Ensure app directory exists
-    if let Err(e) = std::fs::create_dir_all(&app_dir) {
-        error!("Failed to create application directory: {}", e);
-        panic!("Failed to create application directory: {}", e);
-    }
-
-    // Set up database
-    let db_path = app_dir.join("dewey.db");
-    info!("Using database at: {:?}", db_path);
-    
-    let storage = match LocalStorage::new(&db_path, app_dir).await {
-        Ok(storage) => storage,
-        Err(e) => {
-            error!("Failed to initialize database: {}", e);
-            panic!("Failed to initialize database: {}", e);
-        }
-    };
-
-    // Create app state for dependency injection
-    let app_state = AppState {
-        db: storage.pool(),
     };
 
     info!("Initializing Tauri application...");

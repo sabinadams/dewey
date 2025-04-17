@@ -49,7 +49,8 @@ async fn main() {
             commands::get_user_projects,
             commands::create_project,
             commands::update_project,
-            commands::delete_project
+            commands::delete_project,
+            commands::get_app_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

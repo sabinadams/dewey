@@ -12,6 +12,10 @@ pub struct IconGenerator {
 }
 
 impl IconGenerator {
+    /// Creates a new IconGenerator
+    ///
+    /// # Errors
+    /// Returns an error if the icons directory cannot be created
     pub fn new() -> AppResult<Self> {
         let icons_dir = LocalStorage::get_app_dir().join(constants::ICONS_DIR);
         utils::ensure_dir_exists(&icons_dir)?;
@@ -21,6 +25,11 @@ impl IconGenerator {
 
     /// Generates an icon from the provided seed and saves it to disk
     /// Returns the filename of the saved icon
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - The file path is invalid
+    /// - The identicon fails to generate or save
     pub fn generate_and_save(&self, seed: &[u8]) -> AppResult<String> {
         // Create a filename from the first few bytes of the seed
         let truncated_seed = &seed[..std::cmp::min(seed.len(), 8)];
@@ -37,16 +46,19 @@ impl IconGenerator {
         Identicon::new(&hex_seed)
             .set_border(0)
             .save_image(path_str)
-            .map_err(|e| AppError::IconGeneration(format!("Failed to save icon: {}", e)))?;
+            .map_err(|e| AppError::IconGeneration(format!("Failed to save icon: {e}")))?;
         
         Ok(filename)
     }
 
-    pub fn get_icons_dir(&self) -> &PathBuf {
+    /// Returns the directory where icons are stored
+    #[must_use]
+    pub const fn get_icons_dir(&self) -> &PathBuf {
         &self.icons_dir
     }
     
     /// Returns the full path to an icon given its filename
+    #[must_use]
     pub fn get_icon_path(&self, filename: &str) -> PathBuf {
         self.icons_dir.join(filename)
     }

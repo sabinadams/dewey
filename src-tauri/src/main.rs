@@ -17,13 +17,14 @@ async fn main() {
     info!("Starting Dewey application...");
 
     // Initialize app state
-    let app_state = match state::initialize_app_state().await {
-        Ok(state) => state,
-        Err(e) => {
-            error!("Failed to initialize application state: {}", e);
-            panic!("Failed to initialize application state: {}", e);
+    let app_state = state::initialize_app_state().await.unwrap_or_else(|e| {
+        error!("Failed to initialize application state");
+        if cfg!(debug_assertions) {
+            panic!("Failed to initialize application state: {e}");
+        } else {
+            std::process::exit(1);
         }
-    };
+    });
 
     info!("Initializing Tauri application...");
     

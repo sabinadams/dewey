@@ -32,12 +32,12 @@ pub type AppResult<T> = Result<T, AppError>;
 
 impl From<image::ImageError> for AppError {
     fn from(err: image::ImageError) -> Self {
-        AppError::Image(err.to_string())
+        Self::Image(err.to_string())
     }
 }
 
 impl From<String> for AppError {
     fn from(err: String) -> Self {
-        AppError::Unknown(err)
+        Self::Unknown(err)
     }
 } 

@@ -2,7 +2,7 @@ use crate::error::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
-use tracing::{debug, instrument};
+use tracing::debug;
 
 /// Represents a user project in the application
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -21,21 +21,25 @@ pub struct ProjectRepository {
 }
 
 impl ProjectRepository {
-    /// Create a new ProjectRepository instance
-    pub fn new(pool: Arc<SqlitePool>) -> Self {
+    /// Create a new `ProjectRepository` instance
+    #[must_use]
+    pub const fn new(pool: Arc<SqlitePool>) -> Self {
         Self { pool }
     }
 
-    /// Create a new project for a user
-    #[instrument(skip(self), fields(project_name = %name, user_id = %user_id))]
+    /// Create a new project
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
     pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
-        debug!("Creating new project");
+        debug!("Creating new project '{}' for user: {}", name, user_id);
+        
         let result = sqlx::query(
-            r#"
+            r"
             INSERT INTO projects (name, user_id, icon_path, created_at, updated_at)
             VALUES (?, ?, ?, unixepoch(), unixepoch())
             RETURNING id
-            "#
+            "
         )
         .bind(name)
         .bind(user_id)
@@ -49,16 +53,19 @@ impl ProjectRepository {
     }
 
     /// Get all projects for a user
-    #[instrument(skip(self), fields(user_id = %user_id))]
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
     pub async fn get_by_user(&self, user_id: &str) -> AppResult<Vec<Project>> {
-        debug!("Fetching projects for user");
+        debug!("Fetching projects for user: {}", user_id);
+        
         let projects = sqlx::query_as::<_, Project>(
-            r#"
+            r"
             SELECT id, name, user_id, created_at, updated_at, icon_path
             FROM projects
             WHERE user_id = ?
             ORDER BY created_at DESC
-            "#
+            "
         )
         .bind(user_id)
         .fetch_all(&*self.pool)
@@ -69,15 +76,18 @@ impl ProjectRepository {
     }
 
     /// Update a project's name
-    #[instrument(skip(self), fields(project_id = %id))]
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
     pub async fn update(&self, id: i64, name: &str) -> AppResult<()> {
-        debug!("Updating project name");
+        debug!("Updating project {} with name: {}", id, name);
+        
         sqlx::query(
-            r#"
+            r"
             UPDATE projects
             SET name = ?, updated_at = unixepoch()
             WHERE id = ?
-            "#
+            "
         )
         .bind(name)
         .bind(id)
@@ -89,14 +99,17 @@ impl ProjectRepository {
     }
 
     /// Delete a project
-    #[instrument(skip(self), fields(project_id = %id))]
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
     pub async fn delete(&self, id: i64) -> AppResult<()> {
-        debug!("Deleting project");
+        debug!("Deleting project: {}", id);
+        
         sqlx::query(
-            r#"
+            r"
             DELETE FROM projects
             WHERE id = ?
-            "#
+            "
         )
         .bind(id)
         .execute(&*self.pool)
@@ -106,16 +119,19 @@ impl ProjectRepository {
         Ok(())
     }
 
-    /// Get a specific project by ID and verify it belongs to the user
-    #[instrument(skip(self), fields(project_id = %id, user_id = %user_id))]
+    /// Get a project by ID and user ID
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
     pub async fn get_by_id(&self, id: i64, user_id: &str) -> AppResult<Option<Project>> {
-        debug!("Fetching project by ID");
+        debug!("Fetching project {} for user: {}", id, user_id);
+        
         let project = sqlx::query_as::<_, Project>(
-            r#"
+            r"
             SELECT id, name, user_id, created_at, updated_at, icon_path
             FROM projects 
             WHERE id = ? AND user_id = ?
-            "#
+            "
         )
         .bind(id)
         .bind(user_id)
@@ -126,60 +142,24 @@ impl ProjectRepository {
         Ok(project)
     }
 
-    /// Check if a project exists and belongs to the user
-    #[instrument(skip(self), fields(project_id = %project_id, user_id = %user_id))]
-    pub async fn exists(&self, project_id: i64, user_id: &str) -> AppResult<bool> {
-        debug!("Checking if project exists");
-        let exists = sqlx::query_scalar(
-            r#"
+    /// Check if a project exists and belongs to a user
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
+    pub async fn exists(&self, id: i64, user_id: &str) -> AppResult<bool> {
+        debug!("Checking if project {} exists for user: {}", id, user_id);
+        
+        let exists: (bool,) = sqlx::query_as(
+            r"
             SELECT EXISTS(SELECT 1 FROM projects WHERE id = ? AND user_id = ?)
-            "#
+            "
         )
-        .bind(project_id)
+        .bind(id)
         .bind(user_id)
         .fetch_one(&*self.pool)
         .await?;
 
-        debug!("Project existence check: {}", exists);
-        Ok(exists)
+        debug!("Project existence check: {}", exists.0);
+        Ok(exists.0)
     }
-}
-
-// Legacy functions for backward compatibility
-// These will use the new repository implementation internally
-
-/// Create a new project
-pub async fn create(pool: &SqlitePool, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.create(name, user_id, icon_path).await
-}
-
-/// Get all projects for a user
-pub async fn get_by_user(pool: &SqlitePool, user_id: &str) -> AppResult<Vec<Project>> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.get_by_user(user_id).await
-}
-
-/// Update a project's name
-pub async fn update(pool: &SqlitePool, id: i64, name: &str) -> AppResult<()> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.update(id, name).await
-}
-
-/// Delete a project
-pub async fn delete(pool: &SqlitePool, id: i64) -> AppResult<()> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.delete(id).await
-}
-
-/// Get a specific project by ID
-pub async fn get_by_id(pool: &SqlitePool, id: i64, user_id: &str) -> AppResult<Option<Project>> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.get_by_id(id, user_id).await
-}
-
-/// Check if a project exists
-pub async fn exists(pool: &SqlitePool, project_id: i64, user_id: &str) -> AppResult<bool> {
-    let repo = ProjectRepository::new(Arc::new(pool.clone()));
-    repo.exists(project_id, user_id).await
 } 

@@ -44,6 +44,7 @@ pub fn icon_protocol<R: tauri::Runtime>(
     let full_path = base_path.join(&icon_name);
     debug!("Looking for icon at path: {:?}", full_path);
     
+    // Match directly instead of using map + unwrap_or_else
     match fs::read(&full_path) {
         Ok(data) => {
             debug!("Successfully served icon: {}", icon_name);

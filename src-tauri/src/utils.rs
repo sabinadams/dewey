@@ -32,6 +32,7 @@ pub fn setup_logging() {
 }
 
 /// Generate a unique hash from various inputs
+#[must_use]
 pub fn generate_unique_hash(components: &[&str]) -> String {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -47,24 +48,26 @@ pub fn generate_unique_hash(components: &[&str]) -> String {
     hex::encode(&hash.as_bytes()[..8])
 }
 
-/// Create a 404 Not Found response
-pub fn response_not_found() -> Response<Vec<u8>> {
-    debug!("Returning 404 Not Found response");
+/// Create a response with specified status code and content
+fn create_response(status: u16, body: &str) -> Response<Vec<u8>> {
+    debug!("Creating response with status {}: {}", status, body);
     Response::builder()
-        .status(404)
+        .status(status)
         .header("Content-Type", constants::TEXT_CONTENT_TYPE)
-        .body(constants::ICON_NOT_FOUND.as_bytes().to_vec())
+        .body(body.as_bytes().to_vec())
         .unwrap_or_else(|_| Response::new(Vec::new()))
 }
 
+/// Create a 404 Not Found response
+#[must_use]
+pub fn response_not_found() -> Response<Vec<u8>> {
+    create_response(404, constants::ICON_NOT_FOUND)
+}
+
 /// Create a 500 Server Error response
+#[must_use]
 pub fn response_server_error() -> Response<Vec<u8>> {
-    debug!("Returning 500 Server Error response");
-    Response::builder()
-        .status(500)
-        .header("Content-Type", constants::TEXT_CONTENT_TYPE)
-        .body(constants::SERVER_ERROR.as_bytes().to_vec())
-        .unwrap_or_else(|_| Response::new(Vec::new()))
+    create_response(500, constants::SERVER_ERROR)
 }
 
 /// Ensures a directory exists, creating it if necessary

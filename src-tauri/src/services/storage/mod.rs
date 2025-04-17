@@ -25,14 +25,20 @@ pub struct LocalStorage {
 }
 
 impl LocalStorage {
-    /// Create a new LocalStorage instance
+    /// Create a new `LocalStorage` instance
     /// 
     /// # Arguments
-    /// * `path` - The path to the SQLite database file
+    /// * `path` - The path to the `SQLite` database file
     /// * `app_dir` - The application's data directory
     /// 
     /// # Returns
-    /// A Result containing the LocalStorage or an error
+    /// A Result containing the `LocalStorage` or an error
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - The database directory could not be created
+    /// - The database connection could not be established
+    /// - The database migrations failed to run
     pub async fn new<P: AsRef<Path>>(path: P, app_dir: PathBuf) -> AppResult<Self> {
         // Store the app directory globally
         APP_DIR.get_or_init(|| app_dir.clone());
@@ -67,18 +73,24 @@ impl LocalStorage {
     }
 
     /// Get a reference to the database connection pool
+    #[must_use]
     pub fn pool(&self) -> Arc<SqlitePool> {
         self.pool.clone()
     }
 
     /// Get the application's data directory
-    pub fn app_dir(&self) -> &PathBuf {
+    #[must_use]
+    pub const fn app_dir(&self) -> &PathBuf {
         &self.app_dir
     }
 
     /// Get the application's data directory from anywhere in the application
     /// 
-    /// This is available after LocalStorage has been initialized
+    /// This is available after `LocalStorage` has been initialized
+    ///
+    /// # Panics
+    /// Panics if called before `LocalStorage` has been initialized
+    #[must_use]
     pub fn get_app_dir() -> &'static PathBuf {
         APP_DIR.get().expect(constants::APP_DIR_NOT_INITIALIZED)
     }

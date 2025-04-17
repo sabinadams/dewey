@@ -8,6 +8,9 @@ use tracing::{info, error};
 use blake3;
 
 /// Command to fetch all projects for a user
+///
+/// # Errors
+/// Returns a string error if there was a problem accessing the database or the projects could not be retrieved
 #[tauri::command]
 pub async fn get_user_projects(
     user_id: String,
@@ -26,6 +29,12 @@ pub async fn get_user_projects(
 }
 
 /// Command to create a new project
+///
+/// # Errors
+/// Returns a string error if:
+/// - The icon generator fails to initialize
+/// - The icon fails to generate or save
+/// - There was a problem creating the project in the database
 #[tauri::command]
 pub async fn create_project(
     name: String,
@@ -63,6 +72,11 @@ pub async fn create_project(
 }
 
 /// Command to update a project's name
+///
+/// # Errors
+/// Returns a string error if:
+/// - The project doesn't exist or doesn't belong to the user
+/// - There was a database error updating the project
 #[tauri::command]
 pub async fn update_project(
     id: i64,
@@ -75,14 +89,7 @@ pub async fn update_project(
     let project_repo = ProjectRepository::new(state.db.clone());
     
     // First check if the project exists and belongs to the user
-    let exists = project_repo.exists(id, &user_id)
-        .await
-        .map_err(|e| {
-            error!("Failed to check project existence: {}", e);
-            e.to_string()
-        })?;
-    
-    if !exists {
+    if !project_repo.exists(id, &user_id).await.map_err(|e| e.to_string())? {
         return Err(constants::PROJECT_NOT_FOUND.into());
     }
     
@@ -96,6 +103,11 @@ pub async fn update_project(
 }
 
 /// Command to delete a project
+///
+/// # Errors
+/// Returns a string error if:
+/// - The project doesn't exist or doesn't belong to the user
+/// - There was a database error deleting the project
 #[tauri::command]
 pub async fn delete_project(
     id: i64,
@@ -107,14 +119,7 @@ pub async fn delete_project(
     let project_repo = ProjectRepository::new(state.db.clone());
     
     // First check if the project exists and belongs to the user
-    let exists = project_repo.exists(id, &user_id)
-        .await
-        .map_err(|e| {
-            error!("Failed to check project existence: {}", e);
-            e.to_string()
-        })?;
-    
-    if !exists {
+    if !project_repo.exists(id, &user_id).await.map_err(|e| e.to_string())? {
         return Err(constants::PROJECT_NOT_FOUND.into());
     }
     

@@ -30,7 +30,6 @@ tauri-plugin-os = "2"
 tokio = { version = "1.36.0", features = ["full"] }
 
 # Error handling
-anyhow = "1.0.80"
 thiserror = "1.0.57"
 
 # Serialization
@@ -46,13 +45,11 @@ sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-native-tls", "sqlit
 chrono = "0.4"
 
 # Utilities
-async-trait = "0.1"
 base64 = "0.21"
 directories = "6.0.0"
 urlencoding = "2.1.3"
 hex = "0.4"
 blake3 = "1.5"
-dirs = "5.0.1"
 
 # Image handling
 identicon-rs = "6.0.2"

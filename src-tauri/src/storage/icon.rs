@@ -1,13 +1,11 @@
-use blockies::Ethereum;
 use std::path::PathBuf;
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs;
 use hex;
+use identicon_rs::Identicon;
 use crate::error::{AppError, AppResult};
 use super::LocalStorage;
 
 pub struct IconGenerator {
-    blockies: Ethereum,
     icons_dir: PathBuf,
 }
 
@@ -17,15 +15,13 @@ impl IconGenerator {
         fs::create_dir_all(&icons_dir)?;
         
         Ok(Self {
-            blockies: Ethereum::default(),
             icons_dir,
         })
     }
 
     pub fn generate_and_save(&self, seed: &[u8]) -> AppResult<String> {
-        let mut png_data = Vec::new();
-        self.blockies.create_icon(&mut png_data, seed)
-            .map_err(|e| AppError::Unknown(format!("{:?}", e)))?;
+        // Convert seed to hex string (always valid)
+        let hex_seed = hex::encode(seed);
         
         // Create a filename from the first few bytes of the seed
         let filename = format!(
@@ -34,9 +30,12 @@ impl IconGenerator {
         );
         let file_path = self.icons_dir.join(&filename);
         
-        // Create the file and write the PNG data
-        let mut file = File::create(&file_path)?;
-        file.write_all(&png_data)?;
+        // Chain everything in one statement
+        let path_str = file_path.to_str().ok_or_else(|| AppError::Unknown("Invalid path".into()))?;
+        Identicon::new(&hex_seed)
+            .set_border(0)
+            .save_image(path_str)
+            .map_err(|e| AppError::Unknown(format!("Failed to save icon: {:?}", e)))?;
         
         // Return just the filename instead of the full path
         Ok(filename)

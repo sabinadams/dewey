@@ -3,6 +3,8 @@ use crate::storage::icon::IconGenerator;
 use crate::AppState;
 use tauri::State;
 use tracing::info;
+use std::time::{SystemTime, UNIX_EPOCH};
+use blake3;
 
 #[tauri::command]
 pub async fn get_user_projects(
@@ -22,16 +24,23 @@ pub async fn create_project(
     state: State<'_, AppState>,
 ) -> Result<i64, String> {
     info!("Creating new project '{}' for user: {}", name, user_id);
-    
-    // Generate a unique seed for the icon by combining the name and user_id
-    let seed = format!("{}:{}", name, user_id);
-    
     // Create and save the icon
     let icon_generator = IconGenerator::new()
         .map_err(|e| e.to_string())?;
     
+    // Generate a unique ID using blake3 hash of relevant data
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos()
+        .to_string();
+    
+    // Combine timestamp, name and user_id for uniqueness
+    let seed_string = format!("{}:{}:{}", timestamp, name, user_id);
+    let hash = blake3::hash(seed_string.as_bytes());
+    
     let icon_path = icon_generator
-        .generate_and_save(seed.as_bytes())
+        .generate_and_save(hash.as_bytes())
         .map_err(|e| e.to_string())?;
     
     // Create the project with the icon path

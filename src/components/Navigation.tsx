@@ -121,19 +121,21 @@ export function Navigation() {
               />
             ))}
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="grid place-items-center w-10 h-10 border border-zinc-700 rounded-lg hover:bg-zinc-700"
-                    onClick={handleCreateProject}
-                  >
-                    <Plus size={20} className="text-zinc-50" />
-                  </Button>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="grid place-items-center w-10 h-10 border border-zinc-700 rounded-lg hover:bg-zinc-700 cursor-pointer"
+                      onClick={handleCreateProject}
+                    >
+                      <Plus size={20} className="text-zinc-50" />
+                    </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  New Project
+                  <p>New Project</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

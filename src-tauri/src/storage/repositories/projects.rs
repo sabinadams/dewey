@@ -9,18 +9,20 @@ pub struct Project {
     pub user_id: String,
     pub created_at: i64,
     pub updated_at: i64,
+    pub icon_path: Option<String>,
 }
 
-pub async fn create(pool: &SqlitePool, name: &str, user_id: &str) -> AppResult<i64> {
+pub async fn create(pool: &SqlitePool, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
     let result = sqlx::query(
         r#"
-        INSERT INTO projects (name, user_id, created_at, updated_at)
-        VALUES (?, ?, unixepoch(), unixepoch())
+        INSERT INTO projects (name, user_id, icon_path, created_at, updated_at)
+        VALUES (?, ?, ?, unixepoch(), unixepoch())
         RETURNING id
         "#
     )
     .bind(name)
     .bind(user_id)
+    .bind(icon_path)
     .fetch_one(pool)
     .await?;
 

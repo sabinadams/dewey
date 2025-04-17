@@ -1,9 +1,10 @@
 use blockies::Ethereum;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::fs::{self, File};
 use std::io::Write;
 use directories::ProjectDirs;
 use hex;
+use crate::error::{AppError, AppResult};
 
 pub struct IconGenerator {
     blockies: Ethereum,
@@ -11,10 +12,10 @@ pub struct IconGenerator {
 }
 
 impl IconGenerator {
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new() -> AppResult<Self> {
         // Get the project directories
         let project_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or("Failed to get project directories")?;
+            .ok_or_else(|| AppError::Config("Failed to get project directories".into()))?;
             
         // Create the icons directory in the data directory
         let icons_dir = project_dirs.data_dir().join("icons");
@@ -26,9 +27,10 @@ impl IconGenerator {
         })
     }
 
-    pub fn generate_and_save(&self, seed: &[u8]) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn generate_and_save(&self, seed: &[u8]) -> AppResult<String> {
         let mut png_data = Vec::new();
-        self.blockies.create_icon(&mut png_data, seed)?;
+        self.blockies.create_icon(&mut png_data, seed)
+            .map_err(|e| AppError::Unknown(format!("{:?}", e)))?;
         
         // Create a filename from the first few bytes of the seed
         let filename = format!(
@@ -41,7 +43,7 @@ impl IconGenerator {
         let mut file = File::create(&file_path)?;
         file.write_all(&png_data)?;
         
-        Ok(file_path)
+        Ok(file_path.to_string_lossy().into_owned())
     }
 
     pub fn get_icons_dir(&self) -> &PathBuf {
@@ -61,7 +63,8 @@ mod tests {
         );
         
         assert!(result.is_ok());
-        if let Ok(path) = result {
+        if let Ok(path_str) = result {
+            let path = Path::new(&path_str);
             assert!(path.exists());
             assert!(path.starts_with(generator.get_icons_dir()));
         }

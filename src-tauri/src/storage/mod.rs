@@ -6,6 +6,7 @@ use std::str::FromStr;
 use tracing::info;
 
 pub mod repositories;
+pub mod icon;
 
 pub struct LocalStorage {
     pool: Arc<SqlitePool>,

@@ -1,4 +1,5 @@
 use thiserror::Error;
+use std::path::PathBuf;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -14,8 +15,29 @@ pub enum AppError {
     #[error("Configuration error: {0}")]
     Config(String),
 
+    #[error("Icon generation error: {0}")]
+    IconGeneration(String),
+
+    #[error("Image processing error: {0}")]
+    Image(String),
+
+    #[error("File not found: {0}")]
+    FileNotFound(PathBuf),
+
     #[error("Unknown error: {0}")]
     Unknown(String),
 }
 
-pub type AppResult<T> = Result<T, AppError>; 
+pub type AppResult<T> = Result<T, AppError>;
+
+impl From<image::ImageError> for AppError {
+    fn from(err: image::ImageError) -> Self {
+        AppError::Image(err.to_string())
+    }
+}
+
+impl From<String> for AppError {
+    fn from(err: String) -> Self {
+        AppError::Unknown(err)
+    }
+} 

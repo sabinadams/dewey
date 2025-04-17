@@ -4,31 +4,77 @@ use tauri::{
     UriSchemeContext
 };
 
-use std::{fs, path::PathBuf};
+use std::fs;
+use tracing::{debug, error};
+use urlencoding::decode;
 
-pub fn icon_protocol<'a, R: tauri::Runtime>(
-    ctx: UriSchemeContext<'a, R>,
+/// Handle custom icon URI requests to serve project icons
+/// 
+/// This protocol handler serves icon images from the app's data directory
+/// using a custom `icon://` protocol
+pub fn icon_protocol<R: tauri::Runtime>(
+    ctx: UriSchemeContext<'_, R>,
     request: Request<Vec<u8>>
 ) -> Response<Vec<u8>> {    
     let uri: &Uri = request.uri();
-    let binding = uri.to_string().replace("icon://", "");
-    let icon_name = binding.trim_end_matches('/');
-    let base_path: PathBuf = ctx.app_handle().path().app_data_dir().unwrap().join("icons");
+    let icon_uri = uri.to_string().replace("icon://", "");
+    
+    // URL decode the icon name in case it contains special characters
+    let icon_name = match decode(&icon_uri) {
+        Ok(decoded) => decoded.trim_end_matches('/').to_string(),
+        Err(e) => {
+            error!("Failed to decode icon URI '{}': {}", icon_uri, e);
+            return response_not_found();
+        }
+    };
+    
+    debug!("Serving icon: {}", icon_name);
+    
+    // Get icons directory from the app data directory
+    let base_path = match ctx.app_handle().path().app_data_dir() {
+        Ok(path) => path.join("icons"),
+        Err(e) => {
+            error!("Failed to get app data directory: {}", e);
+            return response_not_found();
+        }
+    };
     
     let full_path = base_path.join(&icon_name);
+    debug!("Looking for icon at path: {:?}", full_path);
     
     match fs::read(&full_path) {
-        Ok(data) => Response::builder()
-            .header("Content-Type", "image/png")
-            .header("Cache-Control", "public, max-age=31536000")
-            .body(data)
-            .unwrap(),
-        Err(e) => {
-            println!("Failed to read icon: {:?}", e);
+        Ok(data) => {
+            debug!("Successfully served icon: {}", icon_name);
             Response::builder()
-                .status(404)
-                .body(Vec::new())
-                .unwrap()
+                .header("Content-Type", "image/png")
+                .header("Cache-Control", "public, max-age=31536000")
+                .body(data)
+                .unwrap_or_else(|e| {
+                    error!("Failed to build response: {}", e);
+                    response_server_error()
+                })
+        },
+        Err(e) => {
+            error!("Failed to read icon at {:?}: {}", full_path, e);
+            response_not_found()
         }
     }
+}
+
+/// Create a 404 Not Found response
+fn response_not_found() -> Response<Vec<u8>> {
+    Response::builder()
+        .status(404)
+        .header("Content-Type", "text/plain")
+        .body("Icon not found".as_bytes().to_vec())
+        .unwrap_or_else(|_| Response::new(Vec::new()))
+}
+
+/// Create a 500 Server Error response
+fn response_server_error() -> Response<Vec<u8>> {
+    Response::builder()
+        .status(500)
+        .header("Content-Type", "text/plain")
+        .body("Server error".as_bytes().to_vec())
+        .unwrap_or_else(|_| Response::new(Vec::new()))
 }

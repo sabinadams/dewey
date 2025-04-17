@@ -27,7 +27,9 @@ impl LocalStorage {
 
         let pool = SqlitePool::connect_with(options).await?;
         
-        info!("Connected to database - migrations will be handled by SQLx");
+        info!("Connected to database - running migrations");
+        sqlx::migrate!("./migrations").run(&pool).await?;
+        info!("Migrations completed successfully");
         
         Ok(Self {
             pool: Arc::new(pool),

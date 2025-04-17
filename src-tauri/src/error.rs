@@ -5,6 +5,9 @@ pub enum AppError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
 
+    #[error("Migration error: {0}")]
+    Migration(#[from] sqlx::migrate::MigrateError),
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 

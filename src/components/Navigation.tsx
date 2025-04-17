@@ -51,8 +51,9 @@ function NavItem({ to, label, imageSrc, active }: NavItemProps) {
             size: "icon",
             className: cn(
               'w-10 h-10 p-0 grid place-items-center rounded-lg transition-colors',
-              'data-[state=active]:bg-accent data-[state=active]:text-accent-foreground',
-              isActive && 'bg-accent text-accent-foreground'
+              'hover:bg-zinc-700 hover:text-zinc-50',
+              'data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-50',
+              isActive && 'bg-zinc-700 text-zinc-50'
             )
           })
         )
@@ -125,10 +126,10 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="grid place-items-center w-10 h-10"
+                    className="grid place-items-center w-10 h-10 border border-zinc-700 rounded-lg hover:bg-zinc-700"
                     onClick={handleCreateProject}
                   >
-                    <Plus size={20} className="text-foreground" />
+                    <Plus size={20} className="text-zinc-50" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">

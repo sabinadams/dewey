@@ -1,15 +1,20 @@
 import { Navigation } from '@/components/Navigation';
 import { cn } from "@/lib/utils"
 import { Card } from '@/components/ui/card';
+import { useAppSelector } from '@/store/hooks';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  // Get projects loading state
+  const { isLoading: projectsLoading } = useAppSelector(state => state.projects);
+
   return (
     <div className="flex flex-1">
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation - Always visible */}
       <Navigation />
 
       {/* Main Content Area */}
@@ -19,7 +24,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           "bg-zinc-50",
           "text-zinc-900"
         )}>
-          {children}
+          {projectsLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            children
+          )}
         </Card>
       </main>
     </div>

@@ -45,7 +45,10 @@ function RoutesGuard() {
     }
   }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
 
-  // Handle loading state
+  // Handle loading state - only for auth, not for projects
+  const { items: projects, isLoading: projectsLoading } = useAppSelector(state => state.projects);
+  
+  // Show loading spinner for auth loading only
   if (isLoading || !isAuthLoaded || !isUserLoaded) {
     return <LoadingSpinner />;
   }
@@ -71,6 +74,11 @@ function RoutesGuard() {
     return <Navigate to={path} replace />;
   }
 
+  if ( isAuthenticated && projects.length > 0 && location.pathname === '/' ) {
+    // TODO: Ideally this should be stored in a user setting as the most recently used project
+    return <Navigate to={`/project/${projects[0].id}`} replace />;
+  }
+  
   // Show protected routes if authenticated
   return <AppLayout>{element}</AppLayout>;
 }

@@ -11,6 +11,8 @@ use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 use directories::ProjectDirs;
 
+mod protocols;
+
 fn setup_logging() {
     FmtSubscriber::builder()
         .with_max_level(Level::INFO)
@@ -58,6 +60,7 @@ async fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
+        .register_uri_scheme_protocol("icon", protocols::icons::icon_protocol)
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             commands::get_user_projects,

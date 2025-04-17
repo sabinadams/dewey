@@ -8,6 +8,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { createProject } from '@/store/slices/projectsSlice';
 import { useAuth } from '@clerk/clerk-react';
+import { basename } from '@tauri-apps/api/path';
 import {
   Tooltip,
   TooltipContent,
@@ -17,32 +18,46 @@ import {
 
 interface NavItemProps {
   to: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
+  imageSrc?: string;
 }
 
-function NavItem({ to, icon, label }: NavItemProps) {
+function NavItem({ to, label, imageSrc }: NavItemProps) {
+  const iconUrl = imageSrc ? `icon://${basename(imageSrc)}` : undefined;
+  console.log(iconUrl);
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <NavLink
-          to={to}
-          className={({ isActive }) =>
-            cn(
-              "relative grid place-items-center w-10 h-10 rounded-lg transition-colors",
-              isActive ? "bg-zinc-700 text-white" : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
-            )
-          }
-        >
-          <div className="flex items-center justify-center">
-            {icon}
-          </div>
-        </NavLink>
-      </TooltipTrigger>
-      <TooltipContent side="right">
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        cn(
+          'w-10 h-10 grid place-items-center rounded-lg transition-colors',
+          'hover:bg-zinc-200 dark:hover:bg-zinc-800',
+          isActive && 'bg-zinc-200 dark:bg-zinc-800'
+        )
+      }
+    >
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="grid place-items-center w-6 h-6">
+              {iconUrl ? (
+                <img 
+                  src={iconUrl} 
+                  alt={label} 
+                  className="w-6 h-6 rounded"
+                />
+              ) : (
+                <Folder size={20} />
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </NavLink>
   );
 }
 
@@ -73,7 +88,7 @@ export function Navigation() {
               <NavItem
                 key={project.id}
                 to={`/project/${project.id}`}
-                icon={<Folder size={20} />}
+                imageSrc={project.icon_path || undefined}
                 label={project.name}
               />
             ))}

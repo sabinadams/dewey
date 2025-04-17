@@ -32,7 +32,7 @@ pub async fn create(pool: &SqlitePool, name: &str, user_id: &str, icon_path: Opt
 pub async fn get_by_user(pool: &SqlitePool, user_id: &str) -> AppResult<Vec<Project>> {
     let projects = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, name, user_id, created_at, updated_at
+        SELECT id, name, user_id, created_at, updated_at, icon_path
         FROM projects
         WHERE user_id = ?
         ORDER BY created_at DESC

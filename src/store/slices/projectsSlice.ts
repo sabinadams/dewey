@@ -7,6 +7,7 @@ export interface Project {
     user_id: string
     created_at: number
     updated_at: number
+    icon_path: string | null
 }
 
 interface ProjectsState {

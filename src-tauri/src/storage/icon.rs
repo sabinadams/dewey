@@ -1,5 +1,5 @@
 use blockies::Ethereum;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use std::fs::{self, File};
 use std::io::Write;
 use directories::ProjectDirs;
@@ -54,6 +54,7 @@ impl IconGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn test_generate_and_save_icon() {

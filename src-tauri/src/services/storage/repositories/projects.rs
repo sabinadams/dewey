@@ -64,7 +64,7 @@ impl ProjectRepository {
             SELECT id, name, user_id, created_at, updated_at, icon_path
             FROM projects
             WHERE user_id = ?
-            ORDER BY created_at DESC
+            ORDER BY created_at ASC
             "
         )
         .bind(user_id)

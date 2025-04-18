@@ -37,36 +37,28 @@ export default meta;
 
 type Story = StoryObj<typeof DropdownMenu>;
 
-// Helper component to display dropdown content in Storybook
-const OpenDropdown = ({ trigger, children }: { trigger: React.ReactNode, children: React.ReactNode }) => {
-  const [open, setOpen] = React.useState(true);
-  
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        {trigger}
-      </DropdownMenuTrigger>
-      {children}
-    </DropdownMenu>
-  );
-};
-
 export const Default: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">Open Menu</Button>}>
-      <DropdownMenuContent forceMount align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Open Menu</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
         <DropdownMenuItem>Item 1</DropdownMenuItem>
         <DropdownMenuItem>Item 2</DropdownMenuItem>
         <DropdownMenuItem>Item 3</DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
 export const WithLabel: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">Options</Button>}>
-      <DropdownMenuContent forceMount align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Options</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -74,14 +66,17 @@ export const WithLabel: Story = {
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuItem>Logout</DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
 export const WithIcons: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">My Account</Button>}>
-      <DropdownMenuContent forceMount align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">My Account</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
@@ -102,14 +97,17 @@ export const WithIcons: Story = {
           <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
 export const WithShortcuts: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">Keyboard Shortcuts</Button>}>
-      <DropdownMenuContent forceMount align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Keyboard Shortcuts</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
         <DropdownMenuItem>
           New Tab
           <DropdownMenuShortcut>⌘T</DropdownMenuShortcut>
@@ -132,7 +130,7 @@ export const WithShortcuts: Story = {
           <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
@@ -143,8 +141,11 @@ export const WithCheckboxItems: Story = {
     const [showPanel, setShowPanel] = React.useState(false)
     
     return (
-      <OpenDropdown trigger={<Button variant="outline">View Options</Button>}>
-        <DropdownMenuContent forceMount className="w-56" align="center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">View Options</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="center">
           <DropdownMenuLabel>Appearance</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
@@ -166,7 +167,7 @@ export const WithCheckboxItems: Story = {
             Panel
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
-      </OpenDropdown>
+      </DropdownMenu>
     )
   },
 };
@@ -176,8 +177,11 @@ export const WithRadioItems: Story = {
     const [position, setPosition] = React.useState("bottom")
     
     return (
-      <OpenDropdown trigger={<Button variant="outline">Position</Button>}>
-        <DropdownMenuContent forceMount className="w-56" align="center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">Position</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="center">
           <DropdownMenuLabel>Panel Position</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
@@ -187,15 +191,18 @@ export const WithRadioItems: Story = {
             <DropdownMenuRadioItem value="left">Left</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
-      </OpenDropdown>
+      </DropdownMenu>
     )
   },
 };
 
 export const WithGroups: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">Groups</Button>}>
-      <DropdownMenuContent forceMount className="w-56" align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Groups</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="center">
         <DropdownMenuGroup>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -210,20 +217,23 @@ export const WithGroups: Story = {
         <DropdownMenuSeparator />
         <DropdownMenuItem>Logout</DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
 export const WithSubMenu: Story = {
   render: () => (
-    <OpenDropdown trigger={<Button variant="outline">Submenu</Button>}>
-      <DropdownMenuContent forceMount align="center">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Submenu</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
         <DropdownMenuItem>Item 1</DropdownMenuItem>
         <DropdownMenuItem>Item 2</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>More Options</DropdownMenuSubTrigger>
-          <DropdownMenuSubContent forceMount>
+          <DropdownMenuSubContent>
             <DropdownMenuItem>Sub Item 1</DropdownMenuItem>
             <DropdownMenuItem>Sub Item 2</DropdownMenuItem>
             <DropdownMenuItem>Sub Item 3</DropdownMenuItem>
@@ -232,26 +242,25 @@ export const WithSubMenu: Story = {
         <DropdownMenuSeparator />
         <DropdownMenuItem>Item 3</DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 };
 
 export const IconButton: Story = {
   render: () => (
-    <OpenDropdown 
-      trigger={
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="h-4 w-4" />
           <span className="sr-only">More options</span>
         </Button>
-      }
-    >
-      <DropdownMenuContent forceMount align="end">
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
         <DropdownMenuItem>Edit</DropdownMenuItem>
         <DropdownMenuItem>Duplicate</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
       </DropdownMenuContent>
-    </OpenDropdown>
+    </DropdownMenu>
   ),
 }; 

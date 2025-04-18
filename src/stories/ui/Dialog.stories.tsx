@@ -216,11 +216,15 @@ export const CustomStyling: Story = {
         </div>
         <DialogFooter className="border-t border-primary-foreground/20 pt-4">
           <DialogClose asChild>
-            <Button variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button 
+              className="bg-transparent border border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            >
               Cancel
             </Button>
           </DialogClose>
-          <Button className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+          <Button 
+            className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+          >
             Continue
           </Button>
         </DialogFooter>

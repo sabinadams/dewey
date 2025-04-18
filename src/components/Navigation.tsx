@@ -8,7 +8,6 @@ import { ScrollArea } from './ui/scroll-area';
 import { Button, buttonVariants } from './ui/button';
 import { createProject } from '@/store/slices/projectsSlice';
 import { useAuth } from '@clerk/clerk-react';
-import { basename } from '@tauri-apps/api/path';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   Tooltip,
@@ -99,7 +98,7 @@ export function Navigation() {
   return (
     <aside 
       className={cn(
-        "min-w-18 flex flex-col bg-sidebar text-sidebar-foreground",
+        "min-w-18 flex flex-col text-sidebar-foreground",
         isMac ? "mt-10" : "",
         "h-[calc(100vh-2.5rem)]"
       )}

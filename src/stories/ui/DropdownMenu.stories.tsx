@@ -19,18 +19,45 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react";
 
+// This custom wrapper fixes portal issues in Storybook
+const StorybookDropdownMenuFix = ({ children }: { children: React.ReactNode }) => {
+  // Create a ref to the current document for the portal
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+    // This ensures we don't have scrolling issues
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+    };
+  }, []);
+  
+  if (!mounted) return null;
+  
+  return (
+    <div className="flex items-center justify-center p-6 min-h-[180px] relative z-50">
+      {children}
+    </div>
+  );
+};
+
 const meta: Meta<typeof DropdownMenu> = {
   title: "UI/DropdownMenu",
   component: DropdownMenu,
   tags: ["autodocs"],
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: "Interactive dropdown menus with various features. Click on the buttons to see the menus."
+      }
+    }
   },
-  decorators: [(Story) => (
-    <div className="flex items-center justify-center p-10">
-      <Story />
-    </div>
-  )],
+  decorators: [(Story) => <StorybookDropdownMenuFix>{Story()}</StorybookDropdownMenuFix>],
 };
 
 export default meta;
@@ -43,7 +70,7 @@ export const Default: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">Open Menu</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuItem>Item 1</DropdownMenuItem>
         <DropdownMenuItem>Item 2</DropdownMenuItem>
         <DropdownMenuItem>Item 3</DropdownMenuItem>
@@ -58,7 +85,7 @@ export const WithLabel: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">Options</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -76,7 +103,7 @@ export const WithIcons: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">My Account</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
@@ -107,7 +134,7 @@ export const WithShortcuts: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">Keyboard Shortcuts</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuItem>
           New Tab
           <DropdownMenuShortcut>⌘T</DropdownMenuShortcut>
@@ -145,7 +172,7 @@ export const WithCheckboxItems: Story = {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">View Options</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="center">
+        <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Appearance</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
@@ -181,7 +208,7 @@ export const WithRadioItems: Story = {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">Position</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="center">
+        <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Panel Position</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
@@ -202,7 +229,7 @@ export const WithGroups: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">Groups</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="center">
+      <DropdownMenuContent className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -227,7 +254,7 @@ export const WithSubMenu: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">Submenu</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuItem>Item 1</DropdownMenuItem>
         <DropdownMenuItem>Item 2</DropdownMenuItem>
         <DropdownMenuSeparator />

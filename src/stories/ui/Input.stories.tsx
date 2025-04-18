@@ -115,15 +115,6 @@ export const Validation: Story = {
   ),
 };
 
-export const FileInput: Story = {
-  render: () => (
-    <div className="grid w-full max-w-sm items-center gap-1.5">
-      <label htmlFor="file" className="text-sm font-medium text-foreground">Upload file</label>
-      <Input id="file" type="file" />
-    </div>
-  ),
-};
-
 export const WithButton: Story = {
   render: () => (
     <div className="flex w-full max-w-sm items-center space-x-2">

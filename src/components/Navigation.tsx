@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import * as DeweyLogo from '@/assets/dewey.svg';
 import { UserMenu } from '@/components/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -9,6 +8,7 @@ import { Button, buttonVariants } from './ui/button';
 import { createProject } from '@/store/slices/projectsSlice';
 import { useAuth } from '@clerk/clerk-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import {
   Tooltip,
   TooltipContent,
@@ -105,7 +105,11 @@ export function Navigation() {
     >
       {/* Top Section with Logo */}
       <div className="shrink-0 grid place-items-center pb-2 pt-2">
-        <img src={DeweyLogo.default} className="w-12 h-12" alt="Dewey Logo" />
+        <LogoSVG 
+          width="48" 
+          height="48" 
+          className="text-sidebar-foreground" 
+        />
       </div>
 
       {/* Projects Navigation */}

@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Theme transition */
+/* Background and foreground */
+:root {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

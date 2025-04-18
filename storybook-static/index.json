@@ -1,0 +1,1 @@
+{"v":5,"entries":{"button--default":{"type":"story","id":"button--default","name":"Default","title":"Button","importPath":"./src/stories/ui/Button.stories.tsx","componentPath":"./src/components/ui/button.tsx","tags":["dev","test"]}}}

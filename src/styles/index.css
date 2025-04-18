@@ -1,0 +1,20 @@
+@import "./theme.css";
+
+:root, html, body, #root {
+  background-color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+body, html, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+.titlebar-drag {
+    -webkit-app-region: drag;
+}
+button, .no-drag {
+    -webkit-app-region: no-drag;
+}

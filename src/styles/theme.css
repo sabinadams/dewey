@@ -3,26 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root, html, body, #root {
-  background-color: rgb(24 24 27) !important; /* zinc-900 */
-}
-
-body, html, #root {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 0.5rem;
-}
-
-.titlebar-drag {
-    -webkit-app-region: drag;
-}
-button, .no-drag {
-    -webkit-app-region: no-drag;
-}
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

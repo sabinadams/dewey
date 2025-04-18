@@ -1,0 +1,84 @@
+<!-- Fix for Storybook manager UI scrolling and navigation issues -->
+<style>
+  /* Make sure the manager UI is scrollable */
+  [role="main"] {
+    overflow: auto !important;
+  }
+
+  /* Ensure story nav is scrollable and items can be selected */
+  .sidebar-container {
+    overflow-y: auto !important;
+  }
+
+  /* Improve scrollbar visibility */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  /* Fix scrolling panel on the right */
+  .sidebar-subheading {
+    padding: 10px 0;
+  }
+
+  /* Fix for preview panel scrolling */
+  .sb-show-main.sb-main-padded {
+    padding: 20px;
+  }
+
+  /* Fix for story switching */
+  .os-content, .os-viewport {
+    height: auto !important;
+  }
+
+  /* Fix for navigation highlighting */
+  .sidebar-item {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .sidebar-item[data-selected="true"] {
+    background-color: rgba(30, 167, 253, 0.2) !important;
+  }
+
+  /* Fix iframe container */
+  #storybook-preview-iframe {
+    height: auto !important;
+    min-height: 100vh;
+  }
+
+  /* Fix for content getting hidden behind panels */
+  #storybook-preview-wrapper {
+    padding-bottom: 80px !important;
+  }
+
+  /* Fix z-index issues */
+  .simplebar-track {
+    z-index: 10 !important;
+  }
+</style>
+
+<script>
+  // Patch Storybook UI to fix navigation and scrolling
+  window.addEventListener('load', function() {
+    // Force a resize event when story changes
+    const observer = new MutationObserver(function() {
+      setTimeout(function() {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+    });
+    
+    // Start observing when UI is ready
+    setTimeout(function() {
+      const previewWrapper = document.getElementById('storybook-preview-wrapper');
+      if (previewWrapper) {
+        observer.observe(previewWrapper, { attributes: true, childList: true });
+      }
+    }, 1000);
+  });
+</script> 

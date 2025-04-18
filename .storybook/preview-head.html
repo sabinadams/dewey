@@ -1,0 +1,45 @@
+<!-- Fix for Storybook scrolling and navigation issues -->
+<style>
+  /* Fix for story canvas scrolling issues */
+  html, body, #root {
+    height: auto !important;
+    min-height: 100%;
+    overflow: visible !important; 
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ensure content can be seen */
+  #root > div {
+    padding-bottom: 40px !important;
+  }
+
+  /* Fix for iframe content that might get cut off */
+  .sb-show-main {
+    box-sizing: border-box;
+    padding: 20px !important;
+    overflow: visible !important;
+  }
+
+  /* Make sure the main content is scrollable */
+  .docs-story, .sbdocs-content {
+    overflow: visible !important;
+    margin-bottom: 40px !important;
+  }
+
+  /* Improve content visibility */
+  .sb-show-main {
+    margin: 0;
+    padding: 1rem !important;
+  }
+
+  /* Add extra space at the bottom of all stories */
+  .docs-story > div {
+    margin-bottom: 40px !important;
+  }
+
+  /* Ensure story wrapper is scrollable */
+  .docs-story > div:first-child {
+    overflow: visible !important;
+  }
+</style> 

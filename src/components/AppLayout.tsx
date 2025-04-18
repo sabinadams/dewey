@@ -13,7 +13,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isLoading: projectsLoading } = useAppSelector(state => state.projects);
 
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 bg-background text-foreground">
       {/* Sidebar Navigation - Always visible */}
       <Navigation />
 
@@ -21,8 +21,8 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex flex-col flex-1 p-2 pl-0">
         <Card className={cn(
           "flex flex-col flex-1",
-          "bg-zinc-50",
-          "text-zinc-900"
+          "bg-card",
+          "text-card-foreground"
         )}>
           {projectsLoading ? (
             <div className="flex-1 flex items-center justify-center">

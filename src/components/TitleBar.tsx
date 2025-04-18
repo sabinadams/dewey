@@ -7,17 +7,17 @@ function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
     <div className="flex gap-1.5 order-first px-1.5">
       <button 
         onClick={() => win.close()}
-        className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600"
+        className="w-3 h-3 rounded-full bg-destructive hover:bg-destructive/90"
         title="Close"
       />
       <button 
         onClick={() => win.minimize()}
-        className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600"
+        className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600"
         title="Minimize"
       />
       <button 
         onClick={() => win.toggleMaximize()}
-        className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600"
+        className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600"
         title="Maximize"
       />
     </div>
@@ -29,21 +29,21 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
     <div className="flex gap-1.5">
       <button 
         onClick={() => win.minimize()}
-        className="hover:bg-zinc-700 p-1.5 rounded text-gray-400 hover:text-white"
+        className="hover:bg-accent p-1.5 rounded text-muted-foreground hover:text-accent-foreground"
         title="Minimize"
       >
         <Minus size={14} />
       </button>
       <button 
         onClick={() => win.toggleMaximize()}
-        className="hover:bg-zinc-700 p-1.5 rounded text-gray-400 hover:text-white"
+        className="hover:bg-accent p-1.5 rounded text-muted-foreground hover:text-accent-foreground"
         title="Maximize"
       >
         <Square size={14} />
       </button>
       <button 
         onClick={() => win.close()}
-        className="hover:bg-red-500 p-1.5 rounded text-gray-400 hover:text-white"
+        className="hover:bg-destructive p-1.5 rounded text-muted-foreground hover:text-destructive-foreground"
         title="Close"
       >
         <X size={14} />
@@ -60,7 +60,7 @@ export function TitleBar() {
     <div 
       data-tauri-drag-region 
       className={`h-10 px-2 flex items-center justify-between select-none w-full ${
-        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-zinc-900'
+        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-sidebar'
       }`}
     >
       {isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}

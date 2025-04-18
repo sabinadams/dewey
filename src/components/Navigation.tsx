@@ -9,6 +9,7 @@ import { Button, buttonVariants } from './ui/button';
 import { createProject } from '@/store/slices/projectsSlice';
 import { useAuth } from '@clerk/clerk-react';
 import { basename } from '@tauri-apps/api/path';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   Tooltip,
   TooltipContent,
@@ -51,9 +52,9 @@ function NavItem({ to, label, imageSrc, active }: NavItemProps) {
             size: "icon",
             className: cn(
               'w-10 h-10 p-0 grid place-items-center rounded-lg transition-colors',
-              'hover:bg-zinc-700 hover:text-zinc-50',
-              'data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-50',
-              isActive && 'bg-zinc-700 text-zinc-50'
+              'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              'data-[state=active]:bg-sidebar-accent data-[state=active]:text-sidebar-accent-foreground',
+              isActive && 'bg-sidebar-accent text-sidebar-accent-foreground'
             )
           })
         )
@@ -70,7 +71,7 @@ function NavItem({ to, label, imageSrc, active }: NavItemProps) {
                   className="w-8 h-8 rounded"
                 />
               ) : (
-                <Folder size={20} className="text-foreground" />
+                <Folder size={20} className="text-sidebar-foreground" />
               )}
             </div>
           </TooltipTrigger>
@@ -98,7 +99,7 @@ export function Navigation() {
   return (
     <aside 
       className={cn(
-        "min-w-18 flex flex-col",
+        "min-w-18 flex flex-col bg-sidebar text-sidebar-foreground",
         isMac ? "mt-10" : "",
         "h-[calc(100vh-2.5rem)]"
       )}
@@ -127,10 +128,10 @@ export function Navigation() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="grid place-items-center w-10 h-10 border border-zinc-700 rounded-lg hover:bg-zinc-700 cursor-pointer"
+                      className="grid place-items-center w-10 h-10 border border-sidebar-border rounded-lg hover:bg-sidebar-accent cursor-pointer"
                       onClick={handleCreateProject}
                     >
-                      <Plus size={20} className="text-zinc-50" />
+                      <Plus size={20} className="text-sidebar-foreground" />
                     </Button>
                   </div>
                 </TooltipTrigger>
@@ -143,8 +144,20 @@ export function Navigation() {
         </ScrollArea>
       </div>
 
-      {/* User Menu */}
-      <div className="shrink-0 grid place-items-center py-4">
+      {/* Bottom Section with Theme Toggle and User Menu */}
+      <div className="shrink-0 grid place-items-center gap-2 py-4">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <ThemeToggle />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Toggle Theme</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <UserMenu />
       </div>
     </aside>

@@ -106,7 +106,7 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
-        <div className="bg-zinc-900 relative min-h-screen flex flex-col rounded-lg overflow-hidden">
+        <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
           <AppContent />
           <AuthError />
         </div>

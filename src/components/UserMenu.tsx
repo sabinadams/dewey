@@ -28,7 +28,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="w-10 h-10 rounded-lg hover:bg-zinc-800 transition-colors p-1">
+        <button className="w-10 h-10 rounded-lg hover:bg-sidebar-accent transition-colors p-1">
           {user.imageUrl ? (
             <img 
               src={user.imageUrl} 
@@ -36,19 +36,19 @@ export function UserMenu() {
               className="w-full h-full rounded-lg object-cover"
             />
           ) : (
-            <div className="w-full h-full rounded-lg bg-zinc-700 flex items-center justify-center text-white text-sm">
+            <div className="w-full h-full rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-accent-foreground text-sm">
               {user.firstName?.[0] || user.email?.[0] || '?'}
             </div>
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bg-zinc-50 border-zinc-200">
+      <DropdownMenuContent align="start" className="bg-popover border-border">
         <DropdownMenuLabel>
-          <p className="font-medium text-zinc-900">{user.firstName} {user.lastName}</p>
-          <p className="text-sm text-zinc-500">{user.email}</p>
+          <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-zinc-200" />
-        <DropdownMenuItem onClick={handleSignOut} className="text-zinc-700 focus:bg-zinc-100 focus:text-zinc-900">
+        <DropdownMenuSeparator className="bg-border" />
+        <DropdownMenuItem onClick={handleSignOut} className="text-foreground focus:bg-accent focus:text-accent-foreground">
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>

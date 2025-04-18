@@ -106,7 +106,12 @@ export const CustomStyling: Story = {
         <TooltipTrigger>
           <Button variant="outline">Custom Style</Button>
         </TooltipTrigger>
-        <TooltipContent className="bg-blue-600 text-white">
+        <TooltipContent 
+          className="bg-blue-600 text-white" 
+          arrowClassName="bg-blue-600" 
+          arrowStyle={{ fill: "#2563eb", background: "#2563eb" }} 
+          sideOffset={5}
+        >
           <p>Tooltip with custom background</p>
         </TooltipContent>
       </Tooltip>

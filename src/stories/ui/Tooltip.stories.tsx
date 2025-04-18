@@ -22,7 +22,7 @@ export const Default: Story = {
   render: () => (
     <div className="flex items-center justify-center py-8">
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <Button variant="outline" size="icon">
             <Info className="h-4 w-4" />
           </Button>
@@ -55,7 +55,7 @@ export const CustomDelay: Story = {
     <div className="flex items-center justify-center py-8">
       <TooltipProvider delayDuration={800}>
         <Tooltip>
-          <TooltipTrigger asChild>
+          <TooltipTrigger>
             <Button variant="outline">Delayed Tooltip</Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -72,7 +72,7 @@ export const Positions: Story = {
     <div className="flex flex-wrap items-center justify-center gap-8 py-16">
       {["top", "right", "bottom", "left"].map((side) => (
         <Tooltip key={side}>
-          <TooltipTrigger asChild>
+          <TooltipTrigger>
             <Button variant="outline">{side}</Button>
           </TooltipTrigger>
           <TooltipContent side={side as any}>
@@ -88,7 +88,7 @@ export const WithArrow: Story = {
   render: () => (
     <div className="flex items-center justify-center py-8">
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <Button>With Arrow</Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -103,7 +103,7 @@ export const CustomStyling: Story = {
   render: () => (
     <div className="flex items-center justify-center py-8">
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <Button variant="outline">Custom Style</Button>
         </TooltipTrigger>
         <TooltipContent className="bg-blue-600 text-white">

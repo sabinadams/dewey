@@ -1,8 +1,9 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Initialize theme state from localStorage or system preference
@@ -44,13 +45,16 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="h-9 w-9 rounded-lg hover:bg-sidebar-accent"
+      className={cn(
+        "h-9 w-9 rounded-lg hover:bg-sidebar-accent transition-all duration-300",
+        className
+      )}
       title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
       {isDarkMode ? (
-        <Sun size={18} className="text-sidebar-foreground" />
+        <Sun size={18} className="text-sidebar-foreground transition-transform hover:rotate-45" />
       ) : (
-        <Moon size={18} className="text-sidebar-foreground" />
+        <Moon size={18} className="text-sidebar-foreground transition-transform hover:-rotate-12" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>

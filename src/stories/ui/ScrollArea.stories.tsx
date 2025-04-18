@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof ScrollArea> = {
@@ -39,6 +39,7 @@ export const HorizontalScrolling: Story = {
           </div>
         ))}
       </div>
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   ),
 };
@@ -107,23 +108,6 @@ export const NestedScrollAreas: Story = {
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="rounded-md bg-secondary p-4 text-sm">
             Outer Item {i + 1}
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
-  ),
-};
-
-export const CustomStyling: Story = {
-  render: () => (
-    <ScrollArea className="h-72 w-48 rounded-md border bg-card p-4">
-      <div className="grid grid-cols-1 gap-4">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div 
-            key={i} 
-            className="rounded-md p-2 text-center text-sm border border-border bg-background"
-          >
-            Item {i + 1}
           </div>
         ))}
       </div>

@@ -12,6 +12,11 @@ const meta: Meta<typeof Tooltip> = {
   title: "UI/Tooltip",
   component: Tooltip,
   tags: ["autodocs"],
+  decorators: [(story) => (
+    <div className="flex items-center justify-center py-8">
+      {story()}
+    </div>
+  )],
 };
 
 export default meta;
@@ -20,56 +25,55 @@ type Story = StoryObj<typeof Tooltip>;
 
 export const Default: Story = {
   render: () => (
-    <div className="flex items-center justify-center py-8">
-      <Tooltip>
-        <TooltipTrigger>
-          <Button variant="outline" size="icon">
-            <Info className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Helpful information</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button variant="outline" size="icon">
+          <Info className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Helpful information</p>
+      </TooltipContent>
+    </Tooltip>
   ),
 };
 
 export const TextTrigger: Story = {
   render: () => (
-    <div className="flex items-center justify-center py-8">
-      <Tooltip>
-        <TooltipTrigger className="cursor-help text-sm text-blue-500 underline">
-          Hover me
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Tooltip with text trigger</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger className="cursor-help text-sm text-primary underline">
+        Hover me
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Tooltip with text trigger</p>
+      </TooltipContent>
+    </Tooltip>
   ),
 };
 
 export const CustomDelay: Story = {
   render: () => (
-    <div className="flex items-center justify-center py-8">
-      <TooltipProvider delayDuration={800}>
-        <Tooltip>
-          <TooltipTrigger>
-            <Button variant="outline">Delayed Tooltip</Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>This tooltip has a custom delay</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
+    <TooltipProvider delayDuration={800}>
+      <Tooltip>
+        <TooltipTrigger>
+          <Button variant="outline">Delayed Tooltip</Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>This tooltip has a custom delay</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   ),
 };
 
 export const Positions: Story = {
-  render: () => (
+  decorators: [(story) => (
     <div className="flex flex-wrap items-center justify-center gap-8 py-16">
+      {story()}
+    </div>
+  )],
+  render: () => (
+    <>
       {["top", "right", "bottom", "left"].map((side) => (
         <Tooltip key={side}>
           <TooltipTrigger>
@@ -80,53 +84,53 @@ export const Positions: Story = {
           </TooltipContent>
         </Tooltip>
       ))}
-    </div>
+    </>
   ),
 };
 
 export const WithArrow: Story = {
   render: () => (
-    <div className="flex items-center justify-center py-8">
-      <Tooltip>
-        <TooltipTrigger>
-          <Button>With Arrow</Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>This tooltip has an arrow pointing to the trigger</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button>With Arrow</Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>This tooltip has an arrow pointing to the trigger</p>
+      </TooltipContent>
+    </Tooltip>
   ),
 };
 
 export const CustomStyling: Story = {
   render: () => (
-    <div className="flex items-center justify-center py-8">
-      <Tooltip>
-        <TooltipTrigger>
-          <Button variant="outline">Custom Style</Button>
-        </TooltipTrigger>
-        <TooltipContent 
-          className="bg-blue-600 text-white" 
-          arrowClassName="bg-blue-600" 
-          arrowStyle={{ fill: "#2563eb", background: "#2563eb" }} 
-          sideOffset={5}
-        >
-          <p>Tooltip with custom background</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button variant="outline">Custom Style</Button>
+      </TooltipTrigger>
+      <TooltipContent 
+        className="bg-accent text-accent-foreground" 
+        arrowClassName="bg-accent"
+        sideOffset={5}
+      >
+        <p>Tooltip with custom background</p>
+      </TooltipContent>
+    </Tooltip>
   ),
 };
 
 export const WithinFormControls: Story = {
-  render: () => (
+  decorators: [(story) => (
     <div className="space-y-2 w-64">
+      {story()}
+    </div>
+  )],
+  render: () => (
+    <>
       <div className="flex items-center gap-2">
-        <label htmlFor="name" className="text-sm font-medium">Name</label>
+        <label htmlFor="name" className="text-sm font-medium text-foreground">Name</label>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-4 w-4 text-muted-foreground" />
+            <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
           </TooltipTrigger>
           <TooltipContent>
             <p>Enter your full name</p>
@@ -136,9 +140,9 @@ export const WithinFormControls: Story = {
       <input
         id="name"
         type="text"
-        className="w-full rounded-md border px-3 py-2"
+        className="w-full rounded-md border border-input bg-background px-3 py-2"
         placeholder="Enter your name"
       />
-    </div>
+    </>
   ),
 }; 

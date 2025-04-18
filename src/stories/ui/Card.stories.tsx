@@ -7,6 +7,7 @@ import {
   CardContent,
   CardAction,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof Card> = {
@@ -51,9 +52,7 @@ export const WithAction: Story = {
         <CardTitle>Card with Action</CardTitle>
         <CardDescription>A card with an action component</CardDescription>
         <CardAction>
-          <button className="rounded-md bg-primary px-2 py-1 text-white text-xs">
-            Action
-          </button>
+          <Button size="sm">Action</Button>
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -81,10 +80,8 @@ export const ComplexContent: Story = {
         </ul>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <button className="text-sm text-muted-foreground">Cancel</button>
-        <button className="rounded-md bg-primary px-2 py-1 text-white text-xs">
-          Save
-        </button>
+        <Button variant="ghost" size="sm">Cancel</Button>
+        <Button size="sm">Save</Button>
       </CardFooter>
     </Card>
   ),
@@ -92,20 +89,20 @@ export const ComplexContent: Story = {
 
 export const CustomStyling: Story = {
   render: () => (
-    <Card className="w-[350px] bg-gradient-to-br from-purple-50 to-blue-50 border-blue-200">
-      <CardHeader className="border-b border-blue-100 pb-4">
-        <CardTitle className="text-blue-700">Custom Styled Card</CardTitle>
-        <CardDescription className="text-blue-500">
+    <Card className="w-[350px] border-primary/20">
+      <CardHeader className="border-b border-primary/10 pb-4">
+        <CardTitle className="text-primary">Custom Styled Card</CardTitle>
+        <CardDescription className="text-primary/70">
           With custom colors and styling
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
-        <p className="text-blue-600">
+        <p className="text-primary/80">
           This card has custom styling applied to all components.
         </p>
       </CardContent>
-      <CardFooter className="border-t border-blue-100 pt-4 flex justify-end">
-        <span className="text-xs text-blue-400">Last updated: Today</span>
+      <CardFooter className="border-t border-primary/10 pt-4 flex justify-end">
+        <span className="text-xs text-muted-foreground">Last updated: Today</span>
       </CardFooter>
     </Card>
   ),
@@ -150,12 +147,19 @@ export const Responsive: Story = {
         </p>
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
-        <button className="w-full sm:w-auto rounded-md bg-secondary px-3 py-2 text-xs">
+        <Button 
+          className="w-full sm:w-auto" 
+          variant="secondary" 
+          size="sm"
+        >
           Secondary Action
-        </button>
-        <button className="w-full sm:w-auto rounded-md bg-primary px-3 py-2 text-white text-xs">
+        </Button>
+        <Button 
+          className="w-full sm:w-auto" 
+          size="sm"
+        >
           Primary Action
-        </button>
+        </Button>
       </CardFooter>
     </Card>
   ),

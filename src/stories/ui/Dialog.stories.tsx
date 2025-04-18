@@ -66,23 +66,23 @@ export const WithForm: Story = {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="name" className="text-right text-sm font-medium">
+            <label htmlFor="name" className="text-right text-sm font-medium text-foreground">
               Name
             </label>
             <input
               id="name"
               defaultValue="Pedro Duarte"
-              className="col-span-3 h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+              className="col-span-3 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="username" className="text-right text-sm font-medium">
+            <label htmlFor="username" className="text-right text-sm font-medium text-foreground">
               Username
             </label>
             <input
               id="username"
               defaultValue="@peduarte"
-              className="col-span-3 h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+              className="col-span-3 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
         </div>

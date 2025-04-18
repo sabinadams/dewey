@@ -168,23 +168,23 @@ export const Combinations: Story = {
 // Usage in a form
 export const InForm: Story = {
   render: () => (
-    <div className="w-full max-w-sm space-y-4 rounded-lg border p-4">
+    <div className="w-full max-w-sm space-y-4 rounded-lg border border-input p-4 bg-card">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">Email</label>
+        <label htmlFor="email" className="text-sm font-medium text-foreground">Email</label>
         <input
           id="email"
           type="email"
           placeholder="name@example.com"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2"
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">Password</label>
+        <label htmlFor="password" className="text-sm font-medium text-foreground">Password</label>
         <input
           id="password"
           type="password"
           placeholder="********"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2"
         />
       </div>
       <div className="flex items-center justify-between pt-2">

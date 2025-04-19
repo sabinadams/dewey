@@ -33,14 +33,17 @@ FileUploadLabel.displayName = "FileUploadLabel"
 const FileUploadTrigger = React.forwardRef<
   HTMLLabelElement,
   React.LabelHTMLAttributes<HTMLLabelElement> & {
-    inputId: string
+    inputId: string;
+    disabled?: boolean;
   }
->(({ className, children, inputId, ...props }, ref) => (
+>(({ className, children, inputId, disabled, ...props }, ref) => (
   <label
     ref={ref}
-    htmlFor={inputId}
+    htmlFor={disabled ? undefined : inputId}
     className={cn(
-      "relative cursor-pointer rounded-md border border-dashed border-primary/50 bg-background p-6 shadow-sm hover:bg-muted/50 transition-colors group",
+      "relative rounded-md border border-dashed border-primary/50 bg-background p-6 shadow-sm transition-colors group",
+      !disabled && "cursor-pointer hover:bg-muted/50",
+      disabled && "opacity-60 cursor-not-allowed border-muted-foreground/30",
       className
     )}
     {...props}

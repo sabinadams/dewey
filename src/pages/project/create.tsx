@@ -50,21 +50,8 @@ export default function CreateProjectPage() {
                             This will be the display name for your project
                         </p>
                     </div>
-                    <div className="flex flex-col gap-2">
-                        <FileUpload className="w-full max-w-sm">
-                            <FileUploadLabel htmlFor="compact-file">Upload file</FileUploadLabel>
-                            <FileUploadTrigger inputId="compact-file" className="p-4">
-                                <div className="flex items-center gap-2">
-                                    <FileUploadIcon className="h-5 w-5" />
-                                    <span className="text-sm font-medium text-foreground">
-                                        Click to upload file
-                                    </span>
-                                </div>
-                            </FileUploadTrigger>
-                            <FileUploadInput 
-                                id="compact-file" 
-                                onChange={handleFileChange}
-                            />
+                    <div className="flex flex-col gap-2 justify-center">
+                        <FileUpload>
                             {file && previewUrl ? (
                                 <FileUploadPreview
                                     fileName={file.name}
@@ -73,6 +60,23 @@ export default function CreateProjectPage() {
                                     onDelete={handleFileDelete}
                                 />
                             ) : null}
+                            <FileUploadTrigger 
+                                inputId="compact-file" 
+                                className="p-4"
+                                disabled={!!file}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <FileUploadIcon className="h-5 w-5" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {file ? "File already uploaded" : "Click to upload file"}
+                                    </span>
+                                </div>
+                            </FileUploadTrigger>
+                            <FileUploadInput 
+                                id="compact-file" 
+                                onChange={handleFileChange}
+                                disabled={!!file}
+                            />
                         </FileUpload>
                     </div>
                 </div>

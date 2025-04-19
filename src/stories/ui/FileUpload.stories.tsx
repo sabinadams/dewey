@@ -210,15 +210,26 @@ export const WithInteractivePreview: Story = {
         <FileUploadLabel htmlFor="interactive-preview">
           Interactive File Upload with Preview
         </FileUploadLabel>
-        <FileUploadTrigger inputId="interactive-preview">
+        {file && (
+          <FileUploadPreview
+            fileName={file.name}
+            fileUrl={file.url}
+            fileType={file.type}
+            onDelete={handleDelete}
+          />
+        )}
+        <FileUploadTrigger 
+          inputId="interactive-preview"
+          disabled={!!file}
+        >
           <div className="flex flex-col items-center gap-2">
             <FileUploadIcon />
             <div className="flex flex-col items-center gap-1">
               <span className="text-sm font-medium text-foreground">
-                Try uploading a file
+                {file ? "File already uploaded" : "Try uploading a file"}
               </span>
               <span className="text-xs text-muted-foreground">
-                To see the preview in action
+                {file ? "Delete the current file to upload a new one" : "To see the preview in action"}
               </span>
             </div>
           </div>
@@ -226,16 +237,53 @@ export const WithInteractivePreview: Story = {
         <FileUploadInput 
           id="interactive-preview" 
           onChange={handleFileChange}
+          disabled={!!file}
         />
-        {file ? (
-          <FileUploadPreview
-            fileName={file.name}
-            fileUrl={file.url}
-            fileType={file.type}
-            onDelete={handleDelete}
-          />
-        ) : null}
       </FileUpload>
     );
   }
+};
+
+export const DisabledState: Story = {
+  render: () => (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Disabled Upload</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadLabel htmlFor="disabled-file">Upload file (Disabled)</FileUploadLabel>
+          <FileUploadTrigger inputId="disabled-file" className="p-4" disabled>
+            <div className="flex items-center gap-2">
+              <FileUploadIcon className="h-5 w-5" />
+              <span className="text-sm font-medium text-foreground">
+                Upload disabled
+              </span>
+            </div>
+          </FileUploadTrigger>
+          <FileUploadInput id="disabled-file" disabled />
+        </FileUpload>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium mb-2">Disabled with Preview</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadPreview
+            fileName="example-image.jpg"
+            fileUrl="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            fileType="image/jpeg"
+            onDelete={() => console.log('Image deleted')}
+          />
+          <FileUploadLabel htmlFor="disabled-preview-file">Upload file (Disabled with Preview)</FileUploadLabel>
+          <FileUploadTrigger inputId="disabled-preview-file" className="p-4" disabled>
+            <div className="flex items-center gap-2">
+              <FileUploadIcon className="h-5 w-5" />
+              <span className="text-sm font-medium text-foreground">
+                File already uploaded
+              </span>
+            </div>
+          </FileUploadTrigger>
+          <FileUploadInput id="disabled-preview-file" disabled />
+        </FileUpload>
+      </div>
+    </div>
+  ),
 }; 

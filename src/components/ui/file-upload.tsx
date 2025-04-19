@@ -130,6 +130,57 @@ const FileUploadItemDeleteTrigger = React.forwardRef<
 ))
 FileUploadItemDeleteTrigger.displayName = "FileUploadItemDeleteTrigger"
 
+const FileUploadPreview = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    fileName: string;
+    fileUrl?: string;
+    fileType?: string;
+    onDelete?: () => void;
+  }
+>(({ className, children, fileName, fileUrl, fileType, onDelete, ...props }, ref) => {
+  const isImage = fileType?.startsWith('image/') || fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+  
+  return (
+    <div
+      ref={ref}
+      className={cn("rounded-md border bg-muted/40 p-2 text-sm overflow-hidden", className)}
+      {...props}
+    >
+      <div className="flex flex-col gap-2">
+        {isImage && fileUrl ? (
+          <div className="relative h-48 w-full overflow-hidden rounded-md">
+            <img 
+              src={fileUrl} 
+              alt={fileName} 
+              className="h-full w-full object-cover" 
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <File className="h-4 w-4 text-primary" />
+            <span className="flex-1 truncate">{fileName}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground truncate">{fileName}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={onDelete}
+          >
+            <span className="sr-only">Remove file</span>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+})
+FileUploadPreview.displayName = "FileUploadPreview"
+
 export {
   FileUpload,
   FileUploadLabel,
@@ -139,5 +190,6 @@ export {
   FileUploadItem,
   FileUploadItemIcon,
   FileUploadItemName,
-  FileUploadItemDeleteTrigger
+  FileUploadItemDeleteTrigger,
+  FileUploadPreview
 } 

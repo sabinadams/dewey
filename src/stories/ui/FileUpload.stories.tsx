@@ -8,8 +8,10 @@ import {
   FileUploadItem,
   FileUploadItemIcon,
   FileUploadItemName,
-  FileUploadItemDeleteTrigger
+  FileUploadItemDeleteTrigger,
+  FileUploadPreview
 } from "@/components/ui/file-upload";
+import React from "react";
 
 const meta: Meta<typeof FileUpload> = {
   title: "UI/FileUpload",
@@ -123,4 +125,117 @@ export const Compact: Story = {
       </FileUploadItem>
     </FileUpload>
   ),
+};
+
+export const WithFileUploadPreview: Story = {
+  render: () => (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Image Preview</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadLabel htmlFor="preview-image">Upload image</FileUploadLabel>
+          <FileUploadTrigger inputId="preview-image" className="p-4">
+            <div className="flex items-center gap-2">
+              <FileUploadIcon className="h-5 w-5" />
+              <span className="text-sm font-medium text-foreground">
+                Click to upload image
+              </span>
+            </div>
+          </FileUploadTrigger>
+          <FileUploadInput id="preview-image" />
+          <FileUploadPreview
+            fileName="example-image.jpg"
+            fileUrl="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            fileType="image/jpeg"
+            onDelete={() => console.log('Image deleted')}
+          />
+        </FileUpload>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium mb-2">Document Preview</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadLabel htmlFor="preview-doc">Upload document</FileUploadLabel>
+          <FileUploadTrigger inputId="preview-doc" className="p-4">
+            <div className="flex items-center gap-2">
+              <FileUploadIcon className="h-5 w-5" />
+              <span className="text-sm font-medium text-foreground">
+                Click to upload document
+              </span>
+            </div>
+          </FileUploadTrigger>
+          <FileUploadInput id="preview-doc" />
+          <FileUploadPreview
+            fileName="presentation.pptx"
+            fileType="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            onDelete={() => console.log('Document deleted')}
+          />
+        </FileUpload>
+      </div>
+    </div>
+  ),
+};
+
+export const WithInteractivePreview: Story = {
+  render: () => {
+    // Using React's useState hook in a Story component
+    const [file, setFile] = React.useState<{
+      name: string;
+      url: string;
+      type: string;
+    } | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const selectedFile = e.target.files[0];
+        // In a real app, we would use URL.createObjectURL here
+        // For the story, we'll simulate with a placeholder image
+        setFile({
+          name: selectedFile.name,
+          // Use a placeholder image for the story
+          url: selectedFile.type.startsWith('image/') 
+               ? "https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+               : "",
+          type: selectedFile.type
+        });
+      }
+    };
+
+    const handleDelete = () => {
+      setFile(null);
+    };
+
+    return (
+      <FileUpload className="w-full max-w-sm">
+        <FileUploadLabel htmlFor="interactive-preview">
+          Interactive File Upload with Preview
+        </FileUploadLabel>
+        <FileUploadTrigger inputId="interactive-preview">
+          <div className="flex flex-col items-center gap-2">
+            <FileUploadIcon />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium text-foreground">
+                Try uploading a file
+              </span>
+              <span className="text-xs text-muted-foreground">
+                To see the preview in action
+              </span>
+            </div>
+          </div>
+        </FileUploadTrigger>
+        <FileUploadInput 
+          id="interactive-preview" 
+          onChange={handleFileChange}
+        />
+        {file ? (
+          <FileUploadPreview
+            fileName={file.name}
+            fileUrl={file.url}
+            fileType={file.type}
+            onDelete={handleDelete}
+          />
+        ) : null}
+      </FileUpload>
+    );
+  }
 }; 

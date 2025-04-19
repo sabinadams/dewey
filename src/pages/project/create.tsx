@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { FileUpload, FileUploadIcon, FileUploadInput, FileUploadPreview, FileUploadTrigger } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
 
 export default function CreateProjectPage() {
@@ -10,18 +10,46 @@ export default function CreateProjectPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [fileInputKey, setFileInputKey] = useState<number>(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Clean up preview URL when component unmounts
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setSelectedFile(file);
-            setShowCropper(true);
+            
+            // Check if it's an SVG
+            const isSvg = file.name.toLowerCase().endsWith('.svg') || file.type === 'image/svg+xml';
+            
+            // If it's SVG, we might want to skip cropping for better quality
+            if (isSvg && false) { // Set to true to skip cropper for SVGs
+                setFile(file);
+                const url = URL.createObjectURL(file);
+                setPreviewUrl(url);
+            } else {
+                setSelectedFile(file);
+                setShowCropper(true);
+            }
         }
     };
 
     const handleCropComplete = (croppedFile: File) => {
+        // Clean up old preview URL if exists
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        
         setFile(croppedFile);
-        setPreviewUrl(URL.createObjectURL(croppedFile));
+        const url = URL.createObjectURL(croppedFile);
+        setPreviewUrl(url);
         setShowCropper(false);
         setSelectedFile(null);
     };
@@ -32,6 +60,14 @@ export default function CreateProjectPage() {
         }
         setFile(null);
         setPreviewUrl(null);
+        
+        // Reset the file input by updating its key
+        setFileInputKey(prev => prev + 1);
+        
+        // Also reset the input value if using a ref
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     return (
@@ -87,18 +123,22 @@ export default function CreateProjectPage() {
                                 className="p-4"
                                 disabled={!!file}
                             >
-                                <div className="flex items-center gap-2">
-                                    <FileUploadIcon className="h-5 w-5" />
-                                    <span className="text-sm font-medium text-foreground">
-                                        {file ? "File already uploaded" : "Click to upload project icon"}
-                                    </span>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <FileUploadIcon className="h-5 w-5" />
+                                        <span className="text-sm font-medium text-foreground">
+                                            {file ? "File already uploaded" : "Click to upload project icon"}
+                                        </span>
+                                    </div>
                                 </div>
                             </FileUploadTrigger>
                             <FileUploadInput 
+                                key={fileInputKey}
+                                ref={fileInputRef}
                                 id="compact-file" 
                                 onChange={handleFileChange}
                                 disabled={!!file}
-                                accept="image/*"
+                                accept="image/*,.svg"
                             />
                         </FileUpload>
                     </div>

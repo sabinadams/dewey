@@ -143,7 +143,12 @@ const FileUploadPreview = React.forwardRef<
     size?: "default" | "small" | "icon";
   }
 >(({ className, children, fileName, fileUrl, fileType, onDelete, size = "default", ...props }, ref) => {
-  const isImage = fileType?.startsWith('image/') || fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+  // Check if the file is an image or SVG
+  const isImage = fileType?.startsWith('image/') && !fileType?.includes('svg') && 
+                 fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i) !== null;
+  
+  const isSvg = fileType === 'image/svg+xml' || 
+               fileName.toLowerCase().endsWith('.svg');
   
   const sizeClasses = {
     default: "h-48",
@@ -158,14 +163,14 @@ const FileUploadPreview = React.forwardRef<
       {...props}
     >
       <div className="flex flex-col gap-2">
-        {isImage && fileUrl ? (
+        {(isImage || isSvg) && fileUrl ? (
           <div className={cn("relative w-full overflow-hidden rounded-md", sizeClasses[size])}>
             <img 
               src={fileUrl} 
               alt={fileName} 
               className={cn(
-                "object-cover", 
-                size === "icon" ? "h-full w-full object-contain" : "h-full w-full"
+                size === "icon" ? "h-full w-full object-contain" : "h-full w-full object-cover",
+                isSvg && "bg-white/20 p-1 rounded-md" // Add slight background for SVGs to ensure visibility
               )}
             />
           </div>

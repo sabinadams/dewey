@@ -286,4 +286,49 @@ export const DisabledState: Story = {
       </div>
     </div>
   ),
+};
+
+export const PreviewSizes: Story = {
+  render: () => (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Default Size</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadPreview
+            fileName="large-image.jpg"
+            fileUrl="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            fileType="image/jpeg"
+            onDelete={() => console.log('Image deleted')}
+            size="default"
+          />
+        </FileUpload>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium mb-2">Small Size</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadPreview
+            fileName="small-image.jpg"
+            fileUrl="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            fileType="image/jpeg"
+            onDelete={() => console.log('Image deleted')}
+            size="small"
+          />
+        </FileUpload>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium mb-2">Icon Size (80x80)</h3>
+        <FileUpload className="w-full max-w-sm">
+          <FileUploadPreview
+            fileName="icon-image.jpg"
+            fileUrl="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            fileType="image/jpeg"
+            onDelete={() => console.log('Image deleted')}
+            size="icon"
+          />
+        </FileUpload>
+      </div>
+    </div>
+  ),
 }; 

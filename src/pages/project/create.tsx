@@ -1,22 +1,29 @@
 import { Card } from "@/components/ui/card";
-import { FileUpload, FileUploadIcon, FileUploadInput, FileUploadItem, FileUploadItemDeleteTrigger, FileUploadItemIcon, FileUploadItemName, FileUploadLabel, FileUploadPreview, FileUploadTrigger } from "@/components/ui/file-upload";
+import { FileUpload, FileUploadIcon, FileUploadInput, FileUploadPreview, FileUploadTrigger } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 
 export default function CreateProjectPage() {
     const [projectName, setProjectName] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const selectedFile = e.target.files[0];
-            setFile(selectedFile);
-            
-            // Create preview URL for the file
-            const fileUrl = URL.createObjectURL(selectedFile);
-            setPreviewUrl(fileUrl);
+            const file = e.target.files[0];
+            setSelectedFile(file);
+            setShowCropper(true);
         }
+    };
+
+    const handleCropComplete = (croppedFile: File) => {
+        setFile(croppedFile);
+        setPreviewUrl(URL.createObjectURL(croppedFile));
+        setShowCropper(false);
+        setSelectedFile(null);
     };
 
     const handleFileDelete = () => {
@@ -35,6 +42,20 @@ export default function CreateProjectPage() {
                     Set up a new database project with AI-enhanced capabilities
                 </p>
             </div>
+
+            {selectedFile && showCropper && (
+                <ImageCropModal
+                    open={showCropper}
+                    onClose={() => {
+                        setShowCropper(false);
+                        setSelectedFile(null);
+                    }}
+                    image={selectedFile}
+                    onCropComplete={handleCropComplete}
+                    aspectRatio={1}
+                    cropShape="round"
+                />
+            )}
 
             <Card className="p-6">
                 <div className="flex flex-row gap-6">
@@ -58,6 +79,7 @@ export default function CreateProjectPage() {
                                     fileUrl={previewUrl}
                                     fileType={file.type}
                                     onDelete={handleFileDelete}
+                                    size="icon"
                                 />
                             ) : null}
                             <FileUploadTrigger 
@@ -68,7 +90,7 @@ export default function CreateProjectPage() {
                                 <div className="flex items-center gap-2">
                                     <FileUploadIcon className="h-5 w-5" />
                                     <span className="text-sm font-medium text-foreground">
-                                        {file ? "File already uploaded" : "Click to upload file"}
+                                        {file ? "File already uploaded" : "Click to upload project icon"}
                                     </span>
                                 </div>
                             </FileUploadTrigger>
@@ -76,6 +98,7 @@ export default function CreateProjectPage() {
                                 id="compact-file" 
                                 onChange={handleFileChange}
                                 disabled={!!file}
+                                accept="image/*"
                             />
                         </FileUpload>
                     </div>

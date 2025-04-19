@@ -140,9 +140,16 @@ const FileUploadPreview = React.forwardRef<
     fileUrl?: string;
     fileType?: string;
     onDelete?: () => void;
+    size?: "default" | "small" | "icon";
   }
->(({ className, children, fileName, fileUrl, fileType, onDelete, ...props }, ref) => {
+>(({ className, children, fileName, fileUrl, fileType, onDelete, size = "default", ...props }, ref) => {
   const isImage = fileType?.startsWith('image/') || fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+  
+  const sizeClasses = {
+    default: "h-48",
+    small: "h-32",
+    icon: "h-20 w-20 mx-auto"
+  };
   
   return (
     <div
@@ -152,11 +159,14 @@ const FileUploadPreview = React.forwardRef<
     >
       <div className="flex flex-col gap-2">
         {isImage && fileUrl ? (
-          <div className="relative h-48 w-full overflow-hidden rounded-md">
+          <div className={cn("relative w-full overflow-hidden rounded-md", sizeClasses[size])}>
             <img 
               src={fileUrl} 
               alt={fileName} 
-              className="h-full w-full object-cover" 
+              className={cn(
+                "object-cover", 
+                size === "icon" ? "h-full w-full object-contain" : "h-full w-full"
+              )}
             />
           </div>
         ) : (

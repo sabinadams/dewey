@@ -113,11 +113,17 @@ export function ImageCropModal({
             onValueChange={(value) => setZoom(value[0])}
           />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="dark:text-foreground"
+          >
             Cancel
           </Button>
-          <Button onClick={createCroppedImage}>
+          <Button 
+            onClick={createCroppedImage}
+          >
             Apply
           </Button>
         </DialogFooter>

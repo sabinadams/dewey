@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useEffect, useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 interface NavItemProps {
   to: string;
   icon?: React.ReactNode;
@@ -88,7 +88,7 @@ export function Navigation() {
   const projects = useAppSelector(state => state.projects.items);
   const dispatch = useAppDispatch();
   const { userId } = useAuth();
-
+  const navigate = useNavigate();
   const handleCreateProject = () => {
     if (userId) {
       dispatch(createProject(userId));
@@ -132,7 +132,7 @@ export function Navigation() {
                       variant="ghost"
                       size="icon"
                       className="grid place-items-center w-10 h-10 border border-sidebar-border rounded-lg hover:bg-sidebar-accent cursor-pointer"
-                      onClick={handleCreateProject}
+                      onClick={() => navigate('/project/create')}
                     >
                       <Plus size={20} className="text-sidebar-foreground" />
                     </Button>

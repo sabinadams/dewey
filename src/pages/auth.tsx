@@ -108,7 +108,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
+    <div className="flex-1 flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">
@@ -163,27 +163,27 @@ export default function AuthPage() {
             </div>
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid gap-2">
-                <label htmlFor="email" className="text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="email" className="text-sm font-medium leading-none text-foreground">
                   Email
                 </label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="password" className="text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="password" className="text-sm font-medium leading-none text-foreground">
                   Password
                 </label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete={isSignIn ? "current-password" : "new-password"}
                   required
                 />

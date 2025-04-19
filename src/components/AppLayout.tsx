@@ -22,7 +22,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         <Card className={cn(
           "flex flex-col flex-1",
           "bg-card",
-          "text-card-foreground"
+          "text-card-foreground",
+          "p-6"
         )}>
           {projectsLoading ? (
             <div className="flex-1 flex items-center justify-center">

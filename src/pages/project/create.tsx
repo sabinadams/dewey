@@ -1,5 +1,5 @@
 import CreateProjectForm from "@/components/projects/CreateProjectForm";
-
+import { CreateProjectProvider } from "@/contexts/create-project.context";
 export default function CreateProjectPage() {
     return (
         <div className="flex flex-col gap-6 w-2/3 mx-auto">
@@ -10,7 +10,9 @@ export default function CreateProjectPage() {
                 </p>
             </div>
 
-           <CreateProjectForm />   
+            <CreateProjectProvider>
+                <CreateProjectForm />
+            </CreateProjectProvider>
         </div>
     );
 }

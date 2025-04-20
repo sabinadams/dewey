@@ -19,6 +19,7 @@ import { ControllerRenderProps } from 'react-hook-form'
 import { useAppSelector, useAppDispatch } from "@/store/hooks"
 import { createProject, CreateProjectParams } from "@/store/slices/projectsSlice"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 // Define the form schema to match the one in create-project.context.tsx
 const formSchema = z.object({
@@ -124,6 +125,11 @@ const CreateProjectForm = () => {
     try {
       setIsSubmitting(true);
       
+      // Create a loading toast that will be updated with the result
+      const loadingToastId = toast.loading('Creating project...', {
+        duration: Infinity, // Don't auto-dismiss
+      });
+      
       // Create the project params object for Redux
       const projectParams: CreateProjectParams = {
         name: data.name,
@@ -140,20 +146,41 @@ const CreateProjectForm = () => {
 
       // Use the Redux thunk to create the project
       const result = await dispatch(createProject(projectParams));
-
       
       // TypeScript type narrowing
       if (createProject.fulfilled.match(result)) {
         // Extract projectId from the payload
         const { projectId } = result.payload;
         
+        // Dismiss the loading toast
+        toast.dismiss(loadingToastId);
+        
+        // Create a new success toast with standard duration
+        toast.success('Project created successfully!', {
+          description: `Project "${data.name}" has been created`,
+          duration: 4000, // Standard 4 second duration
+        });
+        
         // Navigate to the new project page
         navigate(`/project/${projectId}`);
+      } else {
+        // Dismiss the loading toast
+        toast.dismiss(loadingToastId);
+        
+        // Create a new error toast with standard duration
+        toast.error('Failed to create project', {
+          description: result.error?.message || 'An unknown error occurred',
+          duration: 5000, // Slightly longer for errors
+        });
       }
       
     } catch (error) {
       console.error("Error creating project:", error);
-      // Handle error (show error message, etc.)
+      // Show error toast with the error message
+      toast.error('Failed to create project', {
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        duration: 5000, // Slightly longer for errors
+      });
     } finally {
       setIsSubmitting(false);
     }

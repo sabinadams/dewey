@@ -10,6 +10,7 @@ import { detectOS } from '@/store/slices/systemSlice';
 import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from '@/store/slices/authSlice';
 import { fetchProjects } from '@/store/slices/projectsSlice';
 import { AuthError } from '@/components/AuthError';
+import { Toaster } from '@/components/ui/sonner';
 import routes from '~react-pages';
 
 // Public routes that don't require authentication
@@ -109,6 +110,7 @@ export default function App() {
         <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
           <AppContent />
           <AuthError />
+          <Toaster />
         </div>
       </BrowserRouter>
     </ClerkProvider>

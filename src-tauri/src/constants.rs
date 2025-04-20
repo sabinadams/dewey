@@ -20,6 +20,7 @@ pub const DEFAULT_LOG_LEVEL: Level = Level::INFO;
 // Content types
 pub const PNG_CONTENT_TYPE: &str = "image/png";
 pub const TEXT_CONTENT_TYPE: &str = "text/plain";
+pub const SVG_CONTENT_TYPE: &str = "image/svg+xml";
 
 // Cache control
 pub const ICON_CACHE_CONTROL: &str = "public, max-age=31536000";

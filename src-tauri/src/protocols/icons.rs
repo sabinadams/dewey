@@ -5,6 +5,7 @@ use tauri::{
 };
 
 use std::fs;
+use std::path::Path;
 use tracing::{debug, error};
 use urlencoding::decode;
 use dewey_lib::constants;
@@ -48,8 +49,19 @@ pub fn icon_protocol<R: tauri::Runtime>(
     match fs::read(&full_path) {
         Ok(data) => {
             debug!("Successfully served icon: {}", icon_name);
+            
+            // Determine content type based on file extension
+            let content_type = if let Some(extension) = Path::new(&icon_name).extension() {
+                match extension.to_str().unwrap_or("").to_lowercase().as_str() {
+                    "svg" => constants::SVG_CONTENT_TYPE,
+                    _ => constants::PNG_CONTENT_TYPE,
+                }
+            } else {
+                constants::PNG_CONTENT_TYPE // Default to PNG if no extension
+            };
+            
             Response::builder()
-                .header("Content-Type", constants::PNG_CONTENT_TYPE)
+                .header("Content-Type", content_type)
                 .header("Cache-Control", constants::ICON_CACHE_CONTROL)
                 .body(data)
                 .unwrap_or_else(|e| {

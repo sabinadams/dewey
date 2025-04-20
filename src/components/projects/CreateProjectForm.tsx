@@ -129,7 +129,7 @@ const CreateProjectForm = () => {
               <div className="flex flex-col gap-2 justify-center">
                 {/* Don't use FormField for file upload - manage directly */}
                 <FileUpload>
-                  {currentFile && previewUrl && (
+                  {currentFile && previewUrl ? (
                     <FileUploadPreview
                       fileName={currentFile.name}
                       fileUrl={previewUrl}
@@ -137,31 +137,31 @@ const CreateProjectForm = () => {
                       onDelete={handleFileDelete}
                       size="icon"
                     />
+                  ) : (
+                    <>
+                      <FileUploadTrigger
+                        inputId="compact-file"
+                        className="p-4"
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <FileUploadIcon className="h-5 w-5" />
+                            <span className="text-sm font-medium text-foreground">
+                              Click to upload project icon
+                            </span>
+                          </div>
+                        </div>
+                      </FileUploadTrigger>
+
+                      <FileUploadInput
+                        key={fileInputKey}
+                        ref={fileInputRef}
+                        id="compact-file"
+                        onChange={handleFileChange}
+                        accept="image/*,.svg"
+                      />
+                    </>
                   )}
-
-                  <FileUploadTrigger
-                    inputId="compact-file"
-                    className="p-4"
-                    disabled={!!currentFile}
-                  >
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <FileUploadIcon className="h-5 w-5" />
-                        <span className="text-sm font-medium text-foreground">
-                          {currentFile ? "File already uploaded" : "Click to upload project icon"}
-                        </span>
-                      </div>
-                    </div>
-                  </FileUploadTrigger>
-
-                  <FileUploadInput
-                    key={fileInputKey}
-                    ref={fileInputRef}
-                    id="compact-file"
-                    onChange={handleFileChange}
-                    disabled={!!currentFile}
-                    accept="image/*,.svg"
-                  />
                 </FileUpload>
               </div>
             </div>

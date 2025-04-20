@@ -20,7 +20,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks"
 import { createProject, CreateProjectParams } from "@/store/slices/projectsSlice"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-
+import { fileToBase64 } from "@/lib/utils"
 // Define the form schema to match the one in create-project.context.tsx
 const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -104,21 +104,6 @@ const CreateProjectForm = () => {
   const handleCloseCropper = () => {
     setShowCropper(false);
     setSelectedFile(null);
-  };
-
-  /**
-   * Convert a File to a base64 string with the proper mime type prefix
-   */
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result);
-      };
-      reader.onerror = error => reject(error);
-    });
   };
 
   const onSubmit = form.handleSubmit(async (data: FormData) => {

@@ -129,6 +129,8 @@ const CreateProjectForm = () => {
       };
       
       // If there's a file to upload, add it to the project params
+      // The backend will use this to save a custom icon
+      // If not provided, the backend will generate a default icon
       if (currentFile) {
         // Convert file to base64 string for Rust backend
         const fileBase64 = await fileToBase64(currentFile);
@@ -146,7 +148,6 @@ const CreateProjectForm = () => {
       if (user?.id) {
         await dispatch(fetchProjects(user.id));
       }
-      
       
       // Navigate to the new project page
       navigate(`/project/${projectId}`);

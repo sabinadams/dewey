@@ -1,8 +1,10 @@
+import CenteredLayout from "@/components/layouts/centered";
 import CreateProjectForm from "@/components/projects/CreateProjectForm";
 import { CreateProjectProvider } from "@/contexts/create-project.context";
+
 export default function CreateProjectPage() {
     return (
-        <div className="flex flex-col gap-6 w-2/3 mx-auto">
+        <CenteredLayout>
             <div>
                 <h1 className="text-2xl font-bold">Create Project</h1>
                 <p className="text-sm text-zinc-500">
@@ -13,6 +15,6 @@ export default function CreateProjectPage() {
             <CreateProjectProvider>
                 <CreateProjectForm />
             </CreateProjectProvider>
-        </div>
+        </CenteredLayout>
     );
 }

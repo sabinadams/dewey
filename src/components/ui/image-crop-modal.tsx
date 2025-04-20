@@ -51,14 +51,6 @@ export function ImageCropModal({
     }
   }, [image])
 
-  const onCropChange = (crop: Point) => {
-    setCrop(crop)
-  }
-
-  const onZoomChange = (zoom: number) => {
-    setZoom(zoom)
-  }
-
   const onCropCompleteCallback = useCallback(
     (_croppedArea: Area, croppedAreaPixels: Area) => {
       setCroppedAreaPixels(croppedAreaPixels)
@@ -70,12 +62,7 @@ export function ImageCropModal({
     if (!croppedAreaPixels) return
 
     try {
-      const croppedImage = await getCroppedImg(
-        imageUrl,
-        croppedAreaPixels,
-        0,
-        image.name
-      )
+      const croppedImage = await getCroppedImg(imageUrl, croppedAreaPixels, image.name)
       onCropComplete(croppedImage)
       onClose()
     } catch (e) {
@@ -97,9 +84,9 @@ export function ImageCropModal({
               zoom={zoom}
               aspect={aspectRatio}
               cropShape={cropShape}
-              onCropChange={onCropChange}
+              onCropChange={setCrop}
               onCropComplete={onCropCompleteCallback}
-              onZoomChange={onZoomChange}
+              onZoomChange={setZoom}
             />
           )}
         </div>
@@ -121,9 +108,7 @@ export function ImageCropModal({
           >
             Cancel
           </Button>
-          <Button 
-            onClick={createCroppedImage}
-          >
+          <Button onClick={createCroppedImage}>
             Apply
           </Button>
         </DialogFooter>
@@ -132,7 +117,7 @@ export function ImageCropModal({
   )
 }
 
-// Helper function to create a cropped image
+// Helper function to create an image element from a URL
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image()
@@ -141,57 +126,35 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url
   })
 
-// Helper function to get the cropped image
+// Simplified function to get a high-quality cropped image
 async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
-  rotation = 0,
   fileName: string
 ): Promise<File> {
-  // Since SVGs are handled in the component directly, this function now only handles raster images
+  const image = await createImage(imageSrc)
   
-  const image = await createImage(imageSrc);
+  const finalSize = 160 // Final size for the output image (doubled for high-DPI screens)
   
-  // Use a larger intermediate canvas size for better quality
-  // We'll use a constant size that's large enough for most images while being reasonable for memory
-  const MAX_DIMENSION = 1024; // Maximum dimension for the intermediate canvas
+  // Create canvas setup for high quality
+  const canvas = document.createElement('canvas')
+  canvas.width = finalSize
+  canvas.height = finalSize
   
-  // Calculate the largest possible dimensions while maintaining aspect ratio
-  const cropAspect = pixelCrop.width / pixelCrop.height;
-  let intermediateWidth, intermediateHeight;
-  
-  if (cropAspect >= 1) { // Width >= Height
-    intermediateWidth = Math.min(pixelCrop.width, MAX_DIMENSION);
-    intermediateHeight = intermediateWidth / cropAspect;
-  } else { // Height > Width
-    intermediateHeight = Math.min(pixelCrop.height, MAX_DIMENSION);
-    intermediateWidth = intermediateHeight * cropAspect;
-  }
-  
-  // Round to integers
-  intermediateWidth = Math.round(intermediateWidth);
-  intermediateHeight = Math.round(intermediateHeight);
-  
-  // First, create a canvas that matches the crop dimensions to maintain quality
-  const canvas = document.createElement('canvas');
-  canvas.width = intermediateWidth;
-  canvas.height = intermediateHeight;
-  
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d')
   if (!ctx) {
-    throw new Error('Failed to get canvas context');
+    throw new Error('Failed to get canvas context')
   }
   
-  // Clear canvas with white (for transparent PNGs that need a background)
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.globalCompositeOperation = 'source-over'; // Reset to default
+  // Set up for high quality
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
   
-  // Enable high-quality image scaling
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  // Fill with white background for transparent images
+  ctx.fillStyle = 'white'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
   
-  // Draw the cropped portion at intermediate resolution
+  // Draw the cropped image directly with high quality
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -200,59 +163,37 @@ async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    intermediateWidth,
-    intermediateHeight
-  );
+    finalSize,
+    finalSize
+  )
   
-  // Now create the final canvas for the 80x80 output
-  const finalCanvas = document.createElement('canvas');
-  const finalSize = 160; // Double the final display size for better quality on high-DPI screens
-  finalCanvas.width = finalSize;
-  finalCanvas.height = finalSize;
-  
-  const finalCtx = finalCanvas.getContext('2d');
-  if (!finalCtx) {
-    throw new Error('Failed to get final canvas context');
-  }
-  
-  // Use better quality settings for the resize
-  finalCtx.imageSmoothingEnabled = true;
-  finalCtx.imageSmoothingQuality = 'high';
-  
-  // Draw the intermediate canvas onto the final canvas, resizing to the final size
-  finalCtx.drawImage(
-    canvas,
-    0, 0, intermediateWidth, intermediateHeight,
-    0, 0, finalSize, finalSize
-  );
-  
-  // Determine output format - use PNG for higher quality
-  const outputFormat = 'image/png';
-  const fileExt = '.png';
+  // Configure output as PNG for best quality
+  const outputFormat = 'image/png'
+  const fileExt = '.png'
   
   // Create appropriate filename
   const newFileName = fileName.includes('.')
     ? fileName.replace(/\.[^/.]+$/, fileExt)
-    : `${fileName}${fileExt}`;
+    : `${fileName}${fileExt}`
   
   // Convert canvas to blob with high quality
   return new Promise((resolve, reject) => {
-    finalCanvas.toBlob(
+    canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new Error('Canvas is empty'));
-          return;
+          reject(new Error('Canvas is empty'))
+          return
         }
         
         const croppedFile = new File([blob], newFileName, {
           type: outputFormat,
           lastModified: Date.now(),
-        });
+        })
         
-        resolve(croppedFile);
+        resolve(croppedFile)
       },
       outputFormat,
-      1.0  // Use maximum quality
-    );
-  });
+      1.0  // Maximum quality
+    )
+  })
 } 

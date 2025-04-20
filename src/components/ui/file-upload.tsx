@@ -143,13 +143,12 @@ const FileUploadPreview = React.forwardRef<
     size?: "default" | "small" | "icon";
   }
 >(({ className, children, fileName, fileUrl, fileType, onDelete, size = "default", ...props }, ref) => {
-  // Check if the file is an image or SVG
-  const isImage = fileType?.startsWith('image/') && !fileType?.includes('svg') && 
-                 fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i) !== null;
+  // Detect file types
+  const isSvg = fileType === 'image/svg+xml' || fileName.toLowerCase().endsWith('.svg');
+  const isImage = (fileType?.startsWith('image/') || fileName.match(/\.(jpeg|jpg|gif|png|webp)$/i)) && !isSvg;
+  const hasPreview = (isImage || isSvg) && fileUrl;
   
-  const isSvg = fileType === 'image/svg+xml' || 
-               fileName.toLowerCase().endsWith('.svg');
-  
+  // Size mapping
   const sizeClasses = {
     default: "h-48",
     small: "h-32",
@@ -163,14 +162,14 @@ const FileUploadPreview = React.forwardRef<
       {...props}
     >
       <div className="flex flex-col gap-2">
-        {(isImage || isSvg) && fileUrl ? (
+        {hasPreview ? (
           <div className={cn("relative w-full overflow-hidden rounded-md", sizeClasses[size])}>
             <img 
               src={fileUrl} 
               alt={fileName} 
               className={cn(
                 size === "icon" ? "h-full w-full object-contain" : "h-full w-full object-cover",
-                isSvg && "bg-white/20 p-1 rounded-md" // Add slight background for SVGs to ensure visibility
+                isSvg && "bg-white/20 p-1 rounded-md"
               )}
             />
           </div>
@@ -180,17 +179,20 @@ const FileUploadPreview = React.forwardRef<
             <span className="flex-1 truncate">{fileName}</span>
           </div>
         )}
+        
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground truncate">{fileName}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onDelete}
-          >
-            <span className="sr-only">Remove file</span>
-            <X className="h-4 w-4" />
-          </Button>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onDelete}
+            >
+              <span className="sr-only">Remove file</span>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         {children}
       </div>

@@ -10,7 +10,7 @@ export default function CreateProjectPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [fileInputKey, setFileInputKey] = useState<number>(0);
+    const [fileInputKey, setFileInputKey] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Clean up preview URL when component unmounts
@@ -20,55 +20,53 @@ export default function CreateProjectPage() {
                 URL.revokeObjectURL(previewUrl);
             }
         };
-    }, []);
+    }, [previewUrl]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+        if (!e.target.files?.length) return;
+        
+        const file = e.target.files[0];
+        const isSvg = file.name.toLowerCase().endsWith('.svg') || file.type === 'image/svg+xml';
+        
+        if (isSvg) {
+            // SVGs don't need cropping
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            const url = URL.createObjectURL(file);
             
-            // Check if it's an SVG
-            const isSvg = file.name.toLowerCase().endsWith('.svg') || file.type === 'image/svg+xml';
-            
-            // If it's SVG, skip cropping and use the original file
-            if (isSvg) {
-                setFile(file);
-                const url = URL.createObjectURL(file);
-                setPreviewUrl(url);
-            } else {
-                // For raster images, open the cropper
-                setSelectedFile(file);
-                setShowCropper(true);
-            }
+            setFile(file);
+            setPreviewUrl(url);
+        } else {
+            // Raster images go through the cropper
+            setSelectedFile(file);
+            setShowCropper(true);
         }
     };
 
     const handleCropComplete = (croppedFile: File) => {
-        // Clean up old preview URL if exists
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-        }
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         
-        setFile(croppedFile);
         const url = URL.createObjectURL(croppedFile);
+        setFile(croppedFile);
         setPreviewUrl(url);
         setShowCropper(false);
         setSelectedFile(null);
     };
 
     const handleFileDelete = () => {
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-        }
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        
         setFile(null);
         setPreviewUrl(null);
-        
-        // Reset the file input by updating its key
         setFileInputKey(prev => prev + 1);
         
-        // Also reset the input value if using a ref
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+    };
+
+    const handleCloseCropper = () => {
+        setShowCropper(false);
+        setSelectedFile(null);
     };
 
     return (
@@ -83,10 +81,7 @@ export default function CreateProjectPage() {
             {selectedFile && showCropper && (
                 <ImageCropModal
                     open={showCropper}
-                    onClose={() => {
-                        setShowCropper(false);
-                        setSelectedFile(null);
-                    }}
+                    onClose={handleCloseCropper}
                     image={selectedFile}
                     onCropComplete={handleCropComplete}
                     aspectRatio={1}
@@ -97,7 +92,9 @@ export default function CreateProjectPage() {
             <Card className="p-6">
                 <div className="flex flex-row gap-6">
                     <div className="flex flex-col gap-2 flex-1">
-                        <label htmlFor="project-name" className="text-sm font-medium text-foreground">Project Name</label>
+                        <label htmlFor="project-name" className="text-sm font-medium text-foreground">
+                            Project Name
+                        </label>
                         <Input 
                             id="project-name" 
                             placeholder="My Project" 
@@ -110,7 +107,7 @@ export default function CreateProjectPage() {
                     </div>
                     <div className="flex flex-col gap-2 justify-center">
                         <FileUpload>
-                            {file && previewUrl ? (
+                            {file && previewUrl && (
                                 <FileUploadPreview
                                     fileName={file.name}
                                     fileUrl={previewUrl}
@@ -118,7 +115,8 @@ export default function CreateProjectPage() {
                                     onDelete={handleFileDelete}
                                     size="icon"
                                 />
-                            ) : null}
+                            )}
+                            
                             <FileUploadTrigger 
                                 inputId="compact-file" 
                                 className="p-4"
@@ -133,6 +131,7 @@ export default function CreateProjectPage() {
                                     </div>
                                 </div>
                             </FileUploadTrigger>
+                            
                             <FileUploadInput 
                                 key={fileInputKey}
                                 ref={fileInputRef}
@@ -146,5 +145,5 @@ export default function CreateProjectPage() {
                 </div>
             </Card>
         </div>
-    )
+    );
 }

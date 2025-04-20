@@ -83,7 +83,7 @@ const FileUploadWithCropper = ({
           </div>
           <div className="flex flex-col gap-2 justify-center">
             <FileUpload>
-              {file && previewUrl ? (
+              {file && previewUrl && (
                 <FileUploadPreview
                   fileName={file.name}
                   fileUrl={previewUrl}
@@ -91,17 +91,19 @@ const FileUploadWithCropper = ({
                   onDelete={handleFileDelete}
                   size="icon"
                 />
-              ) : null}
+              )}
               <FileUploadTrigger 
                 inputId="cropper-demo-file" 
                 className="p-4"
                 disabled={!!file}
               >
-                <div className="flex items-center gap-2">
-                  <FileUploadIcon className="h-5 w-5" />
-                  <span className="text-sm font-medium text-foreground">
-                    {file ? "File already uploaded" : "Click to upload image"}
-                  </span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileUploadIcon className="h-5 w-5" />
+                    <span className="text-sm font-medium text-foreground">
+                      {file ? "File already uploaded" : "Click to upload image"}
+                    </span>
+                  </div>
                 </div>
               </FileUploadTrigger>
               <FileUploadInput 

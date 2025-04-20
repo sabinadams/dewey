@@ -34,36 +34,52 @@ pub async fn get_user_projects(
 /// Returns a string error if:
 /// - The icon generator fails to initialize
 /// - The icon fails to generate or save
+/// - The image data could not be decoded (if custom icon is provided)
 /// - There was a problem creating the project in the database
 #[tauri::command]
 pub async fn create_project(
     name: String,
     user_id: String,
+    custom_icon_data: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<i64, String> {
     info!("Creating new project '{}' for user: {}", name, user_id);
     
-    // Generate a unique hash for the icon
-    let hash = blake3::hash(utils::generate_unique_hash(&[&name, &user_id]).as_bytes());
-    
-    // Create and save the icon
+    // Create the icon generator
     let icon_generator = IconGenerator::new()
         .map_err(|e| {
             error!("Failed to create icon generator: {}", e);
             e.to_string()
         })?;
     
-    let icon_path = icon_generator
-        .generate_and_save(hash.as_bytes())
-        .map_err(|e| {
-            error!("Failed to generate icon: {}", e);
-            e.to_string()
-        })?;
+    let final_icon_path = if let Some(icon_data) = custom_icon_data {
+        info!("Using custom icon for project");
+        
+        // Use the helper function to save the custom icon
+        icon_generator.save_custom_icon(&icon_data, &name, &user_id)
+            .map_err(|e| {
+                error!("Failed to save custom icon: {}", e);
+                e.to_string()
+            })?
+    } else {
+        // Generate a default icon
+        info!("Generating default icon for project");
+        
+        // Generate a unique hash for the icon
+        let hash = blake3::hash(utils::generate_unique_hash(&[&name, &user_id]).as_bytes());
+        
+        icon_generator
+            .generate_and_save(hash.as_bytes())
+            .map_err(|e| {
+                error!("Failed to generate default icon: {}", e);
+                e.to_string()
+            })?
+    };
     
     // Create the project with the icon path
     let project_repo = ProjectRepository::new(state.db.clone());
     
-    project_repo.create(&name, &user_id, Some(&icon_path))
+    project_repo.create(&name, &user_id, Some(&final_icon_path))
         .await
         .map_err(|e| {
             error!("Failed to create project: {}", e);

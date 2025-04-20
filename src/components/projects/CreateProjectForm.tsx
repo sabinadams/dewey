@@ -14,6 +14,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { invoke } from '@tauri-apps/api/core'
+import { z } from 'zod'
+import { ControllerRenderProps } from 'react-hook-form'
+import { useAppSelector } from "@/store/hooks"
+
+// Define the form schema to match the one in create-project.context.tsx
+const formSchema = z.object({
+  name: z.string().min(1, "Project name is required"),
+  icon: z.string().optional(),
+})
+
+// Create a type for the form data
+type FormData = z.infer<typeof formSchema>
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -22,8 +35,12 @@ const CreateProjectForm = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const user = useAppSelector(state => 
+    state.auth.user
+  );
+
   const { form } = useCreateProjectContext();
   
   // Clean up preview URL when component unmounts
@@ -85,9 +102,55 @@ const CreateProjectForm = () => {
     setSelectedFile(null);
   };
 
-  const onSubmit = form.handleSubmit((data) => {
-    console.log("Form submitted:", data);
-    console.log("File to upload:", currentFile);
+  /**
+   * Convert a File to a base64 string
+   */
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const onSubmit = form.handleSubmit(async (data: FormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Create the project with or without a custom icon
+      const projectParams: Record<string, any> = {
+        name: data.name,
+        user_id: user?.id
+      };
+      
+      // If there's a file to upload, add it to the project params
+      if (currentFile) {
+        // Convert file to base64 string for Rust backend
+        const fileBase64 = await fileToBase64(currentFile);
+        
+        // Add the custom icon data to the params
+        projectParams.custom_icon_data = fileBase64;
+      }
+
+      // Create the project in the database and save the icon in one operation
+      const projectId = await invoke<number>('create_project', projectParams);
+
+      console.log("Project created with ID:", projectId);
+      
+      // Here you might want to redirect to the new project
+      // or show a success message
+      
+      // Reset the form
+      form.reset();
+      handleFileDelete();
+      
+    } catch (error) {
+      console.error("Error creating project:", error);
+      // Handle error (show error message, etc.)
+    } finally {
+      setIsSubmitting(false);
+    }
   });
 
   return (
@@ -111,7 +174,7 @@ const CreateProjectForm = () => {
                 <FormField
                   control={form.control}
                   name="name"
-                  render={({ field }) => (
+                  render={({ field }: { field: ControllerRenderProps<FormData, "name"> }) => (
                     <FormItem>
                       <FormLabel>Project Name</FormLabel>
                       <FormControl>
@@ -168,7 +231,9 @@ const CreateProjectForm = () => {
           </Card>
 
           <div className="mt-6 flex justify-end">
-            <Button type="submit">Create Project</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Project"}
+            </Button>
           </div>
         </form>
       </Form>

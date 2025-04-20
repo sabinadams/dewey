@@ -87,7 +87,6 @@ const CreateProjectForm = () => {
 
   const onSubmit = form.handleSubmit((data) => {
     console.log("Form submitted:", data);
-    // Handle form submission with file
     console.log("File to upload:", currentFile);
   });
 
@@ -166,11 +165,11 @@ const CreateProjectForm = () => {
                 </FileUpload>
               </div>
             </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button type="submit">Create Project</Button>
-            </div>
           </Card>
+
+          <div className="mt-6 flex justify-end">
+            <Button type="submit">Create Project</Button>
+          </div>
         </form>
       </Form>
     </>

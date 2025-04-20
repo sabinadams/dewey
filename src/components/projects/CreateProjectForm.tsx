@@ -17,7 +17,9 @@ import {
 import { invoke } from '@tauri-apps/api/core'
 import { z } from 'zod'
 import { ControllerRenderProps } from 'react-hook-form'
-import { useAppSelector } from "@/store/hooks"
+import { useAppSelector, useAppDispatch } from "@/store/hooks"
+import { fetchProjects } from "@/store/slices/projectsSlice"
+import { useNavigate } from "react-router-dom"
 
 // Define the form schema to match the one in create-project.context.tsx
 const formSchema = z.object({
@@ -40,6 +42,8 @@ const CreateProjectForm = () => {
   const user = useAppSelector(state => 
     state.auth.user
   );
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const { form } = useCreateProjectContext();
   
@@ -138,12 +142,14 @@ const CreateProjectForm = () => {
 
       console.log("Project created with ID:", projectId);
       
-      // Here you might want to redirect to the new project
-      // or show a success message
+      // Refresh projects list using Redux
+      if (user?.id) {
+        await dispatch(fetchProjects(user.id));
+      }
       
-      // Reset the form
-      form.reset();
-      handleFileDelete();
+      
+      // Navigate to the new project page
+      navigate(`/project/${projectId}`);
       
     } catch (error) {
       console.error("Error creating project:", error);

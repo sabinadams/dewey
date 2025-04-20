@@ -1,12 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppSelector } from '@/store/hooks';
 import { UserMenu } from '@/components/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from './ui/scroll-area';
 import { Button, buttonVariants } from './ui/button';
-import { createProject } from '@/store/slices/projectsSlice';
-import { useAuth } from '@clerk/clerk-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import {
@@ -25,7 +23,7 @@ interface NavItemProps {
   active?: boolean;
 }
 
-function NavItem({ to, label, imageSrc, active }: NavItemProps) {
+function NavItem({ to, label, imageSrc }: NavItemProps) {
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -86,14 +84,7 @@ function NavItem({ to, label, imageSrc, active }: NavItemProps) {
 export function Navigation() {
   const { isMac } = useAppSelector(state => state.system);
   const projects = useAppSelector(state => state.projects.items);
-  const dispatch = useAppDispatch();
-  const { userId } = useAuth();
   const navigate = useNavigate();
-  const handleCreateProject = () => {
-    if (userId) {
-      dispatch(createProject(userId));
-    }
-  };
 
   return (
     <aside 

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSignIn, useSignUp } from '@clerk/clerk-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from 'sonner';
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
@@ -26,6 +27,16 @@ export default function AuthPage() {
     setPassword('');
     setError('');
   }, [searchParams]);
+
+  // Show toast when error changes
+  useEffect(() => {
+    if (error) {
+      toast.error('Authentication Error', {
+        description: error,
+        duration: 5000,
+      });
+    }
+  }, [error]);
 
   // Handle OAuth redirect cleanup
   useEffect(() => {
@@ -114,11 +125,6 @@ export default function AuthPage() {
           <CardTitle className="text-2xl text-center">
             {isSignIn ? 'Sign In' : 'Sign Up'}
           </CardTitle>
-          {error && (
-            <CardDescription className="text-sm font-medium text-destructive">
-              {error}
-            </CardDescription>
-          )}
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">

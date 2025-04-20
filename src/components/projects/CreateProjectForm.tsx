@@ -14,11 +14,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { invoke } from '@tauri-apps/api/core'
 import { z } from 'zod'
 import { ControllerRenderProps } from 'react-hook-form'
 import { useAppSelector, useAppDispatch } from "@/store/hooks"
-import { fetchProjects } from "@/store/slices/projectsSlice"
+import { createProject, CreateProjectParams } from "@/store/slices/projectsSlice"
 import { useNavigate } from "react-router-dom"
 
 // Define the form schema to match the one in create-project.context.tsx
@@ -107,13 +106,22 @@ const CreateProjectForm = () => {
   };
 
   /**
-   * Convert a File to a base64 string
+   * Convert a File to a base64 string with the proper mime type prefix
    */
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () => {
+        const result = reader.result as string;
+        
+        // Make sure the result has the proper format: data:[mime-type];base64,[data]
+        // FileReader.readAsDataURL should already provide this format, but let's log to confirm
+        console.log("File type:", file.type);
+        console.log("Base64 result prefix:", result.substring(0, 50));
+        
+        resolve(result);
+      };
       reader.onerror = error => reject(error);
     });
   };
@@ -122,35 +130,40 @@ const CreateProjectForm = () => {
     try {
       setIsSubmitting(true);
       
-      // Create the project with or without a custom icon
-      const projectParams: Record<string, any> = {
+      // Create the project params object for Redux
+      const projectParams: CreateProjectParams = {
         name: data.name,
-        user_id: user?.id
+        user_id: user?.id || ''
       };
       
       // If there's a file to upload, add it to the project params
-      // The backend will use this to save a custom icon
-      // If not provided, the backend will generate a default icon
       if (currentFile) {
+        console.log("Custom icon detected, preparing for upload:", currentFile.name, currentFile.type);
+        
         // Convert file to base64 string for Rust backend
         const fileBase64 = await fileToBase64(currentFile);
+        console.log("Base64 prefix:", fileBase64.substring(0, 50), "...");
         
         // Add the custom icon data to the params
         projectParams.custom_icon_data = fileBase64;
+      } else {
+        console.log("No custom icon selected, backend will generate one");
       }
 
-      // Create the project in the database and save the icon in one operation
-      const projectId = await invoke<number>('create_project', projectParams);
+      console.log("Project params:", projectParams);
+      // Use the Redux thunk to create the project
+      const result = await dispatch(createProject(projectParams));
 
-      console.log("Project created with ID:", projectId);
+      console.log("Result:", result);
       
-      // Refresh projects list using Redux
-      if (user?.id) {
-        await dispatch(fetchProjects(user.id));
+      // TypeScript type narrowing
+      if (createProject.fulfilled.match(result)) {
+        // Extract projectId from the payload
+        const { projectId } = result.payload;
+        
+        // Navigate to the new project page
+        navigate(`/project/${projectId}`);
       }
-      
-      // Navigate to the new project page
-      navigate(`/project/${projectId}`);
       
     } catch (error) {
       console.error("Error creating project:", error);

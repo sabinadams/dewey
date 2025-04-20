@@ -30,16 +30,31 @@ export const fetchProjects = createAsyncThunk(
     }
 )
 
+// Define the CreateProjectParams interface
+export interface CreateProjectParams {
+    name: string
+    user_id: string
+    custom_icon_data?: string
+}
+
 export const createProject = createAsyncThunk(
     'projects/createProject',
-    async (userId: string, { dispatch }) => {
-        await invoke('create_project', {
-            name: 'New Project',
-            userId
+    async (params: CreateProjectParams) => {
+        // For Tauri commands, we need to use camelCase parameter names
+        const projectId = await invoke<number>('create_project', {
+            name: params.name,
+            userId: params.user_id, // Convert snake_case to camelCase for Tauri
+            customIconData: params.custom_icon_data // Convert snake_case to camelCase for Tauri
         });
+        
         // After creating, fetch the updated list
-        const projects = await invoke<Project[]>('get_user_projects', { userId });
-        return projects;
+        const projects = await invoke<Project[]>('get_user_projects', { userId: params.user_id });
+        
+        // Return both the project ID and the updated projects list
+        return {
+            projectId,
+            projects
+        };
     }
 )
 
@@ -76,7 +91,7 @@ export const projectsSlice = createSlice({
             })
             .addCase(createProject.fulfilled, (state, action) => {
                 state.isLoading = false
-                state.items = action.payload
+                state.items = action.payload.projects
                 state.error = null
             })
             .addCase(createProject.rejected, (state, action) => {

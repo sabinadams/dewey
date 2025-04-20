@@ -114,12 +114,6 @@ const CreateProjectForm = () => {
       reader.readAsDataURL(file);
       reader.onload = () => {
         const result = reader.result as string;
-        
-        // Make sure the result has the proper format: data:[mime-type];base64,[data]
-        // FileReader.readAsDataURL should already provide this format, but let's log to confirm
-        console.log("File type:", file.type);
-        console.log("Base64 result prefix:", result.substring(0, 50));
-        
         resolve(result);
       };
       reader.onerror = error => reject(error);
@@ -138,23 +132,15 @@ const CreateProjectForm = () => {
       
       // If there's a file to upload, add it to the project params
       if (currentFile) {
-        console.log("Custom icon detected, preparing for upload:", currentFile.name, currentFile.type);
-        
-        // Convert file to base64 string for Rust backend
         const fileBase64 = await fileToBase64(currentFile);
-        console.log("Base64 prefix:", fileBase64.substring(0, 50), "...");
-        
-        // Add the custom icon data to the params
         projectParams.custom_icon_data = fileBase64;
       } else {
         console.log("No custom icon selected, backend will generate one");
       }
 
-      console.log("Project params:", projectParams);
       // Use the Redux thunk to create the project
       const result = await dispatch(createProject(projectParams));
 
-      console.log("Result:", result);
       
       // TypeScript type narrowing
       if (createProject.fulfilled.match(result)) {

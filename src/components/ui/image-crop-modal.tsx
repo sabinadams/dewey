@@ -148,30 +148,8 @@ async function getCroppedImg(
   rotation = 0,
   fileName: string
 ): Promise<File> {
-  // Check if this is an SVG file
-  const isSvg = fileName.toLowerCase().endsWith('.svg') || 
-                imageSrc.includes('image/svg+xml');
+  // Since SVGs are handled in the component directly, this function now only handles raster images
   
-  // Special handling for SVGs - we need to preserve the vector data
-  if (isSvg) {
-    try {
-      // For SVGs, we'll use fetch to get the original SVG data
-      const response = await fetch(imageSrc);
-      const svgBlob = await response.blob();
-      
-      // Just return the original SVG with the original filename
-      // SVGs don't need to be cropped as they scale perfectly
-      return new File([svgBlob], fileName, {
-        type: 'image/svg+xml',
-        lastModified: Date.now(),
-      });
-    } catch (error) {
-      console.error('Error processing SVG:', error);
-      // If there's an error, fall back to the canvas approach
-    }
-  }
-  
-  // For raster images (or SVG fallback), use canvas approach
   const image = await createImage(imageSrc);
   
   // Use a larger intermediate canvas size for better quality

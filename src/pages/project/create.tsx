@@ -29,12 +29,13 @@ export default function CreateProjectPage() {
             // Check if it's an SVG
             const isSvg = file.name.toLowerCase().endsWith('.svg') || file.type === 'image/svg+xml';
             
-            // If it's SVG, we might want to skip cropping for better quality
-            if (isSvg && false) { // Set to true to skip cropper for SVGs
+            // If it's SVG, skip cropping and use the original file
+            if (isSvg) {
                 setFile(file);
                 const url = URL.createObjectURL(file);
                 setPreviewUrl(url);
             } else {
+                // For raster images, open the cropper
                 setSelectedFile(file);
                 setShowCropper(true);
             }

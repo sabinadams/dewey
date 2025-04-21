@@ -1,5 +1,11 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Database, Check, Sparkles, HelpCircle } from "lucide-react";
+import { Check, Sparkles, HelpCircle } from "lucide-react";
+import { 
+    SiPostgresql,
+    SiMysql,
+    SiMongodb,
+    SiSqlite
+} from '@icons-pack/react-simple-icons';
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
@@ -17,25 +23,25 @@ const databaseTypes = [
         id: "postgres",
         name: "PostgreSQL",
         description: "Connect to a PostgreSQL database",
-        icon: Database,
+        icon: () => <SiPostgresql className="h-5 w-5 text-primary" />,
     },
     {
         id: "mysql",
         name: "MySQL",
         description: "Connect to a MySQL database",
-        icon: Database,
+        icon: () => <SiMysql className="h-5 w-5 text-primary" />,
     },
     {
         id: "mongodb",
         name: "MongoDB",
         description: "Connect to a MongoDB database",
-        icon: Database,
+        icon: () => <SiMongodb className="h-5 w-5 text-primary" />,
     },
     {
         id: "sqlite",
         name: "SQLite",
         description: "Connect to a SQLite database",
-        icon: Database,
+        icon: () => <SiSqlite className="h-5 w-5 text-primary" />,
     },
 ]
 
@@ -150,7 +156,7 @@ export default function CreateConnectionForm() {
                                     </div>
                                 )}
                                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                                    <type.icon className="h-5 w-5 text-primary" />
+                                    {type.icon()}
                                 </div>
                                 <h3 className="font-medium">{type.name}</h3>
                                 <p className="text-sm text-muted-foreground">{type.description}</p>

@@ -3,7 +3,7 @@ use rand::{rngs::OsRng, RngCore};
 use std::path::PathBuf;
 use std::fs;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use tracing::{debug, error};
+use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
 use crate::error::AppError;
@@ -34,7 +34,7 @@ impl KeyManager {
         match self.get_key_from_keyring() {
             Ok(key) => {
                 debug!("Retrieved encryption key from system keyring");
-                return Ok(key);
+                Ok(key)
             }
             Err(e) => {
                 debug!("Could not retrieve key from keyring: {}", e);
@@ -42,14 +42,14 @@ impl KeyManager {
                 match self.get_key_from_file() {
                     Ok(key) => {
                         debug!("Retrieved encryption key from file");
-                        return Ok(key);
+                        Ok(key)
                     }
                     Err(e) => {
                         debug!("Could not retrieve key from file: {}", e);
                         // Generate and store a new key if none exists
                         let new_key = self.generate_new_key()?;
                         self.store_key(&new_key)?;
-                        return Ok(new_key);
+                        Ok(new_key)
                     }
                 }
             }
@@ -71,7 +71,7 @@ impl KeyManager {
 
     fn get_key_from_file(&self) -> Result<[u8; 32], AppError> {
         let key_str = fs::read_to_string(&self.key_file_path)
-            .map_err(|e| AppError::Io(e))?;
+            .map_err(AppError::Io)?;
         
         let key_bytes = BASE64.decode(key_str.trim())
             .map_err(|e| AppError::KeyGeneration(e.to_string()))?;
@@ -94,18 +94,18 @@ impl KeyManager {
         match self.keyring_entry.set_password(&key_str) {
             Ok(_) => {
                 debug!("Stored encryption key in system keyring");
-                return Ok(());
+                Ok(())
             }
             Err(e) => {
                 debug!("Failed to store key in keyring, falling back to file: {}", e);
                 // Fall back to file storage
                 if let Some(parent) = self.key_file_path.parent() {
                     fs::create_dir_all(parent)
-                        .map_err(|e| AppError::Io(e))?;
+                        .map_err(AppError::Io)?;
                 }
                 
                 fs::write(&self.key_file_path, key_str)
-                    .map_err(|e| AppError::Io(e))?;
+                    .map_err(AppError::Io)?;
                 
                 debug!("Stored encryption key in file");
                 Ok(())

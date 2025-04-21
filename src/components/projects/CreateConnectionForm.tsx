@@ -130,7 +130,7 @@ export default function CreateConnectionForm() {
                             icon={Sparkles} 
                             size={20}
                         />
-                        Get Help
+                        Dewey
                     </TabsTrigger>
                 </TabsList>
 
@@ -257,10 +257,10 @@ export default function CreateConnectionForm() {
                                     <HelpCircle className="h-6 w-6 text-primary" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-medium">AI Connection Helper</h3>
+                                    <h3 className="font-medium">Let Dewey help you connect to your database</h3>
                                     <p className="text-sm text-muted-foreground">
                                         Describe your database setup or ask questions about connecting to your database. 
-                                        Our AI helper will guide you through the process.
+                                        Dewey will guide you through the process.
                                     </p>
                                 </div>
                             </div>

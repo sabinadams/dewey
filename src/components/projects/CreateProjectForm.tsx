@@ -21,6 +21,7 @@ import { createProject, CreateProjectParams } from "@/store/slices/projectsSlice
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
+import CreateConnectionForm from "./CreateConnectionForm"
 // Define the form schema to match the one in create-project.context.tsx
 const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -39,14 +40,14 @@ const CreateProjectForm = () => {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const user = useAppSelector(state => 
+  const user = useAppSelector(state =>
     state.auth.user
   );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const { form } = useCreateProjectContext();
-  
+
   // Clean up preview URL when component unmounts
   useEffect(() => {
     return () => {
@@ -109,18 +110,18 @@ const CreateProjectForm = () => {
   const onSubmit = form.handleSubmit(async (data: FormData) => {
     try {
       setIsSubmitting(true);
-      
+
       // Create a loading toast that will be updated with the result
       const loadingToastId = toast.loading('Creating project...', {
         duration: Infinity, // Don't auto-dismiss
       });
-      
+
       // Create the project params object for Redux
       const projectParams: CreateProjectParams = {
         name: data.name,
         user_id: user?.id || ''
       };
-      
+
       // If there's a file to upload, add it to the project params
       if (currentFile) {
         const fileBase64 = await fileToBase64(currentFile);
@@ -131,34 +132,34 @@ const CreateProjectForm = () => {
 
       // Use the Redux thunk to create the project
       const result = await dispatch(createProject(projectParams));
-      
+
       // TypeScript type narrowing
       if (createProject.fulfilled.match(result)) {
         // Extract projectId from the payload
         const { projectId } = result.payload;
-        
+
         // Dismiss the loading toast
         toast.dismiss(loadingToastId);
-        
+
         // Create a new success toast with standard duration
         toast.success('Project created successfully!', {
           description: `Project "${data.name}" has been created`,
           duration: 4000, // Standard 4 second duration
         });
-        
+
         // Navigate to the new project page
         navigate(`/project/${projectId}`);
       } else {
         // Dismiss the loading toast
         toast.dismiss(loadingToastId);
-        
+
         // Create a new error toast with standard duration
         toast.error('Failed to create project', {
           description: result.error?.message || 'An unknown error occurred',
           duration: 5000, // Slightly longer for errors
         });
       }
-      
+
     } catch (error) {
       console.error("Error creating project:", error);
       // Show error toast with the error message
@@ -186,72 +187,77 @@ const CreateProjectForm = () => {
 
       <Form {...form}>
         <form onSubmit={onSubmit}>
-          <Card className="p-6">
-            <div className="flex flex-row gap-6">
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }: { field: ControllerRenderProps<FormData, "name"> }) => (
-                    <FormItem>
-                      <FormLabel>Project Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="My Project" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This will be the display name for your project
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="flex flex-col gap-2 justify-center">
-                {/* Don't use FormField for file upload - manage directly */}
-                <FileUpload>
-                  {currentFile && previewUrl ? (
-                    <FileUploadPreview
-                      fileName={currentFile.name}
-                      fileUrl={previewUrl}
-                      fileType={currentFile.type}
-                      onDelete={handleFileDelete}
-                      size="icon"
-                    />
-                  ) : (
-                    <>
-                      <FileUploadTrigger
-                        inputId="compact-file"
-                        className="p-4"
-                      >
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <FileUploadIcon className="h-5 w-5" />
-                            <span className="text-sm font-medium text-foreground">
-                              Click to upload project icon
-                            </span>
-                          </div>
-                        </div>
-                      </FileUploadTrigger>
+          <div className="flex flex-col gap-6">
+            <Card className="p-6">
+              <div className="flex flex-row gap-6">
+                <div className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }: { field: ControllerRenderProps<FormData, "name"> }) => (
+                      <FormItem>
+                        <FormLabel>Project Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="My Project" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          This will be the display name for your project
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                      <FileUploadInput
-                        key={fileInputKey}
-                        ref={fileInputRef}
-                        id="compact-file"
-                        onChange={handleFileChange}
-                        accept="image/*,.svg"
+                <div className="flex flex-col gap-2 justify-center">
+                  {/* Don't use FormField for file upload - manage directly */}
+                  <FileUpload>
+                    {currentFile && previewUrl ? (
+                      <FileUploadPreview
+                        fileName={currentFile.name}
+                        fileUrl={previewUrl}
+                        fileType={currentFile.type}
+                        onDelete={handleFileDelete}
+                        size="icon"
                       />
-                    </>
-                  )}
-                </FileUpload>
-              </div>
-            </div>
-          </Card>
+                    ) : (
+                      <>
+                        <FileUploadTrigger
+                          inputId="compact-file"
+                          className="p-4"
+                        >
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <FileUploadIcon className="h-5 w-5" />
+                              <span className="text-sm font-medium text-foreground">
+                                Click to upload project icon
+                              </span>
+                            </div>
+                          </div>
+                        </FileUploadTrigger>
 
-          <div className="mt-6 flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Project"}
-            </Button>
+                        <FileUploadInput
+                          key={fileInputKey}
+                          ref={fileInputRef}
+                          id="compact-file"
+                          onChange={handleFileChange}
+                          accept="image/*,.svg"
+                        />
+                      </>
+                    )}
+                  </FileUpload>
+                </div>
+              </div>
+            </Card>
+
+            <CreateConnectionForm />
+
+            <div className="mt-6 flex justify-end">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Project"}
+              </Button>
+            </div>
+
           </div>
         </form>
       </Form>

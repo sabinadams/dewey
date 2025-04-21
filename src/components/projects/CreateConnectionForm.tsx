@@ -103,7 +103,19 @@ export default function CreateConnectionForm() {
                     You will be able to add more connections later
                 </p>
             </div>
-            <Tabs defaultValue="standard" value={activeTab} onValueChange={(value) => setActiveTab(value as "standard" | "url")}>
+            <Tabs defaultValue="standard" value={activeTab} onValueChange={(value) => {
+                setActiveTab(value as "standard" | "url");
+                // Clear form fields when switching tabs
+                form.setValue("host", "");
+                form.setValue("port", "");
+                form.setValue("username", "");
+                form.setValue("password", "");
+                form.setValue("database", "");
+                // Clear connection string when switching to standard
+                if (value === "standard") {
+                    setConnectionString("");
+                }
+            }}>
                 <TabsList className="w-full">
                     <TabsTrigger value="standard">Standard Connection</TabsTrigger>
                     <TabsTrigger value="url">Connection URL</TabsTrigger>

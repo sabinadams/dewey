@@ -79,7 +79,7 @@ impl ConnectionRepository {
             "#
         )
         .bind(&connection.connection_name)
-        .bind(&connection.project_id)
+        .bind(connection.project_id)
         .bind(&connection.db_type)
         .bind(encrypt_string(&connection.host)?)
         .bind(encrypt_string(&connection.port)?)

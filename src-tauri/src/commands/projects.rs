@@ -78,19 +78,45 @@ pub async fn create_project(
 
     // Create the project with the icon path
     let project_repo = ProjectRepository::new(state.db.clone());
+    let connection_repo = ConnectionRepository::new(state.db.clone());
 
-    project_repo
+    // Create the project first
+    let project_id = project_repo
         .create(
             &name,
             &user_id,
             Some(&final_icon_path),
-            initial_connection,
         )
         .await
         .map_err(|e| {
             error!("Failed to create project: {}", e);
             e.to_string()
-        })
+        })?;
+
+    // If an initial connection was provided, create it
+    if let Some(initial_connection) = initial_connection {
+        info!("Creating initial connection for project {}", project_id);
+        let connection = Connection {
+            id: 0,
+            connection_name: initial_connection.connection_name,
+            project_id,
+            db_type: initial_connection.db_type,
+            host: initial_connection.host,
+            port: initial_connection.port,
+            username: initial_connection.username,
+            password: initial_connection.password,
+            database: initial_connection.database,
+            created_at: None,
+            updated_at: None,
+        };
+
+        connection_repo.create(&connection).await.map_err(|e| {
+            error!("Failed to create initial connection: {}", e);
+            e.to_string()
+        })?;
+    }
+
+    Ok(project_id)
 }
 
 /// Command to update a project's name

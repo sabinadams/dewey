@@ -124,7 +124,7 @@ export default function CreateConnectionForm() {
                 <TabsList className="w-full">
                     <TabsTrigger value="standard">Standard Connection</TabsTrigger>
                     <TabsTrigger value="url">Connection URL</TabsTrigger>
-                    <TabsTrigger value="ai">
+                    <TabsTrigger value="ai" disabled>
                         <GradientIcon 
                             icon={Sparkles} 
                             size={20}

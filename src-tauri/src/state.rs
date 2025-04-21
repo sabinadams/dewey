@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
-use crate::error::AppError;
+use crate::types::AppResult;
 use crate::services::storage::LocalStorage;
 use crate::utils;
 use crate::constants;
@@ -19,7 +19,7 @@ pub struct AppState {
 }
 
 /// Initialize the application state by setting up the database
-pub async fn initialize_app_state() -> Result<AppState, AppError> {
+pub async fn initialize_app_state() -> AppResult<AppState> {
     // Get app directory
     let app_dir = utils::get_app_dir()?;
     

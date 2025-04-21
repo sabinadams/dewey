@@ -5,6 +5,7 @@ use dewey_lib::{
     commands,
     state,
     utils,
+    services,
 };
 use tracing::{info, error};
 
@@ -15,6 +16,10 @@ async fn main() {
     // Initialize logging first
     utils::setup_logging();
     info!("Starting Dewey application...");
+
+    // Initialize encryption key at startup
+    services::encryption::initialize_encryption_key()
+        .expect("Failed to initialize encryption key");
 
     // Initialize app state
     let app_state = state::initialize_app_state().await.unwrap_or_else(|e| {

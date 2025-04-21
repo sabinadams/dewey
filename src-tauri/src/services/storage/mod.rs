@@ -1,4 +1,4 @@
-use crate::error::AppResult;
+use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
 

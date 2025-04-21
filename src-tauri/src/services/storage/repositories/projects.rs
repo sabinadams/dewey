@@ -1,4 +1,4 @@
-use crate::error::AppResult;
+use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;

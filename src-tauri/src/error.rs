@@ -26,9 +26,13 @@ pub enum AppError {
 
     #[error("Unknown error: {0}")]
     Unknown(String),
-}
 
-pub type AppResult<T> = Result<T, AppError>;
+    #[error("Keyring error: {0}")]
+    Keyring(String),
+
+    #[error("Key generation error: {0}")]
+    KeyGeneration(String),
+}
 
 impl From<image::ImageError> for AppError {
     fn from(err: image::ImageError) -> Self {

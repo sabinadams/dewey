@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 import { Card } from '@/components/ui/card';
 import { useAppSelector } from '@/store/hooks';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,24 +14,18 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isLoading: projectsLoading } = useAppSelector(state => state.projects);
 
   return (
-    <div className="flex flex-1 bg-background text-foreground">
-      {/* Sidebar Navigation - Always visible */}
+    <div className="flex flex-1">
       <Navigation />
-
-      {/* Main Content Area */}
-      <main className="flex flex-col flex-1 p-2 pl-0">
-        <Card className={cn(
-          "flex flex-col flex-1",
-          "bg-card",
-          "text-card-foreground",
-          "p-6"
-        )}>
+      <main className="flex-1 p-2 pl-0">
+        <Card className="h-full p-6">
           {projectsLoading ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="h-full grid place-items-center">
               <LoadingSpinner />
             </div>
           ) : (
-            children
+            <ScrollArea className="h-full">
+              {children}
+            </ScrollArea>
           )}
         </Card>
       </main>

@@ -129,7 +129,12 @@ export default function CreateConnectionForm() {
               </Card>
             ))}
           </div>
-          
+        <h2>Spacer</h2>
+        <h2>Spacer</h2>
+        <h2>Spacer</h2>
+        <h2>Spacer</h2>
+        <h2>Spacer</h2>
+        <h2>Spacer</h2>
           {/* Standard connection fields will be added here */}
           {watchDatabaseType && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

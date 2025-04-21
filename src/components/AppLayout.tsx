@@ -17,13 +17,13 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-1 h-screen bg-background text-foreground">
       <Navigation />
       <main className="flex-1 p-2 pl-0 h-full overflow-hidden">
-        <Card className="h-full p-6 bg-card text-card-foreground">
+        <Card className="h-full bg-card text-card-foreground">
           {projectsLoading ? (
             <div className="h-full grid place-items-center">
               <LoadingSpinner />
             </div>
           ) : (
-            <ScrollArea className="h-full w-full">
+            <ScrollArea className="h-full w-full px-6">
               {children}
             </ScrollArea>
           )}

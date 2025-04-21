@@ -1,14 +1,55 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Database, Check, Brain, HelpCircle } from "lucide-react";
+import { LucideIcon } from "lucide-react";
+import { Database, Check, Sparkles, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { useState } from "react";
+import React from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ConnectionString } from "connection-string";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+interface GradientIconProps {
+  icon: LucideIcon;
+  size?: number;
+  className?: string;
+  gradient?: string; // Tailwind gradient classes
+}
+
+export const GradientIcon: React.FC<GradientIconProps> = ({
+  icon: Icon,
+  size = 24,
+  className = "",
+  gradient = "from-purple-500 via-pink-500 to-red-500",
+}) => {
+  const id = React.useId();
+  
+  return (
+    <div className={cn("inline-block", className)}>
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id={`gradient-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgb(168, 85, 247)" />
+            <stop offset="50%" stopColor="rgb(236, 72, 153)" />
+            <stop offset="100%" stopColor="rgb(239, 68, 68)" />
+          </linearGradient>
+          <mask id={`mask-${id}`}>
+            <Icon size={24} className="text-white" />
+          </mask>
+        </defs>
+        <rect 
+          width="24" 
+          height="24" 
+          fill={`url(#gradient-${id})`}
+          mask={`url(#mask-${id})`}
+        />
+      </svg>
+    </div>
+  );
+};
 
 const databaseTypes = [
     {
@@ -122,7 +163,10 @@ export default function CreateConnectionForm() {
                 <TabsList className="w-full">
                     <TabsTrigger value="standard">Standard Connection</TabsTrigger>
                     <TabsTrigger value="url">Connection URL</TabsTrigger>
-                    <TabsTrigger value="ai">Get Help</TabsTrigger>
+                    <TabsTrigger value="ai">
+                        <GradientIcon icon={Sparkles} gradient="from-purple-500 via-pink-500 to-red-500" size={20}/>
+                        Get Help
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="standard" className="space-y-6 pt-4">

@@ -16,6 +16,11 @@ const formSchema = z.object({
   username: z.string().optional(),
   password: z.string().optional(),
   database: z.string().optional(),
+
+  // AI connection details
+  aiApiKey: z.string().optional(),
+  aiModel: z.string().optional(),
+  aiEndpoint: z.string().optional(),
 })
 
 // Export the schema for use in other components
@@ -44,6 +49,9 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       username: "",
       password: "",
       database: "",
+      aiApiKey: "",
+      aiModel: "",
+      aiEndpoint: "",
     },
   })
 

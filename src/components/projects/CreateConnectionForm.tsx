@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Database, Check } from "lucide-react";
+import { Database, Check, Brain, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
@@ -7,6 +7,8 @@ import { useState } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ConnectionString } from "connection-string";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const databaseTypes = [
     {
@@ -77,8 +79,9 @@ function parseConnectionString(connectionString: string) {
 export default function CreateConnectionForm() {
     const { form } = useCreateProjectContext();
     const watchDatabaseType = form.watch("databaseType");
-    const [activeTab, setActiveTab] = useState<"standard" | "url">("standard");
+    const [activeTab, setActiveTab] = useState<"standard" | "url" | "ai">("standard");
     const [connectionString, setConnectionString] = useState("");
+    const [aiQuestion, setAiQuestion] = useState("");
 
     // Handle connection string changes
     const handleConnectionStringChange = (value: string) => {
@@ -104,7 +107,7 @@ export default function CreateConnectionForm() {
                 </p>
             </div>
             <Tabs defaultValue="standard" value={activeTab} onValueChange={(value) => {
-                setActiveTab(value as "standard" | "url");
+                setActiveTab(value as "standard" | "url" | "ai");
                 // Clear form fields when switching tabs
                 form.setValue("host", "");
                 form.setValue("port", "");
@@ -119,6 +122,7 @@ export default function CreateConnectionForm() {
                 <TabsList className="w-full">
                     <TabsTrigger value="standard">Standard Connection</TabsTrigger>
                     <TabsTrigger value="url">Connection URL</TabsTrigger>
+                    <TabsTrigger value="ai">Get Help</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="standard" className="space-y-6 pt-4">
@@ -234,6 +238,51 @@ export default function CreateConnectionForm() {
                         </FormControl>
                         <FormMessage />
                     </FormItem>
+                </TabsContent>
+
+                <TabsContent value="ai" className="pt-4">
+                    <Card className="p-6">
+                        <div className="flex flex-col gap-6">
+                            <div className="flex items-start gap-4">
+                                <div className="h-10 w-10 rounded-full bg-primary/10 p-2">
+                                    <HelpCircle className="h-6 w-6 text-primary" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-medium">AI Connection Helper</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Describe your database setup or ask questions about connecting to your database. 
+                                        Our AI helper will guide you through the process.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <FormItem>
+                                    <FormLabel>What do you need help with?</FormLabel>
+                                    <FormControl>
+                                        <Textarea 
+                                            placeholder="E.g., How do I find my PostgreSQL connection details? What port does MySQL typically use?"
+                                            value={aiQuestion}
+                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAiQuestion(e.target.value)}
+                                            className="min-h-[100px]"
+                                        />
+                                    </FormControl>
+                                </FormItem>
+
+                                <div className="flex justify-end">
+                                    <Button 
+                                        type="button"
+                                        onClick={() => {
+                                            // TODO: Implement AI helper functionality
+                                            console.log("AI helper question:", aiQuestion);
+                                        }}
+                                    >
+                                        Get Help
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
                 </TabsContent>
             </Tabs>
         </>

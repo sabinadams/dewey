@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { ImageCropModal } from "@/components/ui/image-crop-modal"
 import { FileUpload, FileUploadIcon, FileUploadInput, FileUploadPreview, FileUploadTrigger } from "@/components/ui/file-upload"
 import { useRef, useState, useEffect } from "react"
-import { useCreateProjectContext } from "@/contexts/create-project.context"
+import { useCreateProjectContext, CreateProjectFormData } from "@/contexts/create-project.context"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -14,22 +14,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { z } from 'zod'
-import { ControllerRenderProps } from 'react-hook-form'
 import { useAppSelector, useAppDispatch } from "@/store/hooks"
 import { createProject, CreateProjectParams } from "@/store/slices/projectsSlice"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
-// Define the form schema to match the one in create-project.context.tsx
-const formSchema = z.object({
-  name: z.string().min(1, "Project name is required"),
-  icon: z.string().optional(),
-})
-
-// Create a type for the form data
-type FormData = z.infer<typeof formSchema>
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -107,7 +97,7 @@ const CreateProjectForm = () => {
     setSelectedFile(null);
   };
 
-  const onSubmit = form.handleSubmit(async (data: FormData) => {
+  const onSubmit = form.handleSubmit(async (data: CreateProjectFormData) => {
     try {
       setIsSubmitting(true);
 
@@ -194,7 +184,7 @@ const CreateProjectForm = () => {
                   <FormField
                     control={form.control}
                     name="name"
-                    render={({ field }: { field: ControllerRenderProps<FormData, "name"> }) => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Project Name</FormLabel>
                         <FormControl>

@@ -17,6 +17,7 @@ async fn main() {
     utils::setup_logging();
     info!("Starting Dewey application...");
 
+    info!("Initializing encryption key...");
     // Initialize encryption key at startup
     services::encryption::initialize_encryption_key()
         .expect("Failed to initialize encryption key");

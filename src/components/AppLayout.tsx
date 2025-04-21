@@ -14,10 +14,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isLoading: projectsLoading } = useAppSelector(state => state.projects);
 
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 bg-background text-foreground">
       <Navigation />
       <main className="flex-1 p-2 pl-0">
-        <Card className="h-full p-6">
+        <Card className="h-full p-6 bg-card text-card-foreground">
           {projectsLoading ? (
             <div className="h-full grid place-items-center">
               <LoadingSpinner />

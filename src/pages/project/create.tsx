@@ -7,7 +7,7 @@ export default function CreateProjectPage() {
         <CenteredLayout>
            <div className="flex flex-col gap-1">
                 <h1 className="text-2xl font-bold">Create Project</h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted-foreground">
                     Set up a new database project with AI-enhanced capabilities
                 </p>
             </div>

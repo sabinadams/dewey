@@ -99,8 +99,8 @@ export default function CreateConnectionForm() {
         <>
             <div className="flex flex-col gap-1">
                 <h2 className="text-xl font-semibold">Initial Database Connection</h2>
-                <p className="text-sm text-zinc-500">
-                    You will be able to add more connections later
+                <p className="text-sm text-muted-foreground">
+                    You can add more connections to this project later
                 </p>
             </div>
             <Tabs defaultValue="standard" value={activeTab} onValueChange={(value) => {

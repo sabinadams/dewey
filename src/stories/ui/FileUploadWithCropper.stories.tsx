@@ -57,7 +57,7 @@ const FileUploadWithCropper = ({
   return (
     <div className="w-full max-w-xl mx-auto">
       <h2 className="text-xl font-bold mb-2">{title}</h2>
-      <p className="text-sm text-zinc-500 mb-4">{description}</p>
+      <p className="text-sm text-muted-foreground mb-4">{description}</p>
 
       {selectedFile && showCropper && (
         <ImageCropModal

@@ -256,37 +256,87 @@ export default function CreateConnectionForm() {
                                     <HelpCircle className="h-6 w-6 text-primary" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-medium">Let Dewey help you connect to your database</h3>
+                                    <h3 className="font-medium">Let Dewey help you connect</h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Describe your database setup or ask questions about connecting to your database. 
-                                        Dewey will guide you through the process.
+                                        Describe your database setup in plain English, paste connection errors, or upload config files. 
+                                        Dewey will help you fill out the connection details automatically.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <FormItem>
-                                    <FormLabel>What do you need help with?</FormLabel>
+                                    <FormLabel>Tell Dewey about your database</FormLabel>
                                     <FormControl>
                                         <Textarea 
-                                            placeholder="E.g., How do I find my PostgreSQL connection details? What port does MySQL typically use?"
+                                            placeholder="Examples:
+- I want to connect to my local Postgres database running on port 5432
+- I'm getting this error: 'connection refused on port 3306'
+- I have a MongoDB Atlas cluster and here's my connection string...
+- My database is running in Docker at localhost:27017"
                                             value={aiQuestion}
-                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAiQuestion(e.target.value)}
-                                            className="min-h-[100px]"
+                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                setAiQuestion(e.target.value);
+                                                // TODO: Implement real-time suggestions
+                                            }}
+                                            className="min-h-[120px]"
                                         />
                                     </FormControl>
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Dewey will analyze your input and help fill out the connection details
+                                    </p>
                                 </FormItem>
 
-                                <div className="flex justify-end">
+                                <div className="flex flex-col gap-4 p-4 bg-muted/50 rounded-lg">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Sparkles className="h-4 w-4" />
+                                        <span>Dewey's suggestions will appear here</span>
+                                    </div>
+                                    {/* TODO: Add real-time suggestions component */}
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <Button 
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            // TODO: Implement file upload for config files
+                                        }}
+                                    >
+                                        Upload Config File
+                                    </Button>
                                     <Button 
                                         type="button"
                                         onClick={() => {
-                                            // TODO: Implement AI helper functionality
-                                            console.log("AI helper question:", aiQuestion);
+                                            // TODO: Implement AI processing
+                                            console.log("Processing:", aiQuestion);
                                         }}
                                     >
-                                        Get Help
+                                        Let Dewey Help
                                     </Button>
+                                </div>
+                            </div>
+
+                            {/* Show detected connection details */}
+                            <div className="border rounded-lg p-4">
+                                <h4 className="text-sm font-medium mb-3">Detected Connection Details</h4>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground">Type:</span>
+                                        <span className="ml-2">{form.watch("databaseType") || "Not detected"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Host:</span>
+                                        <span className="ml-2">{form.watch("host") || "Not detected"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Port:</span>
+                                        <span className="ml-2">{form.watch("port") || "Not detected"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Database:</span>
+                                        <span className="ml-2">{form.watch("database") || "Not detected"}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

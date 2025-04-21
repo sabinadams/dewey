@@ -67,7 +67,6 @@ export const CustomGradient: Story = {
     size: 32,
     gradient: {
       from: "rgb(34, 197, 94)", // green-500
-      via: "rgb(59, 130, 246)", // blue-500
       to: "rgb(139, 92, 246)"   // violet-500
     }
   }
@@ -124,23 +123,21 @@ export const GradientVariations: Story = {
   decorators: [
     (Story) => (
       <div className="flex gap-4">
-        {/* Default - Purple to Rose */}
+        {/* Purple to Rose */}
         <GradientIcon 
           icon={Heart} 
           size={32} 
           gradient={{
             from: "rgb(192, 132, 252)", // purple-400
-            via: "rgb(244, 114, 182)", // pink-400
             to: "rgb(251, 113, 133)"  // rose-400
           }}
         />
-        {/* Emerald to Sky */}
+        {/* Emerald to Blue */}
         <GradientIcon 
           icon={Heart} 
           size={32} 
           gradient={{
             from: "rgb(52, 211, 153)", // emerald-400
-            via: "rgb(56, 189, 248)", // sky-400
             to: "rgb(96, 165, 250)"  // blue-400
           }}
         />
@@ -153,13 +150,12 @@ export const GradientVariations: Story = {
             to: "rgb(251, 146, 60)"   // orange-400
           }}
         />
-        {/* Indigo to Violet */}
+        {/* Indigo to Fuchsia */}
         <GradientIcon 
           icon={Heart} 
           size={32} 
           gradient={{
             from: "rgb(129, 140, 248)", // indigo-400
-            via: "rgb(167, 139, 250)", // violet-400
             to: "rgb(232, 121, 249)"   // fuchsia-400
           }}
         />
@@ -173,13 +169,12 @@ export const VibrantGradients: Story = {
   decorators: [
     (Story) => (
       <div className="flex gap-4">
-        {/* Teal to Cyan */}
+        {/* Teal to Sky */}
         <GradientIcon 
           icon={Star} 
           size={32} 
           gradient={{
             from: "rgb(45, 212, 191)", // teal-400
-            via: "rgb(34, 211, 238)", // cyan-400
             to: "rgb(56, 189, 248)"   // sky-400
           }}
         />
@@ -198,7 +193,6 @@ export const VibrantGradients: Story = {
           size={32} 
           gradient={{
             from: "rgb(250, 204, 21)", // yellow-400
-            via: "rgb(251, 146, 60)",  // orange-400
             to: "rgb(248, 113, 113)"   // red-400
           }}
         />
@@ -227,7 +221,6 @@ export const PastelGradients: Story = {
           size={32} 
           gradient={{
             from: "rgb(153, 246, 228)", // teal-200
-            via: "rgb(196, 231, 252)", // light-blue-200
             to: "rgb(191, 219, 254)"   // blue-200
           }}
         />
@@ -246,7 +239,6 @@ export const PastelGradients: Story = {
           size={32} 
           gradient={{
             from: "rgb(254, 240, 138)", // yellow-200
-            via: "rgb(253, 224, 71)",   // yellow-300
             to: "rgb(254, 215, 170)"    // orange-200
           }}
         />

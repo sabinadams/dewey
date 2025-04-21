@@ -46,7 +46,7 @@ function RoutesGuard() {
   }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
 
   // Handle loading state - only for auth, not for projects
-  const { items: projects, isLoading: projectsLoading } = useAppSelector(state => state.projects);
+  const { items: projects } = useAppSelector(state => state.projects);
   
   // Show loading spinner for auth loading only
   if (isLoading || !isAuthLoaded || !isUserLoaded) {

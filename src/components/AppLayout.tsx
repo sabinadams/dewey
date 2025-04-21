@@ -1,5 +1,4 @@
 import { Navigation } from '@/components/Navigation';
-import { cn } from "@/lib/utils"
 import { Card } from '@/components/ui/card';
 import { useAppSelector } from '@/store/hooks';
 import LoadingSpinner from '@/components/LoadingSpinner';

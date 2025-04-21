@@ -6,7 +6,6 @@ import {
   Star, 
   Sun, 
   Moon, 
-  Github,
   CircleDot,
   Activity,
   Zap
@@ -19,14 +18,13 @@ const meta: Meta<typeof GradientIcon> = {
   argTypes: {
     icon: {
       control: "select",
-      options: ["Sparkles", "Heart", "Star", "Sun", "Moon", "Github", "CircleDot", "Activity", "Zap"],
+      options: ["Sparkles", "Heart", "Star", "Sun", "Moon", "CircleDot", "Activity", "Zap"],
       mapping: {
         Sparkles,
         Heart,
         Star,
         Sun,
         Moon,
-        Github,
         CircleDot,
         Activity,
         Zap
@@ -87,14 +85,13 @@ export const TwoColorGradient: Story = {
 // Grid of different icons with the same gradient
 export const IconGrid: Story = {
   decorators: [
-    (Story) => (
+    () => (
       <div className="grid grid-cols-3 gap-4">
         <GradientIcon icon={Sparkles} size={32} />
         <GradientIcon icon={Heart} size={32} />
         <GradientIcon icon={Star} size={32} />
         <GradientIcon icon={Sun} size={32} />
         <GradientIcon icon={Moon} size={32} />
-        <GradientIcon icon={Github} size={32} />
         <GradientIcon icon={CircleDot} size={32} />
         <GradientIcon icon={Activity} size={32} />
         <GradientIcon icon={Zap} size={32} />
@@ -106,7 +103,7 @@ export const IconGrid: Story = {
 // Size comparison
 export const SizeComparison: Story = {
   decorators: [
-    (Story) => (
+    () => (
       <div className="flex items-end gap-4">
         <GradientIcon icon={Star} size={16} />
         <GradientIcon icon={Star} size={24} />
@@ -121,7 +118,7 @@ export const SizeComparison: Story = {
 // Different gradient examples
 export const GradientVariations: Story = {
   decorators: [
-    (Story) => (
+    () => (
       <div className="flex gap-4">
         {/* Purple to Rose */}
         <GradientIcon 
@@ -167,7 +164,7 @@ export const GradientVariations: Story = {
 // Modern Vibrant Examples
 export const VibrantGradients: Story = {
   decorators: [
-    (Story) => (
+    () => (
       <div className="flex gap-4">
         {/* Teal to Sky */}
         <GradientIcon 
@@ -213,7 +210,7 @@ export const VibrantGradients: Story = {
 // Modern Pastel Examples
 export const PastelGradients: Story = {
   decorators: [
-    (Story) => (
+    () => (
       <div className="flex gap-4">
         {/* Teal to Blue */}
         <GradientIcon 

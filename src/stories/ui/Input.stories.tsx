@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Search, Mail, Lock, User, Calendar } from "lucide-react";
+import { Search, Mail, Lock } from "lucide-react";
 
 const meta: Meta<typeof Input> = {
   title: "UI/Input",

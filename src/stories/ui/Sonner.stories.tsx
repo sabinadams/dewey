@@ -7,7 +7,6 @@ import {
   AlertCircle, 
   Info, 
   Ban,
-  Loader2 
 } from "lucide-react";
 
 const meta: Meta<typeof Toaster> = {

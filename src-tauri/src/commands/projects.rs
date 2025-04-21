@@ -1,11 +1,12 @@
-use crate::services::storage::repositories::projects::{Project, ProjectRepository};
-use crate::services::storage::icon::IconGenerator;
-use crate::AppState;
-use crate::utils;
 use crate::constants;
-use tauri::State;
-use tracing::{info, error};
+use crate::services::storage::icon::IconGenerator;
+use crate::services::storage::repositories::connections::{Connection, ConnectionRepository};
+use crate::services::storage::repositories::projects::{Project, ProjectRepository};
+use crate::utils;
+use crate::AppState;
 use blake3;
+use tauri::State;
+use tracing::{error, info};
 
 /// Command to fetch all projects for a user
 ///
@@ -17,15 +18,13 @@ pub async fn get_user_projects(
     state: State<'_, AppState>,
 ) -> Result<Vec<Project>, String> {
     info!("Fetching projects for user: {}", user_id);
-    
+
     let project_repo = ProjectRepository::new(state.db.clone());
-    
-    project_repo.get_by_user(&user_id)
-        .await
-        .map_err(|e| {
-            error!("Failed to fetch projects: {}", e);
-            e.to_string()
-        })
+
+    project_repo.get_by_user(&user_id).await.map_err(|e| {
+        error!("Failed to fetch projects: {}", e);
+        e.to_string()
+    })
 }
 
 /// Command to create a new project
@@ -41,22 +40,23 @@ pub async fn create_project(
     name: String,
     user_id: String,
     custom_icon_data: Option<String>,
+    initial_connection: Option<Connection>,
     state: State<'_, AppState>,
 ) -> Result<i64, String> {
     info!("Creating new project '{}' for user: {}", name, user_id);
-    
+
     // Create the icon generator
-    let icon_generator = IconGenerator::new()
-        .map_err(|e| {
-            error!("Failed to create icon generator: {}", e);
-            e.to_string()
-        })?;
-    
+    let icon_generator = IconGenerator::new().map_err(|e| {
+        error!("Failed to create icon generator: {}", e);
+        e.to_string()
+    })?;
+
     let final_icon_path = if let Some(icon_data) = custom_icon_data {
         info!("Using custom icon for project");
-        
+
         // Use the helper function to save the custom icon
-        icon_generator.save_custom_icon(&icon_data, &name, &user_id)
+        icon_generator
+            .save_custom_icon(&icon_data, &name, &user_id)
             .map_err(|e| {
                 error!("Failed to save custom icon: {}", e);
                 e.to_string()
@@ -64,10 +64,10 @@ pub async fn create_project(
     } else {
         // Generate a default icon
         info!("Generating default icon for project");
-        
+
         // Generate a unique hash for the icon
         let hash = blake3::hash(utils::generate_unique_hash(&[&name, &user_id]).as_bytes());
-        
+
         icon_generator
             .generate_and_save(hash.as_bytes())
             .map_err(|e| {
@@ -75,11 +75,17 @@ pub async fn create_project(
                 e.to_string()
             })?
     };
-    
+
     // Create the project with the icon path
     let project_repo = ProjectRepository::new(state.db.clone());
-    
-    project_repo.create(&name, &user_id, Some(&final_icon_path))
+
+    project_repo
+        .create(
+            &name,
+            &user_id,
+            Some(&final_icon_path),
+            initial_connection,
+        )
         .await
         .map_err(|e| {
             error!("Failed to create project: {}", e);
@@ -101,21 +107,23 @@ pub async fn update_project(
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     info!("Updating project {} for user: {}", id, user_id);
-    
+
     let project_repo = ProjectRepository::new(state.db.clone());
-    
+
     // First check if the project exists and belongs to the user
-    if !project_repo.exists(id, &user_id).await.map_err(|e| e.to_string())? {
+    if !project_repo
+        .exists(id, &user_id)
+        .await
+        .map_err(|e| e.to_string())?
+    {
         return Err(constants::PROJECT_NOT_FOUND.into());
     }
-    
+
     // Update the project
-    project_repo.update(id, &name)
-        .await
-        .map_err(|e| {
-            error!("Failed to update project: {}", e);
-            e.to_string()
-        })
+    project_repo.update(id, &name).await.map_err(|e| {
+        error!("Failed to update project: {}", e);
+        e.to_string()
+    })
 }
 
 /// Command to delete a project
@@ -131,19 +139,21 @@ pub async fn delete_project(
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     info!("Deleting project {} for user: {}", id, user_id);
-    
+
     let project_repo = ProjectRepository::new(state.db.clone());
-    
+
     // First check if the project exists and belongs to the user
-    if !project_repo.exists(id, &user_id).await.map_err(|e| e.to_string())? {
+    if !project_repo
+        .exists(id, &user_id)
+        .await
+        .map_err(|e| e.to_string())?
+    {
         return Err(constants::PROJECT_NOT_FOUND.into());
     }
-    
+
     // Delete the project
-    project_repo.delete(id)
-        .await
-        .map_err(|e| {
-            error!("Failed to delete project: {}", e);
-            e.to_string()
-        })
-} 
+    project_repo.delete(id).await.map_err(|e| {
+        error!("Failed to delete project: {}", e);
+        e.to_string()
+    })
+}

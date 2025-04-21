@@ -86,7 +86,7 @@ impl ConnectionRepository {
         .bind(encrypt_string(&connection.username)?)
         .bind(encrypt_string(&connection.password)?)
         .bind(encrypt_string(&connection.database)?)
-        .fetch_one(&self.pool)
+        .fetch_one(&*self.pool)
         .await?;
         
         let id = result.get(0);
@@ -101,7 +101,7 @@ impl ConnectionRepository {
             "#
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&*self.pool)
         .await?;
 
         Ok(connection.map(Connection::from))
@@ -113,7 +113,7 @@ impl ConnectionRepository {
             SELECT * FROM connections
             "#
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&*self.pool)
         .await?;
 
         Ok(connections.into_iter().map(Connection::from).collect())

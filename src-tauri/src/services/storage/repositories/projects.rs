@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
 use tracing::debug;
+use super::connections::{Connection, ConnectionRepository};
 
 /// Represents a user project in the application
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -18,20 +19,25 @@ pub struct Project {
 /// Repository for handling project operations in the database
 pub struct ProjectRepository {
     pool: Arc<SqlitePool>,
+    connections: ConnectionRepository,
 }
 
 impl ProjectRepository {
     /// Create a new `ProjectRepository` instance
     #[must_use]
-    pub const fn new(pool: Arc<SqlitePool>) -> Self {
-        Self { pool }
+    pub fn new(pool: Arc<SqlitePool>) -> Self {
+        let connections = ConnectionRepository::new(pool.clone());
+        Self {
+            pool,
+            connections,
+        }
     }
 
     /// Create a new project
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
+    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>, initial_connection: Option<Connection>) -> AppResult<i64> {
         debug!("Creating new project '{}' for user: {}", name, user_id);
         
         let result = sqlx::query(
@@ -48,7 +54,30 @@ impl ProjectRepository {
         .await?;
 
         let id = result.get(0);
+        
         debug!("Created project with ID: {}", id);
+
+
+        if let Some(initial_connection) = initial_connection {
+            debug!("Creating initial connection for project: {}", id);
+            let connection = Connection {
+                id: 0,
+                connection_name: initial_connection.connection_name,
+                project_id: id,
+                db_type: initial_connection.db_type,
+                host: initial_connection.host,
+                port: initial_connection.port,
+                username: initial_connection.username,
+                password: initial_connection.password,
+                database: initial_connection.database,
+                created_at: None,
+                updated_at: None,
+            };
+
+            self.connections.create(&connection).await?;
+        }
+
+        debug!("Project created successfully");
         Ok(id)
     }
 

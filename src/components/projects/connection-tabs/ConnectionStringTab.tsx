@@ -7,12 +7,14 @@ import { ConnectionString } from "connection-string";
 import { toast } from "sonner";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function ConnectionStringTab({
     isActiveTab
 }: { isActiveTab: boolean }) {
     const { form } = useCreateProjectContext();
     const [connectionString, setConnectionString] = useState("");
+    const debouncedConnectionString = useDebounce(connectionString);
 
     useEffect(() => {
         if (!isActiveTab) {
@@ -20,14 +22,13 @@ export default function ConnectionStringTab({
         }
     }, [isActiveTab]);
 
-    const handleConnectionStringChange = (value: string) => {
-        setConnectionString(value);
-        if (!value.trim()) return;
+    useEffect(() => {
+        if (!debouncedConnectionString.trim()) return;
 
         try {
             // Check if it's a SQLite file path
-            if (value.endsWith('.sqlite') || value.endsWith('.db') || value.startsWith('file:')) {
-                const dbPath = value.startsWith('file:') ? value.slice(5) : value;
+            if (debouncedConnectionString.endsWith('.sqlite') || debouncedConnectionString.endsWith('.db') || debouncedConnectionString.startsWith('file:')) {
+                const dbPath = debouncedConnectionString.startsWith('file:') ? debouncedConnectionString.slice(5) : debouncedConnectionString;
                 form.setValue("databaseType", "sqlite");
                 form.setValue("sqliteType", "file");
                 form.setValue("database", dbPath);
@@ -35,7 +36,7 @@ export default function ConnectionStringTab({
             }
 
             // Handle SQLite connection strings and other database types
-            const parsed = new ConnectionString(value);
+            const parsed = new ConnectionString(debouncedConnectionString);
             const dbType = parsed.protocol === "postgresql" ? "postgres" :
                 parsed.protocol === "mongodb+srv" ? "mongodb" :
                 parsed.protocol === "sqlite" ? "sqlite" :
@@ -53,6 +54,12 @@ export default function ConnectionStringTab({
             form.setValue("username", parsed.user || "");
             form.setValue("password", parsed.password || "");
             form.setValue("database", parsed.path?.[0] || "");
+
+            // Trigger validation after setting all values
+            const touchedFields = Object.keys(form.formState.touchedFields);
+            if (touchedFields.length > 0) {
+                form.trigger(touchedFields as any);
+            }
         } catch (error) {
             console.error("Failed to parse connection string:", error);
             toast.error("Failed to parse connection string", {
@@ -60,14 +67,10 @@ export default function ConnectionStringTab({
                 duration: 5000
             });
         }
-    };
+    }, [debouncedConnectionString, form]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        handleConnectionStringChange(e.target.value);
-        const touchedFields = Object.keys(form.formState.touchedFields);
-        if (touchedFields.length > 0) {
-            form.trigger(touchedFields as any);
-        }
+        setConnectionString(e.target.value);
     };
 
     return (

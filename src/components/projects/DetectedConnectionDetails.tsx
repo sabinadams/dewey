@@ -13,6 +13,23 @@ export default function DetectedConnectionDetails({ form }: DetectedConnectionDe
     const { testConnection, isLoading } = useTestConnection();
 
     const handleTestConnection = async () => {
+        // Validate all fields except connectionName
+        const fieldsToValidate = [
+            "databaseType",
+            "host",
+            "port",
+            "username",
+            "password",
+            "database",
+            "sqliteType"
+        ] as const;
+        
+        const result = await form.trigger(fieldsToValidate);
+        
+        if (!result) {
+            return; // Don't proceed if validation fails
+        }
+
         await testConnection(form.getValues());
     };
 

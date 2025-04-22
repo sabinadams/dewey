@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import { Label } from "../../ui/label";
 import { Button } from "../../ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
-
+import { toast } from "sonner";
 const databaseTypes = [
     {
         id: "postgres",
@@ -44,6 +44,24 @@ export default function ConnectionDetailsTab() {
     const { testConnection, isLoading } = useTestConnection();
 
     const handleTestConnection = async () => {
+        // Validate all fields except connectionName
+        const fieldsToValidate = [
+            "databaseType",
+            "host",
+            "port",
+            "username",
+            "password",
+            "database",
+            "sqliteType"
+        ] as const;
+        
+        const result = await form.trigger(fieldsToValidate);
+        
+        if (!result) {
+            toast.error("Please fill in all fields before testing the connection.");
+            return; // Don't proceed if validation fails
+        }
+
         await testConnection(form.getValues());
     };
 

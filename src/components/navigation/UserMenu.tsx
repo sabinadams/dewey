@@ -1,5 +1,8 @@
 import { useGetCurrentUserQuery } from '@/store/api/auth.api';
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,

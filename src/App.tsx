@@ -3,7 +3,7 @@ import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
 import { Suspense } from 'react';
 import { LoadingSpinner, Toaster } from '@/components/ui';
 import { TitleBar } from '@/components/navigation';
-import AppLayout from '@/components/layouts/AppLayout';
+import { AppLayout } from '@/components/layouts/AppLayout';
 import { useAuthGuard } from '@/hooks';
 import { publicRoutes } from '@/hooks/useAuthGuard';
 import routes from '~react-pages';

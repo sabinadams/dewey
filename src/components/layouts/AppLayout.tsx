@@ -1,27 +1,29 @@
 import { Navigation } from '@/components/navigation';
-import { LoadingSpinner } from '@/components/ui';
+import { Card, ScrollArea, LoadingSpinner } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
-  const { user } = useAuth();
-
-  if (!user) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+export function AppLayout({ children }: AppLayoutProps) {
+  const { isLoading } = useAuth();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-1 h-screen bg-background text-foreground">
       <Navigation />
-      <main className="flex-1 p-6">
-        {children}
+      <main className="flex-1 p-2 pl-0 h-full overflow-hidden">
+        <Card className="h-full bg-card text-card-foreground">
+          {isLoading ? (
+            <div className="h-full grid place-items-center">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <ScrollArea className="h-full w-full px-6">
+              {children}
+            </ScrollArea>
+          )}
+        </Card>
       </main>
     </div>
   );

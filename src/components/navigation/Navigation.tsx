@@ -1,6 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useOS } from '@/hooks/useOS';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -18,6 +16,8 @@ import {
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import { useEffect, useState } from 'react';
 import { useGetProjectsQuery } from '@/store/api/projects.api';
+import { useAuth } from '@/hooks/useAuth';
+import { useOS } from '@/hooks/useOS';
 
 interface NavItemProps {
   to: string;
@@ -66,9 +66,9 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
           <TooltipTrigger asChild>
             <div className="grid place-items-center w-8 h-8">
               {iconUrl ? (
-                <img 
-                  src={iconUrl} 
-                  alt={label} 
+                <img
+                  src={iconUrl}
+                  alt={label}
                   className="w-8 h-8 rounded"
                 />
               ) : (
@@ -86,10 +86,10 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
 }
 
 export default function Navigation() {
-  const { user } = useAuth();
   const { isMac } = useOS();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
     skip: !user?.id,
   });
@@ -107,7 +107,7 @@ export default function Navigation() {
   }
 
   return (
-    <aside 
+    <aside
       className={cn(
         "min-w-18 flex flex-col text-sidebar-foreground",
         isMac ? "mt-10" : "",
@@ -116,61 +116,63 @@ export default function Navigation() {
     >
       {/* Top Section with Logo */}
       <div className="shrink-0 grid place-items-center pb-2 pt-2">
-        <LogoSVG 
-          width="48" 
-          height="48" 
-          className="text-sidebar-foreground" 
+        <LogoSVG
+          width="48"
+          height="48"
+          className="text-sidebar-foreground"
         />
       </div>
 
       {/* Projects Navigation */}
-      <ScrollArea className="flex-1">
-        <nav className="flex flex-col gap-1 p-2">
-          {projects.map((project) => (
-            <NavLink
-              key={project.id}
-              to={`/project/${project.id}`}
-              className={({ isActive }) =>
-                cn(
-                  buttonVariants({
-                    variant: isActive ? "secondary" : "ghost",
-                    size: "sm",
-                  }),
-                  "justify-start gap-2"
-                )
-              }
-            >
-              <Folder className="h-4 w-4" />
-              <span className="truncate">{project.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-      </ScrollArea>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="grid auto-rows-max justify-items-center gap-3 p-2">
+            {projects.map(project => (
+              <NavItem
+                key={project.id}
+                to={`/project/${project.id}`}
+                imageSrc={project.icon_path || undefined}
+                label={project.name}
+              />
+            ))}
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="grid place-items-center w-10 h-10 border border-sidebar-border rounded-lg hover:bg-sidebar-accent cursor-pointer"
+                      onClick={() => navigate('/project/create')}
+                    >
+                      <Plus size={20} className="text-sidebar-foreground" />
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>New Project</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </ScrollArea>
+      </div>
 
-      {/* Bottom Section */}
-      <div className="shrink-0 p-2 flex flex-col gap-2">
+      {/* Bottom Section with Theme Toggle and User Menu */}
+      <div className="shrink-0 grid place-items-center gap-2 py-4">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-full"
-                onClick={() => navigate('/project/new')}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <div>
+                <ThemeToggle />
+              </div>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>Create New Project</p>
+            <TooltipContent side="right">
+              <p>Toggle Theme</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
-        <div className="flex items-center justify-between gap-2">
-          <ThemeToggle />
-          <UserMenu />
-        </div>
+        <UserMenu />
       </div>
     </aside>
   );

@@ -1,15 +1,12 @@
-interface PublicLayoutProps {
-    children: React.ReactNode;
-}
+import React from 'react';
+import TitleBar from '@/components/navigation/TitleBar';
 
-export function PublicLayout({ children }: PublicLayoutProps) {
-    console.log('Rendering PublicLayout');
+export function PublicLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-1 h-screen bg-background text-foreground transition-colors duration-200">
-            <main className="flex-1 p-2 h-full overflow-hidden flex items-center justify-center">
-                <div className="w-full max-w-md">
-                    {children}
-                </div>
+        <div className="fixed inset-0 flex flex-col bg-background rounded-2xl overflow-hidden">
+            <TitleBar />
+            <main className="flex-1 flex items-center justify-center">
+                {children}
             </main>
         </div>
     );

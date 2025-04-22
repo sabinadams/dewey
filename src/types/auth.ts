@@ -1,15 +1,15 @@
 export interface User {
     id: string;
     email: string;
-    name: string;
-    avatar_url?: string;
+    firstName?: string;
+    lastName?: string;
+    imageUrl?: string;
 }
 
 export interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    returnTo: string | null;
     error: string | null;
 }
 

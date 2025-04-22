@@ -3,7 +3,6 @@ import { User, AuthState } from '@/types/auth';
 
 // Create a simple in-memory store for the current user
 let currentUser: User | null = null;
-let returnToPath: string | null = null;
 
 export const authApi = createApi({
   reducerPath: 'authApi',
@@ -16,7 +15,6 @@ export const authApi = createApi({
           user: currentUser,
           isAuthenticated: !!currentUser,
           isLoading: false,
-          returnTo: returnToPath,
           error: null
         }
       }),
@@ -29,18 +27,10 @@ export const authApi = createApi({
       },
       invalidatesTags: ['User'],
     }),
-    setReturnTo: builder.mutation<void, string | null>({
-      queryFn: (path) => {
-        returnToPath = path;
-        return { data: undefined };
-      },
-      invalidatesTags: ['User'],
-    }),
   }),
 });
 
 export const {
   useGetCurrentUserQuery,
   useSetUserMutation,
-  useSetReturnToMutation,
 } = authApi; 

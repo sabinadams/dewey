@@ -19,18 +19,21 @@ export default function UserMenu() {
 
   if (!user) return null;
 
+  const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+  const initials = displayName.charAt(0).toUpperCase();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 cursor-pointer">
-          <AvatarImage src={user.avatar_url} alt={user.name} />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={user.imageUrl} alt={displayName} />
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

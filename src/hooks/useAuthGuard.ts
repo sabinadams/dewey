@@ -1,57 +1,49 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { useGetCurrentUserQuery, useSetUserMutation } from '@/store/api/auth.api';
-import { useGetProjectsQuery } from '@/store/api/projects.api';
+import { useGetCurrentUserQuery } from '@/store/api/auth.api';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { setReturnToPath } from '@/store/slices/ui.slice';
 
 // Public routes that don't require authentication
 export const publicRoutes = ['/auth'];
 
 export function useAuthGuard() {
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
-  const { isLoaded: isUserLoaded, user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
-  const [setUser] = useSetUserMutation();
-  const { data: authState, isLoading: isAuthStateLoading } = useGetCurrentUserQuery();
-  const isAuthenticated = authState?.isAuthenticated ?? false;
-  const returnTo = authState?.returnTo;
-
-  // Prefetch projects if user is authenticated
-  useGetProjectsQuery(user?.id || '', {
-    skip: !user?.id,
-  });
+  const dispatch = useDispatch();
+  const { isSignedIn } = useAuth();
+  const { isLoaded } = useUser();
+  const returnToPath = useSelector((state: RootState) => state.ui.returnToPath);
+  const { data: authState } = useGetCurrentUserQuery();
 
   useEffect(() => {
-    if (isAuthLoaded && isUserLoaded && isSignedIn && user) {
-      setUser({
-        id: user.id,
-        email: user.primaryEmailAddress?.emailAddress || '',
-        name: user.fullName || user.firstName || '',
-        avatar_url: user.imageUrl
-      }).catch(console.error);
+    // Wait for Clerk to load
+    if (!isLoaded) return;
+
+    const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+
+    // If we're on a public route and authenticated, redirect to home
+    if (isPublicRoute && isSignedIn) {
+      navigate('/', { replace: true });
+      return;
     }
-  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, setUser]);
 
-  useEffect(() => {
-    if (!isAuthenticated && !publicRoutes.some(route => location.pathname.startsWith(route))) {
-      if (!location.pathname.startsWith('/auth')) {
-        // Store the return path in the URL instead of Redux
-        navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
-      } else {
-        navigate('/auth?mode=signin', { replace: true });
-      }
-    } else if (returnTo && isAuthenticated) {
-      navigate(returnTo, { replace: true });
+    // If we're not on a public route and not authenticated, redirect to auth
+    if (!isPublicRoute && !isSignedIn) {
+      dispatch(setReturnToPath(location.pathname));
+      navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
+      return;
     }
-  }, [isAuthenticated, location.pathname, returnTo, navigate]);
 
-  const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
-  const isLoading = !isAuthLoaded || !isUserLoaded || isAuthStateLoading;
+    // If we're authenticated and have a return path, redirect there
+    if (returnToPath && isSignedIn) {
+      const path = returnToPath;
+      dispatch(setReturnToPath(null));
+      navigate(path, { replace: true });
+    }
+  }, [isSignedIn, isLoaded, location.pathname, returnToPath, navigate, dispatch]);
 
-  return {
-    isLoading,
-    isAuthenticated,
-    isPublicRoute
-  };
+  return { isLoading: !isLoaded, isAuthenticated: isSignedIn, user: authState?.user };
 } 

@@ -3,9 +3,11 @@ import { setupListeners } from '@reduxjs/toolkit/query'
 import { projectsApi } from './api/projects.api'
 import { systemApi } from './api/system.api'
 import { authApi } from './api/auth.api'
+import uiReducer from './slices/ui.slice'
 
 export const store = configureStore({
   reducer: {
+    ui: uiReducer,
     [projectsApi.reducerPath]: projectsApi.reducer,
     [systemApi.reducerPath]: systemApi.reducer,
     [authApi.reducerPath]: authApi.reducer,

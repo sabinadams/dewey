@@ -1,43 +1,28 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from "@/store";
+import { setTheme } from "@/store/slices/ui.slice";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const dispatch = useDispatch();
+  const theme = useSelector((state: RootState) => state.ui.theme);
 
-  // Initialize theme state from localStorage or system preference
   useEffect(() => {
-    // Check if there's a saved preference
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else if (savedTheme === 'light') {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    } else {
-      // If no saved preference, check system preference
+    // Handle system theme preference
+    if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
-      if (prefersDark) {
-        document.documentElement.classList.add("dark");
-      }
+      document.documentElement.classList.toggle('dark', prefersDark);
+    } else {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    
-    if (newTheme) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem('theme', 'light');
-    }
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    dispatch(setTheme(newTheme));
   };
 
   return (
@@ -49,9 +34,9 @@ export function ThemeToggle({ className }: { className?: string }) {
         "h-9 w-9 rounded-lg hover:bg-sidebar-accent transition-all duration-300",
         className
       )}
-      title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {isDarkMode ? (
+      {theme === 'dark' ? (
         <Sun size={18} className="text-sidebar-foreground transition-transform hover:rotate-45" />
       ) : (
         <Moon size={18} className="text-sidebar-foreground transition-transform hover:-rotate-12" />

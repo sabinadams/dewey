@@ -7,7 +7,7 @@ import { useAuth } from '@clerk/clerk-react';
 import routes from '~react-pages';
 import { useDispatch } from 'react-redux';
 import { setReturnToPath } from '@/store/slices/ui.slice';
-
+import { useGetProjectsQuery } from '@/store/api/projects.api';
 function LoadingScreen() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background rounded-2xl overflow-hidden">
@@ -46,26 +46,39 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 }
 
 function RoutesGuard() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const element = useRoutes(routes);
 
+  const { data: projects, isLoading: projectsLoading } = useGetProjectsQuery(userId ?? '', {
+    skip: !userId,
+  });
+  
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isAuthLoaded || (isSignedIn && projectsLoading)) return;
 
     const isPublicRoute = location.pathname === '/auth';
-    
-    if (isSignedIn && isPublicRoute) {
-      navigate('/', { replace: true });
-    } else if (!isSignedIn && !isPublicRoute) {
+    const isOnRoot = location.pathname === '/';
+
+    if (isSignedIn) {
+      if (isPublicRoute || isOnRoot) {
+        console.log(projects);
+        if (projects && projects.length > 0) {
+          const firstProjectId = projects[0].id;
+          navigate(`/project/${firstProjectId}`, { replace: true });
+        } else if (isPublicRoute) {
+          navigate('/', { replace: true });
+        }
+      }
+    } else if (!isPublicRoute) {
       dispatch(setReturnToPath(location.pathname));
       navigate('/auth', { replace: true });
     }
-  }, [isLoaded, isSignedIn, location.pathname, navigate, dispatch]);
+  }, [isAuthLoaded, isSignedIn, projects, projectsLoading, location.pathname, navigate, dispatch]);
 
-  if (!isLoaded) {
+  if (!isAuthLoaded) {
     return <LoadingScreen />;
   }
 

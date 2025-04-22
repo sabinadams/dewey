@@ -21,11 +21,11 @@ const DatabaseIcon = ({ type }: { type: string }) => {
 
 export default function ProjectPage() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { userId } = useAuth();
   const projectId = Number(id);
 
-  const { data: projects = [], isLoading: isLoadingProject } = useGetProjectsQuery(user?.id || '', {
-    skip: !user?.id,
+  const { data: projects = [], isLoading: isLoadingProject } = useGetProjectsQuery(userId ?? '', {
+    skip: !userId,
   });
 
   console.log(projectId);

@@ -12,6 +12,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setReturnToPath } from '@/store/slices/ui.slice';
 
+function SuspenseFallback() {
+  return (
+    <PublicLayout>
+      <LoadingSpinner />
+    </PublicLayout>
+  );
+}
+
 function RoutesGuard() {
   const { isLoading, isAuthenticated } = useAuthGuard();
   const location = useLocation();
@@ -36,17 +44,12 @@ function RoutesGuard() {
     }
   }, [isAuthenticated, isLoading, location.pathname, isPublicRoute, returnToPath, navigate, dispatch]);
 
-  // Show loading state while authentication is being determined
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
   // Determine which layout to use based on route type and auth state
   const Layout = (!isAuthenticated || isPublicRoute) ? PublicLayout : AppLayout;
   
   return (
     <Layout>
-      {element || <LoadingSpinner />}
+      {isLoading ? <LoadingSpinner /> : (element || <LoadingSpinner />)}
     </Layout>
   );
 }
@@ -59,7 +62,7 @@ export default function App() {
       <BrowserRouter>
         <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
           <TitleBar />
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<SuspenseFallback />}>
             <RoutesGuard />
           </Suspense>
           <Toaster />

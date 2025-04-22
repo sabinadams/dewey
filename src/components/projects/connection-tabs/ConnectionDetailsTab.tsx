@@ -2,7 +2,7 @@ import { SiMysql, SiPostgresql, SiSqlite, SiMongodb } from "@icons-pack/react-si
 import { Card } from "../../ui/card";
 import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
-import { Check } from "lucide-react";
+import { Check, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
@@ -83,6 +83,7 @@ export default function ConnectionDetailsTab() {
                         disabled={isLoading}
                         className="mt-8"
                     >
+                        <Server className="w-4 h-4 mr-2" />
                         {isLoading ? "Testing..." : "Test Connection"}
                     </Button>
                 )}

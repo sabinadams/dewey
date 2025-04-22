@@ -2,6 +2,7 @@ import { UseFormReturn } from "react-hook-form";
 import { CreateProjectFormData } from "@/contexts/create-project.context";
 import { Button } from "@/components/ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
+import { Server } from "lucide-react";
 
 interface DetectedConnectionDetailsProps {
     form: UseFormReturn<CreateProjectFormData>;
@@ -44,6 +45,7 @@ export default function DetectedConnectionDetails({ form }: DetectedConnectionDe
                         onClick={handleTestConnection}
                         disabled={isLoading}
                     >
+                        <Server className="w-4 h-4 mr-2" />
                         {isLoading ? "Testing..." : "Test Connection"}
                     </Button>
                 )}

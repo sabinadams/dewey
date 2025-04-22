@@ -25,10 +25,16 @@ export function useAuthGuard() {
 
     // Only update if the user data has actually changed
     if (currentUserJson !== prevUserRef.current) {
+      console.log('Auth state changed:', {
+        isSignedIn,
+        isLoaded,
+        prevUser: prevUserRef.current,
+        currentUser: currentUserJson
+      });
       prevUserRef.current = currentUserJson;
       updateUser(currentUserJson ? JSON.parse(currentUserJson) : null);
     }
-  }, [clerkUser, isLoaded, updateUser]);
+  }, [clerkUser, isLoaded, updateUser, isSignedIn]);
 
   return {
     isLoading: !isLoaded,

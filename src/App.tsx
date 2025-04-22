@@ -1,22 +1,25 @@
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
-import { LoadingSpinner, Toaster } from '@/components/ui';
-import { TitleBar } from '@/components/navigation';
-import { AppLayout } from '@/components/layouts/AppLayout';
+import { LoadingSpinner, Toaster, Card, ScrollArea } from '@/components/ui';
+import TitleBar from '@/components/navigation/TitleBar';
+import { Navigation } from '@/components/navigation';
 import { useAuthGuard } from '@/hooks';
 import { publicRoutes } from '@/hooks/useAuthGuard';
 import routes from '~react-pages';
-import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setReturnToPath } from '@/store/slices/ui.slice';
 
 function SuspenseFallback() {
   return (
-    <PublicLayout>
-      <LoadingSpinner />
-    </PublicLayout>
+    <div className="absolute inset-0 bg-background">
+      <div className="flex flex-1 h-screen">
+        <main className="flex-1 p-2 h-full overflow-hidden flex items-center justify-center">
+          <LoadingSpinner />
+        </main>
+      </div>
+    </div>
   );
 }
 
@@ -44,13 +47,37 @@ function RoutesGuard() {
     }
   }, [isAuthenticated, isLoading, location.pathname, isPublicRoute, returnToPath, navigate, dispatch]);
 
-  // Determine which layout to use based on route type and auth state
-  const Layout = (!isAuthenticated || isPublicRoute) ? PublicLayout : AppLayout;
-  
+  if (isLoading) {
+    return (
+      <div className="absolute inset-0 bg-background">
+        <div className="flex flex-1 h-screen">
+          <main className="flex-1 p-2 h-full overflow-hidden flex items-center justify-center">
+            <LoadingSpinner />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Layout>
-      {isLoading ? <LoadingSpinner /> : (element || <LoadingSpinner />)}
-    </Layout>
+    <div className="absolute inset-0 bg-background">
+      <div className="flex flex-1 h-screen">
+        {!isPublicRoute && isAuthenticated && <Navigation />}
+        <main className={`flex-1 p-2 ${!isPublicRoute && isAuthenticated ? 'pl-0' : ''} h-full overflow-hidden`}>
+          {isPublicRoute || !isAuthenticated ? (
+            <div className="h-full flex items-center justify-center">
+              {element || <LoadingSpinner />}
+            </div>
+          ) : (
+            <Card className="h-full bg-card text-card-foreground">
+              <ScrollArea className="h-full w-full px-6">
+                {element || <LoadingSpinner />}
+              </ScrollArea>
+            </Card>
+          )}
+        </main>
+      </div>
+    </div>
   );
 }
 
@@ -61,10 +88,14 @@ export default function App() {
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
         <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
-          <TitleBar />
-          <Suspense fallback={<SuspenseFallback />}>
-            <RoutesGuard />
-          </Suspense>
+          <div className="relative flex-1">
+            <TitleBar />
+            <div className="pt-10">
+              <Suspense fallback={<SuspenseFallback />}>
+                <RoutesGuard />
+              </Suspense>
+            </div>
+          </div>
           <Toaster />
         </div>
       </BrowserRouter>

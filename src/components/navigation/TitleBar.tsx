@@ -1,6 +1,7 @@
 import { Window } from '@tauri-apps/api/window';
 import { X, Minus, Square } from 'lucide-react';
 import { useOS } from '@/hooks/useOS';
+import { useEffect } from 'react';
 
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
@@ -56,11 +57,15 @@ export default function TitleBar() {
   const win = Window.getCurrent();
   const { isMac } = useOS();
 
+  useEffect(() => {
+    console.log('TitleBar mounted, isMac:', isMac);
+  }, [isMac]);
+
   return (
     <div 
       data-tauri-drag-region 
-      className={`h-10 px-2 flex items-center justify-between select-none w-full ${
-        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-sidebar'
+      className={`h-10 px-2 flex items-center justify-between select-none w-full z-50 ${
+        isMac ? 'absolute top-0 left-0 bg-transparent' : 'bg-sidebar'
       }`}
     >
       {isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}

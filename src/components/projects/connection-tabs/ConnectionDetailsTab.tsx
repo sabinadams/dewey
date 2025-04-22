@@ -44,17 +44,7 @@ export default function ConnectionDetailsTab() {
     const { testConnection, isLoading } = useTestConnection();
 
     const handleTestConnection = async () => {
-        const values = form.getValues();
-        const isFileSqlite = values.databaseType === "sqlite" && values.sqliteType === "file";
-
-        await testConnection({
-            dbType: values.databaseType || "",
-            host: isFileSqlite ? "localhost" : (values.host || ""),
-            port: isFileSqlite ? "0" : (values.port || ""),
-            username: isFileSqlite ? "" : (values.username || ""),
-            password: isFileSqlite ? "" : (values.password || ""),
-            database: values.database || ""
-        });
+        await testConnection(form.getValues());
     };
 
     return (

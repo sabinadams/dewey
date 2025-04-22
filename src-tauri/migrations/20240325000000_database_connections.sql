@@ -9,6 +9,6 @@ CREATE TABLE IF NOT EXISTS connections (
     encrypted_username BLOB NOT NULL,
     encrypted_password BLOB NOT NULL,
     encrypted_database BLOB,  -- Can be NULL if not applicable
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );

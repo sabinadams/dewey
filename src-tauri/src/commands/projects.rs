@@ -1,6 +1,6 @@
 use crate::constants;
 use crate::services::storage::icon::IconGenerator;
-use crate::services::storage::repositories::connections::{NewConnection, ConnectionRepository};
+use crate::services::storage::repositories::connections::{NewConnection, ConnectionRepository, Connection};
 use crate::services::storage::repositories::projects::{Project, ProjectRepository};
 use crate::utils;
 use crate::AppState;
@@ -177,6 +177,25 @@ pub async fn delete_project(
     // Delete the project
     project_repo.delete(id).await.map_err(|e| {
         error!("Failed to delete project: {}", e);
+        e.to_string()
+    })
+}
+
+/// Command to get all connections for a project
+///
+/// # Errors
+/// Returns a string error if there was a problem accessing the database
+#[tauri::command]
+pub async fn get_project_connections(
+    project_id: i64,
+    state: State<'_, AppState>,
+) -> Result<Vec<Connection>, String> {
+    info!("Fetching connections for project: {}", project_id);
+
+    let connection_repo = ConnectionRepository::new(state.db.clone());
+
+    connection_repo.get_by_project(project_id).await.map_err(|e| {
+        error!("Failed to fetch project connections: {}", e);
         e.to_string()
     })
 }

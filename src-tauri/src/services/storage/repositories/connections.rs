@@ -131,4 +131,21 @@ impl ConnectionRepository {
 
         Ok(connections.into_iter().map(Connection::from).collect())
     }
+
+    pub async fn get_by_project(&self, project_id: i64) -> AppResult<Vec<Connection>> {
+        debug!("Fetching connections for project: {}", project_id);
+        
+        let connections = sqlx::query_as::<_, EncryptedConnection>(
+            r#"
+            SELECT * FROM connections 
+            WHERE project_id = ?
+            ORDER BY created_at ASC
+            "#
+        )
+        .bind(project_id)
+        .fetch_all(&*self.pool)
+        .await?;
+
+        Ok(connections.into_iter().map(Connection::from).collect())
+    }
 }

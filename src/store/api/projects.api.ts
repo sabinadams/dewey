@@ -1,11 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { Project, CreateProjectParams } from '@/types';
+import { Project, CreateProjectParams, Connection } from '@/types';
 import { tauriBaseQuery } from './base';
 
 export const projectsApi = createApi({
   reducerPath: 'projectsApi',
   baseQuery: tauriBaseQuery,
-  tagTypes: ['Project'],
+  tagTypes: ['Project', 'Connection'],
   endpoints: (builder) => ({
     getProjects: builder.query<Project[], string>({
       query: (userId) => ({
@@ -13,6 +13,13 @@ export const projectsApi = createApi({
         args: { userId },
       }),
       providesTags: ['Project'],
+    }),
+    getProjectConnections: builder.query<Connection[], number>({
+      query: (projectId) => ({
+        command: 'get_project_connections',
+        args: { projectId },
+      }),
+      providesTags: ['Connection'],
     }),
     createProject: builder.mutation<number, CreateProjectParams>({
       query: (params) => ({
@@ -24,12 +31,13 @@ export const projectsApi = createApi({
           initialConnection: params.initial_connection,
         },
       }),
-      invalidatesTags: ['Project'],
+      invalidatesTags: ['Project', 'Connection'],
     }),
   }),
 });
 
 export const {
   useGetProjectsQuery,
+  useGetProjectConnectionsQuery,
   useCreateProjectMutation,
 } = projectsApi; 

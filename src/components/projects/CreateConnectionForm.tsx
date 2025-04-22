@@ -44,7 +44,7 @@ export default function CreateConnectionForm() {
                 </TabsList>
                 
                 <ConnectionDetailsTab />
-                <ConnectionStringTab />
+                <ConnectionStringTab isActiveTab={activeTab === "url"} />
                 <ConnectionHelperTab />
             </Tabs>
         </>

@@ -6,11 +6,19 @@ import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { ConnectionString } from "connection-string";
 import { toast } from "sonner";
 import DetectedConnectionDetails from "./DetectedConnectionDetails";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function ConnectionStringTab() {
+export default function ConnectionStringTab({
+    isActiveTab
+}: { isActiveTab: boolean }) {
     const { form } = useCreateProjectContext();
     const [connectionString, setConnectionString] = useState("");
+
+    useEffect(() => {
+        if (!isActiveTab) {
+           setConnectionString("");
+        }
+    }, [isActiveTab]);
 
     const handleConnectionStringChange = (value: string) => {
         setConnectionString(value);

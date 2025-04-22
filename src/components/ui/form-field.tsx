@@ -4,7 +4,7 @@ import { UseFormReturn } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
-    form: UseFormReturn<any>;
+    form?: UseFormReturn<any>;
     name: string;
     label: string;
     description?: React.ReactNode;
@@ -20,6 +20,10 @@ export function ValidatedFormField({
     className,
     inputProps = {},
 }: FormFieldProps) {
+    if (!form) {
+        throw new Error('ValidatedFormField requires a form prop');
+    }
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         form.setValue(name, e.target.value);
         if (form.formState.touchedFields[name]) {

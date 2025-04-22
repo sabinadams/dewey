@@ -21,22 +21,6 @@ import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
 
-// Define the interface for the project params that matches the Tauri backend
-interface ProjectParams {
-  name: string;
-  user_id: string;
-  custom_icon_data?: string;
-  initial_connection: {
-    connection_name: string;
-    db_type: string;
-    host: string;
-    port: string;
-    username: string;
-    password: string;
-    database: string;
-  };
-}
-
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
   const [currentFile, setCurrentFile] = useState<File | null>(null);

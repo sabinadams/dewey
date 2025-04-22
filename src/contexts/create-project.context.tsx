@@ -37,17 +37,6 @@ const completeConnectionSchema = z.object({
 
 const connectionSchema = baseConnectionSchema.refine(
   (data) => {
-    // If any connection field is filled, all fields must be filled
-    const hasAnyField = Object.values(data).some(Boolean);
-    const hasAllFields = Object.values(data).every(Boolean);
-    return !hasAnyField || hasAllFields;
-  },
-  {
-    message: "All connection fields must be filled out to create a connection",
-    path: ["connectionName"], // This will show the error at the connection name field
-  }
-).refine(
-  (data) => {
     // If any field is filled, database type must be selected
     const hasAnyField = Object.values(data).some(Boolean);
     return !hasAnyField || data.databaseType;
@@ -82,29 +71,7 @@ const formSchema = z.object({
   icon: z.string().optional(),
   
   // Database connection details - using the connection schema
-}).and(connectionSchema.refine(
-  (data) => {
-    const connectionFields = [
-      data.connectionName,
-      data.databaseType,
-      data.host,
-      data.port,
-      data.username,
-      data.password,
-      data.database
-    ];
-    
-    // If any field is filled, all must be filled
-    const hasAnyField = connectionFields.some(Boolean);
-    const hasAllFields = connectionFields.every(Boolean);
-    
-    return !hasAnyField || hasAllFields;
-  },
-  {
-    message: "All connection fields must be filled out to create a connection",
-    path: ["connectionName"]
-  }
-));
+}).and(connectionSchema);
 
 // Export types for use in other components
 export type ConnectionData = z.infer<typeof connectionSchema>

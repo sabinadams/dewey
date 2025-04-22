@@ -1,4 +1,4 @@
-import { useGetCurrentUserQuery } from '@/store/api/auth.api';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Avatar,
   AvatarFallback,
@@ -14,8 +14,7 @@ import { useClerk } from "@clerk/clerk-react";
 
 export default function UserMenu() {
   const { signOut } = useClerk();
-  const { data: authState } = useGetCurrentUserQuery();
-  const user = authState?.user;
+  const { user } = useAuth();
 
   if (!user) return null;
 

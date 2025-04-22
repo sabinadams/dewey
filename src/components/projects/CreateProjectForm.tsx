@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { useGetCurrentUserQuery } from '@/store/api/auth.api'
+import { useAuth } from '@/hooks/useAuth'
 import { useCreateProjectMutation } from "@/store/api/projects.api"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
@@ -29,11 +29,10 @@ const CreateProjectForm = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: authState } = useGetCurrentUserQuery();
-  const user = authState?.user;
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [createProject] = useCreateProjectMutation();
-
+ 
   const { form } = useCreateProjectContext();
 
   // Clean up preview URL when component unmounts

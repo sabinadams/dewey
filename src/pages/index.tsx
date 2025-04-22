@@ -1,11 +1,11 @@
-import { useGetCurrentUserQuery } from '@/store/api/auth.api';
+import { useAuth } from '@/hooks/useAuth';
 import { useGetProjectsQuery } from '@/store/api/projects.api';
 import { LoadingSpinner } from '@/components/ui';
 
 export default function HomePage() {
-  const { data: authState } = useGetCurrentUserQuery();
-  const { data: projects = [], isLoading } = useGetProjectsQuery(authState?.user?.id || '', {
-    skip: !authState?.user?.id,
+  const { user } = useAuth();
+  const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
   });
 
   if (isLoading) {

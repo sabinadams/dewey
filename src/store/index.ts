@@ -1,22 +1,18 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { projectsApi } from './api/projects.api'
-import { systemApi } from './api/system.api'
-import { authApi } from './api/auth.api'
 import uiReducer from './slices/ui.slice'
+import authReducer from './slices/auth.slice'
 
 export const store = configureStore({
   reducer: {
     ui: uiReducer,
+    auth: authReducer,
     [projectsApi.reducerPath]: projectsApi.reducer,
-    [systemApi.reducerPath]: systemApi.reducer,
-    [authApi.reducerPath]: authApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
-      .concat(projectsApi.middleware)
-      .concat(systemApi.middleware)
-      .concat(authApi.middleware),
+      .concat(projectsApi.middleware),
 })
 
 // Enable refetchOnFocus and refetchOnReconnect

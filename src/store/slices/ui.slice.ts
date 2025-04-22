@@ -1,14 +1,25 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { type as getOSType } from '@tauri-apps/plugin-os';
 
 interface UIState {
   theme: 'light' | 'dark' | 'system';
   returnToPath: string | null;
+  isMac: boolean | null;
 }
 
 const initialState: UIState = {
   theme: (localStorage.getItem('theme') as UIState['theme']) || 'system',
   returnToPath: null,
+  isMac: null,
 };
+
+export const detectOS = createAsyncThunk(
+  'ui/detectOS',
+  async () => {
+    const osType = await getOSType();
+    return osType === 'macos';
+  }
+);
 
 export const uiSlice = createSlice({
   name: 'ui',
@@ -21,6 +32,11 @@ export const uiSlice = createSlice({
     setReturnToPath: (state, action: PayloadAction<string | null>) => {
       state.returnToPath = action.payload;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(detectOS.fulfilled, (state, action) => {
+      state.isMac = action.payload;
+    });
   },
 });
 

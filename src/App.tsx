@@ -7,6 +7,7 @@ import AppLayout from '@/components/layouts/AppLayout';
 import { useAuthGuard } from '@/hooks';
 import { publicRoutes } from '@/hooks/useAuthGuard';
 import routes from '~react-pages';
+import ClerkAuthSync from '@/components/auth/ClerkAuthSync';
 
 function RoutesGuard() {
   const { isLoading, isAuthenticated } = useAuthGuard();
@@ -27,12 +28,13 @@ function RoutesGuard() {
 
 function AppContent() {
   return (
-    <div className="flex-1 flex flex-col">
+    <>
       <TitleBar />
+      <ClerkAuthSync />
       <Suspense fallback={<LoadingSpinner />}>
         <RoutesGuard />
       </Suspense>
-    </div>
+    </>
   );
 }
 

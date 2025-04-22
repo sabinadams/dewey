@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useGetCurrentUserQuery } from '@/store/api/auth.api';
-import { useDetectOSQuery } from '@/store/api/system.api';
+import { useAuth } from '@/hooks/useAuth';
+import { useOS } from '@/hooks/useOS';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -86,10 +86,8 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
 }
 
 export default function Navigation() {
-  const { data: authState } = useGetCurrentUserQuery();
-  const { data: osInfo } = useDetectOSQuery();
-  const user = authState?.user;
-  const isMac = osInfo?.isMac ?? false;
+  const { user } = useAuth();
+  const { isMac } = useOS();
   const navigate = useNavigate();
   
   const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {

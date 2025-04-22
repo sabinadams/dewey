@@ -1,14 +1,13 @@
 import { Navigation } from '@/components/navigation';
 import { LoadingSpinner } from '@/components/ui';
-import { useGetCurrentUserQuery } from '@/store/api/auth.api';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { data: authState } = useGetCurrentUserQuery();
-  const user = authState?.user;
+  const { user } = useAuth();
 
   if (!user) {
     return (

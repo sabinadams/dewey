@@ -1,6 +1,6 @@
 import { Window } from '@tauri-apps/api/window';
 import { X, Minus, Square } from 'lucide-react';
-import { useDetectOSQuery } from '@/store/api/system.api';
+import { useOS } from '@/hooks/useOS';
 
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
@@ -54,16 +54,16 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
 
 export default function TitleBar() {
   const win = Window.getCurrent();
-  const { data: systemInfo } = useDetectOSQuery();
+  const { isMac } = useOS();
 
   return (
     <div 
       data-tauri-drag-region 
       className={`h-10 px-2 flex items-center justify-between select-none w-full ${
-        systemInfo?.isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-sidebar'
+        isMac ? 'bg-transparent absolute top-0 left-0' : 'bg-sidebar'
       }`}
     >
-      {systemInfo?.isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}
+      {isMac ? <MacOSControls win={win} /> : <WindowsControls win={win} />}
     </div>
   );
 }

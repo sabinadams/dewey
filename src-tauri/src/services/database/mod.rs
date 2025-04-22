@@ -63,16 +63,17 @@ pub async fn test_connection(
             // For SQLite, we need to handle both file-based and hosted connections
             if host == "localhost" && port == "0" {
                 // File-based SQLite
-                if !database.is_empty() {
-                    // Ensure the parent directory exists
-                    if let Some(parent) = Path::new(database).parent() {
-                        std::fs::create_dir_all(parent)?;
-                    }
-                    
-                    let connection_string = format!("sqlite:{}", database);
-                    let _pool = sqlite::SqlitePool::connect(&connection_string).await?;
-                    debug!("SQLite file connection test successful");
+                if database.is_empty() {
+                    return Err("SQLite database path cannot be empty".into());
                 }
+                // Ensure the parent directory exists
+                if let Some(parent) = Path::new(database).parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                
+                let connection_string = format!("sqlite:{}", database);
+                let _pool = sqlite::SqlitePool::connect(&connection_string).await?;
+                debug!("SQLite file connection test successful");
             } else {
                 // Hosted SQLite
                 let connection_string = format!(

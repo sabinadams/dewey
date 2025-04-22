@@ -2,6 +2,7 @@ use crate::types::AppResult;
 use sqlx::{postgres, mysql, sqlite};
 use mongodb::{Client as MongoClient, options::ClientOptions};
 use std::path::Path;
+use std::fs;
 use tracing::debug;
 
 /// Tests a database connection based on the connection parameters
@@ -66,12 +67,36 @@ pub async fn test_connection(
                 if database.is_empty() {
                     return Err("SQLite database path cannot be empty".into());
                 }
-                // Ensure the parent directory exists
-                if let Some(parent) = Path::new(database).parent() {
-                    std::fs::create_dir_all(parent)?;
+
+                let path = Path::new(database);
+                
+                // If the file exists, verify it's a valid SQLite database
+                if path.exists() {
+                    // Try to read the first few bytes to verify it's a SQLite database
+                    let mut file = fs::File::open(path)?;
+                    let mut header = [0u8; 16];
+                    use std::io::Read;
+                    if file.read_exact(&mut header).is_ok() {
+                        // SQLite files start with "SQLite format 3\0"
+                        if &header[0..15] != b"SQLite format 3" {
+                            return Err("File exists but is not a valid SQLite database".into());
+                        }
+                    } else {
+                        return Err("Failed to read database file header".into());
+                    }
+                } else {
+                    // If file doesn't exist, ensure we can create it
+                    if let Some(parent) = path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                        // Try to create an empty file to verify permissions
+                        fs::File::create(path)?.sync_all()?;
+                        // Remove the empty file since SQLx will create it
+                        fs::remove_file(path)?;
+                    }
                 }
                 
-                let connection_string = format!("sqlite:{}", database);
+                // Use sqlite:// prefix for file-based connections
+                let connection_string = format!("sqlite://{}", database);
                 let _pool = sqlite::SqlitePool::connect(&connection_string).await?;
                 debug!("SQLite file connection test successful");
             } else {

@@ -18,8 +18,3 @@ export {
   TooltipProvider,
   TooltipTrigger,
 } from './tooltip'; 
-export {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from './avatar';

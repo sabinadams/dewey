@@ -31,6 +31,7 @@ export default function CreateConnectionForm() {
                         ...form.getValues(),
                         host: "",
                         port: "",
+                        databaseType: "",
                         username: "",
                         password: "",
                         database: ""

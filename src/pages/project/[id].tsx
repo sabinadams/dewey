@@ -1,13 +1,13 @@
 import { useParams } from 'react-router-dom';
-import { useGetCurrentUserQuery } from '@/store/api/auth.api';
 import { useGetProjectsQuery } from '@/store/api/projects.api';
 import { LoadingSpinner } from '@/components/ui';
-
+import { useAuth } from '@/hooks/useAuth';
 export default function ProjectPage() {
   const { id } = useParams();
-  const { data: authState } = useGetCurrentUserQuery();
-  const { data: projects = [], isLoading } = useGetProjectsQuery(authState?.user?.id || '', {
-    skip: !authState?.user?.id,
+  const { user } = useAuth();
+
+  const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
   });
 
   const project = projects.find(p => p.id === Number(id));

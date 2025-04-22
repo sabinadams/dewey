@@ -34,8 +34,10 @@ export interface Connection {
 
 export const createProject = createAsyncThunk(
     'projects/createProject',
-    async (params: CreateProjectParams) => {
-        return projectsApi.createProject(params)
+    async (params: CreateProjectParams, { dispatch }) => {
+        const projectId = await projectsApi.createProject(params)
+        await dispatch(fetchProjects(params.user_id))
+        return projectId
     }
 )
 
@@ -70,9 +72,8 @@ export const projectsSlice = createSlice({
                 state.isLoading = true
                 state.error = null
             })
-            .addCase(createProject.fulfilled, (state, action) => {
+            .addCase(createProject.fulfilled, (state) => {
                 state.isLoading = false
-                state.items = action.payload.projects
                 state.error = null
             })
             .addCase(createProject.rejected, (state, action) => {

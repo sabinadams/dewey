@@ -8,6 +8,13 @@ import { toast } from "sonner";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { HelpCircle } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "../../ui/tooltip";
 
 export default function ConnectionStringTab({
     isActiveTab
@@ -86,7 +93,21 @@ export default function ConnectionStringTab({
                 />
 
                 <FormItem>
-                    <FormLabel>Connection URL</FormLabel>
+                    <div className="flex items-center gap-2">
+                        <FormLabel>Connection URL</FormLabel>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="max-w-xs">
+                                        For SQLite: Use a file path directly, prefix with 'file:' for local files, or use a full connection string for hosted databases.
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                     <FormControl>
                         <Input
                             placeholder="Examples: /path/to/database.sqlite, file:my.db, sqlite://user:pass@host:port/dbname"
@@ -100,9 +121,6 @@ export default function ConnectionStringTab({
                             }}
                         />
                     </FormControl>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        For SQLite: Use a file path directly, prefix with 'file:' for local files, or use a full connection string for hosted databases.
-                    </p>
                 </FormItem>
 
                 <DetectedConnectionDetails form={form} />

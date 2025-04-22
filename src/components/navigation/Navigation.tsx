@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/hooks';
 import { selectIsMac, selectProjects } from '@/store/selectors';
 import UserMenu from '@/components/navigation/UserMenu';
@@ -15,7 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 interface NavItemProps {
   to: string;

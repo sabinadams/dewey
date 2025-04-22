@@ -2,7 +2,8 @@ import { UseFormReturn } from "react-hook-form";
 import { CreateProjectFormData } from "@/contexts/create-project.context";
 import { Button } from "@/components/ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
-import { Server } from "lucide-react";
+import { Server, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 interface DetectedConnectionDetailsProps {
     form: UseFormReturn<CreateProjectFormData>;
@@ -11,7 +12,22 @@ interface DetectedConnectionDetailsProps {
 export default function DetectedConnectionDetails({ form }: DetectedConnectionDetailsProps) {
     const databaseType = form.watch("databaseType");
     const isSQLite = databaseType === "sqlite";
-    const { testConnection, isLoading } = useTestConnection();
+    const { testConnection, isLoading, cancelTest } = useTestConnection();
+
+    // Watch form values and cancel test if they change during testing
+    useEffect(() => {
+        if (isLoading) {
+            cancelTest();
+        }
+    }, [
+        form.watch("databaseType"),
+        form.watch("host"),
+        form.watch("port"),
+        form.watch("username"),
+        form.watch("password"),
+        form.watch("database"),
+        form.watch("sqliteType")
+    ]);
 
     const handleTestConnection = async () => {
         // Validate all fields except connectionName
@@ -45,7 +61,11 @@ export default function DetectedConnectionDetails({ form }: DetectedConnectionDe
                         onClick={handleTestConnection}
                         disabled={isLoading}
                     >
-                        <Server className="w-4 h-4 mr-2" />
+                        {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Server className="w-4 h-4 mr-2" />
+                        )}
                         {isLoading ? "Testing..." : "Test Connection"}
                     </Button>
                 )}

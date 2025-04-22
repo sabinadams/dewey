@@ -2,7 +2,7 @@ import { SiMysql, SiPostgresql, SiSqlite, SiMongodb } from "@icons-pack/react-si
 import { Card } from "../../ui/card";
 import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
-import { Check, Server } from "lucide-react";
+import { Check, Server, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
@@ -10,6 +10,7 @@ import { Label } from "../../ui/label";
 import { Button } from "../../ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 const databaseTypes = [
     {
@@ -42,7 +43,22 @@ export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
     const watchDatabaseType = form.watch("databaseType");
     const watchSqliteType = form.watch("sqliteType") || "file";
-    const { testConnection, isLoading } = useTestConnection();
+    const { testConnection, isLoading, cancelTest } = useTestConnection();
+
+    // Watch form values and cancel test if they change during testing
+    useEffect(() => {
+        if (isLoading) {
+            cancelTest();
+        }
+    }, [
+        form.watch("databaseType"),
+        form.watch("host"),
+        form.watch("port"),
+        form.watch("username"),
+        form.watch("password"),
+        form.watch("database"),
+        form.watch("sqliteType")
+    ]);
 
     const handleTestConnection = async () => {
         // Validate all fields except connectionName
@@ -84,7 +100,11 @@ export default function ConnectionDetailsTab() {
                         disabled={isLoading}
                         className="mt-8"
                     >
-                        <Server className="w-4 h-4 mr-2" />
+                        {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Server className="w-4 h-4 mr-2" />
+                        )}
                         {isLoading ? "Testing..." : "Test Connection"}
                     </Button>
                 )}

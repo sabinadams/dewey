@@ -21,17 +21,6 @@ export const fetchProjects = createAsyncThunk(
     }
 )
 
-// Define the Connection interface
-export interface Connection {
-    connection_name: string
-    db_type: string
-    host: string
-    port: string
-    username: string
-    password: string
-    database: string
-}
-
 export const createProject = createAsyncThunk(
     'projects/createProject',
     async (params: CreateProjectParams, { dispatch }) => {

@@ -1,7 +1,7 @@
-import { Navigation } from '@/components/Navigation';
+import { Navigation } from '@/components/navigation';
 import { Card } from '@/components/ui/card';
-import { useAppSelector } from '@/store/hooks';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAppSelector } from '@/hooks';
+import { LoadingSpinner } from '@/components/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AppLayoutProps {

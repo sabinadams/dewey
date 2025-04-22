@@ -1,11 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { type as getOSType } from '@tauri-apps/plugin-os'
-
-interface SystemState {
-  isMac: boolean
-  isLoading: boolean
-  error: string | null
-}
+import { SystemState } from '@/types'
 
 const initialState: SystemState = {
   isMac: false,

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector } from '@/hooks';
 import { selectIsMac, selectProjects } from '@/store/selectors';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"

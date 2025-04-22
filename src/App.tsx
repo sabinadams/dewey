@@ -4,9 +4,9 @@ import { Suspense, useEffect } from 'react';
 import { LoadingSpinner, Toaster } from '@/components/ui';
 import { TitleBar } from '@/components/navigation';
 import { AppLayout } from '@/components/AppLayout';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch } from '@/hooks';
 import { detectOS } from '@/store/slices/systemSlice';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks';
 import routes from '~react-pages';
 
 function RoutesGuard() {

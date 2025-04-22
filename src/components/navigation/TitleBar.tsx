@@ -1,6 +1,6 @@
 import { Window } from '@tauri-apps/api/window';
 import { X, Minus, Square } from 'lucide-react';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector } from '@/hooks';
 import { selectIsMac } from '@/store/selectors';
 
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {

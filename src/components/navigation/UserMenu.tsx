@@ -1,4 +1,4 @@
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/hooks';
 import { selectAuthUser } from '@/store/selectors';
 import { useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';

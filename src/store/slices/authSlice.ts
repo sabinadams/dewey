@@ -1,22 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AppDispatch } from '@/store'
-
-interface UserInfo {
-  id: string
-  email?: string
-  firstName?: string
-  lastName?: string
-  imageUrl?: string
-  username?: string
-}
-
-interface AuthState {
-  isAuthenticated: boolean
-  isLoading: boolean
-  user: UserInfo | null
-  error: string | null
-  returnTo: string | null // Store the path to return to after auth
-}
+import { User, AuthState } from '@/types'
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -30,7 +14,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAuthenticated: (state, action: PayloadAction<UserInfo>) => {
+    setAuthenticated: (state, action: PayloadAction<User>) => {
       state.isAuthenticated = true
       state.user = action.payload
       state.isLoading = false
@@ -42,7 +26,7 @@ export const authSlice = createSlice({
       state.isLoading = false
       state.error = null
     },
-    updateUserInfo: (state, action: PayloadAction<Partial<UserInfo>>) => {
+    updateUserInfo: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload }
       }
@@ -70,7 +54,7 @@ export const {
 } = authSlice.actions
 
 // Thunk action to handle authentication
-export const authenticateUser = (userInfo: UserInfo) => (dispatch: AppDispatch) => {
+export const authenticateUser = (userInfo: User) => (dispatch: AppDispatch) => {
   dispatch(setAuthenticated(userInfo))
 }
 

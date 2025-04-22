@@ -1,5 +1,4 @@
-import { SiMysql, SiPostgresql, SiSqlite } from "@icons-pack/react-simple-icons";
-import { SiMongodb } from "@icons-pack/react-simple-icons";
+import { SiMysql, SiPostgresql, SiSqlite, SiMongodb } from "@icons-pack/react-simple-icons";
 import { Card } from "../ui/card";
 import { ValidatedFormField } from "../ui/form-field";
 import { TabsContent } from "../ui/tabs";
@@ -34,121 +33,99 @@ const databaseTypes = [
     },
 ];
 
-function ConnectionFields() {
-    const { form } = useCreateProjectContext();
-    const watchDatabaseType = form.watch("databaseType");
-
-    if (!watchDatabaseType) return null;
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <ValidatedFormField
-                form={form}
-                name="host"
-                label="Host"
-                inputProps={{
-                    placeholder: "localhost"
-                }}
-            />
-
-            <ValidatedFormField
-                form={form}
-                name="port"
-                label="Port"
-                inputProps={{
-                    placeholder: "5432",
-                    type: "number"
-                }}
-            />
-
-            <ValidatedFormField
-                form={form}
-                name="username"
-                label="Username"
-                inputProps={{
-                    placeholder: "username"
-                }}
-            />
-
-            <ValidatedFormField
-                form={form}
-                name="password"
-                label="Password"
-                inputProps={{
-                    type: "password",
-                    placeholder: "••••••••"
-                }}
-            />
-
-            <ValidatedFormField
-                form={form}
-                name="database"
-                label="Database Name"
-                className="md:col-span-2"
-                inputProps={{
-                    placeholder: "my_database"
-                }}
-            />
-        </div>
-    );
-}
-
-function DatabaseTypeSelector({ 
-    selected, 
-    onSelect 
-}: { 
-    selected: string | undefined; 
-    onSelect: (id: string) => void;
-}) {
-    return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {databaseTypes.map((type) => (
-                <Card
-                    key={type.id}
-                    className={cn(
-                        "relative cursor-pointer p-4 transition-all hover:border-primary flex flex-col gap-1",
-                        selected === type.id && "border-2 border-primary",
-                    )}
-                    onClick={() => onSelect(type.id)}
-                >
-                    {selected === type.id && (
-                        <div className="absolute right-2 top-2 h-5 w-5 rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-5 w-5 p-1" />
-                        </div>
-                    )}
-                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        {type.icon()}
-                    </div>
-                    <h3 className="font-medium">{type.name}</h3>
-                    <p className="text-sm text-muted-foreground">{type.description}</p>
-                </Card>
-            ))}
-        </div>
-    );
-}
-
 export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
     const watchDatabaseType = form.watch("databaseType");
 
-    return <TabsContent value="standard" className="space-y-6 pt-4">
-    <ValidatedFormField
-        form={form}
-        name="connectionName"
-        label="Connection Name"
-        inputProps={{
-            placeholder: "My Database Connection"
-        }}
-    />
+    return (
+        <TabsContent value="standard" className="space-y-6 pt-4">
+            <ValidatedFormField
+                form={form}
+                name="connectionName"
+                label="Connection Name"
+                inputProps={{
+                    placeholder: "My Database Connection"
+                }}
+            />
 
-    <DatabaseTypeSelector 
-        selected={watchDatabaseType} 
-        onSelect={(id) => {
-            form.setValue("databaseType", id);
-            form.trigger("databaseType");
-        }}
-    />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {databaseTypes.map((type) => (
+                    <Card
+                        key={type.id}
+                        className={cn(
+                            "relative cursor-pointer p-4 transition-all hover:border-primary flex flex-col gap-1",
+                            watchDatabaseType === type.id && "border-2 border-primary",
+                        )}
+                        onClick={() => {
+                            form.setValue("databaseType", type.id);
+                            form.trigger("databaseType");
+                        }}
+                    >
+                        {watchDatabaseType === type.id && (
+                            <div className="absolute right-2 top-2 h-5 w-5 rounded-full bg-primary text-primary-foreground">
+                                <Check className="h-5 w-5 p-1" />
+                            </div>
+                        )}
+                        <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                            {type.icon()}
+                        </div>
+                        <h3 className="font-medium">{type.name}</h3>
+                        <p className="text-sm text-muted-foreground">{type.description}</p>
+                    </Card>
+                ))}
+            </div>
 
-    <ConnectionFields />
-</TabsContent>
+            {watchDatabaseType && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ValidatedFormField
+                        form={form}
+                        name="host"
+                        label="Host"
+                        inputProps={{
+                            placeholder: "localhost"
+                        }}
+                    />
+
+                    <ValidatedFormField
+                        form={form}
+                        name="port"
+                        label="Port"
+                        inputProps={{
+                            placeholder: "5432",
+                            type: "number"
+                        }}
+                    />
+
+                    <ValidatedFormField
+                        form={form}
+                        name="username"
+                        label="Username"
+                        inputProps={{
+                            placeholder: "username"
+                        }}
+                    />
+
+                    <ValidatedFormField
+                        form={form}
+                        name="password"
+                        label="Password"
+                        inputProps={{
+                            type: "password",
+                            placeholder: "••••••••"
+                        }}
+                    />
+
+                    <ValidatedFormField
+                        form={form}
+                        name="database"
+                        label="Database Name"
+                        className="md:col-span-2"
+                        inputProps={{
+                            placeholder: "my_database"
+                        }}
+                    />
+                </div>
+            )}
+        </TabsContent>
+    );
 }

@@ -41,7 +41,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Database
-sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-native-tls", "sqlite", "migrate", "chrono" ] }
+sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-native-tls", "sqlite", "migrate", "chrono", "postgres", "mysql" ] }
 chrono = "0.4"
 
 # Utilities
@@ -62,3 +62,6 @@ rand = "0.8.5"
 
 # Keyring
 keyring = "2.3.2"
+
+# New dependencies
+mongodb = { version = "2.8.1", features = ["tokio-runtime"] }

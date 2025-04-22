@@ -1,9 +1,15 @@
-use crate::constants;
-use crate::services::storage::icon::IconGenerator;
-use crate::services::storage::repositories::connections::{NewConnection, ConnectionRepository, Connection};
-use crate::services::storage::repositories::projects::{Project, ProjectRepository};
-use crate::utils;
-use crate::AppState;
+use crate::{
+    constants,
+    services::storage::{
+        icon::IconGenerator,
+        repositories::{
+            connections::{NewConnection, ConnectionRepository, Connection},
+            projects::{Project, ProjectRepository},
+        },
+    },
+    utils,
+    AppState,
+};
 use blake3;
 use tauri::State;
 use tracing::{error, info};

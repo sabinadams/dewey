@@ -13,6 +13,7 @@ const baseConnectionSchema = z.object({
   username: z.string().optional(),
   password: z.string().optional(),
   database: z.string().optional(),
+  connectionString: z.string().optional(),
 });
 
 // Schema for a complete connection that matches the Rust-side expectations
@@ -26,6 +27,7 @@ const completeConnectionSchema = z.object({
   port: z.string(),
   username: z.string(),
   password: z.string(),
+  connectionString: z.string().optional(),
 }).transform(data => ({
   // Transform to match NewConnection struct
   connection_name: data.connectionName,

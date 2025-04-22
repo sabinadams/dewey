@@ -2,7 +2,7 @@ use crate::services::database;
 
 #[tauri::command]
 pub async fn test_connection(
-    dbType: String,
+    db_type: String,
     host: String,
     port: String,
     username: String,
@@ -10,7 +10,7 @@ pub async fn test_connection(
     database: String,
 ) -> Result<(), String> {
     database::test_connection(
-        &dbType,
+        &db_type,
         &host,
         &port,
         &username,

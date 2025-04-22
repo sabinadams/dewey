@@ -1,6 +1,6 @@
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router-dom';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect } from 'react';
 import { LoadingSpinner, Toaster } from '@/components/ui';
 import { TitleBar } from '@/components/navigation';
 import { AppLayout } from '@/components/layouts/AppLayout';
@@ -20,61 +20,34 @@ function RoutesGuard() {
   const returnToPath = useSelector((state: RootState) => state.ui.returnToPath);
   const element = useRoutes(routes);
   const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
-  const lastPathRef = useRef(location.pathname);
-  const lastAuthRef = useRef(isAuthenticated);
 
   useEffect(() => {
     if (isLoading) return;
 
-    // Only handle navigation if auth state or path has changed
-    if (lastPathRef.current === location.pathname && lastAuthRef.current === isAuthenticated) {
-      return;
-    }
-
-    lastPathRef.current = location.pathname;
-    lastAuthRef.current = isAuthenticated;
-
+    // Handle authentication redirects
     if (isPublicRoute && isAuthenticated) {
       navigate('/', { replace: true });
-      return;
-    }
-
-    if (!isPublicRoute && !isAuthenticated) {
+    } else if (!isPublicRoute && !isAuthenticated) {
       dispatch(setReturnToPath(location.pathname));
       navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
-      return;
-    }
-
-    if (returnToPath && isAuthenticated) {
-      const path = returnToPath;
+    } else if (returnToPath && isAuthenticated) {
+      navigate(returnToPath, { replace: true });
       dispatch(setReturnToPath(null));
-      navigate(path, { replace: true });
     }
-  }, [isAuthenticated, isLoading, location.pathname, returnToPath, navigate, dispatch, isPublicRoute]);
+  }, [isAuthenticated, isLoading, location.pathname, isPublicRoute, returnToPath, navigate, dispatch]);
 
+  // Show loading state while authentication is being determined
   if (isLoading) {
-    return <PublicLayout><LoadingSpinner /></PublicLayout>;
+    return <LoadingSpinner />;
   }
 
-  if (isPublicRoute) {
-    return <PublicLayout>{element || <LoadingSpinner />}</PublicLayout>;
-  }
-
-  if (!isAuthenticated) {
-    return <PublicLayout><LoadingSpinner /></PublicLayout>;
-  }
-
-  return <AppLayout>{element || <LoadingSpinner />}</AppLayout>;
-}
-
-function AppContent() {
+  // Determine which layout to use based on route type and auth state
+  const Layout = (!isAuthenticated || isPublicRoute) ? PublicLayout : AppLayout;
+  
   return (
-    <>
-      <TitleBar />
-      <Suspense fallback={<LoadingSpinner />}>
-        <RoutesGuard />
-      </Suspense>
-    </>
+    <Layout>
+      {element || <LoadingSpinner />}
+    </Layout>
   );
 }
 
@@ -85,7 +58,10 @@ export default function App() {
     <ClerkProvider publishableKey={clerkPubKey}>
       <BrowserRouter>
         <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
-          <AppContent />
+          <TitleBar />
+          <Suspense fallback={<LoadingSpinner />}>
+            <RoutesGuard />
+          </Suspense>
           <Toaster />
         </div>
       </BrowserRouter>

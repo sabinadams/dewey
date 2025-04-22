@@ -25,12 +25,29 @@ export default function ConnectionStringTab({
         if (!value.trim()) return;
 
         try {
+            // Check if it's a SQLite file path
+            if (value.endsWith('.sqlite') || value.endsWith('.db') || value.startsWith('file:')) {
+                const dbPath = value.startsWith('file:') ? value.slice(5) : value;
+                form.setValue("databaseType", "sqlite");
+                form.setValue("sqliteType", "file");
+                form.setValue("database", dbPath);
+                return;
+            }
+
+            // Handle SQLite connection strings and other database types
             const parsed = new ConnectionString(value);
             const dbType = parsed.protocol === "postgresql" ? "postgres" :
                 parsed.protocol === "mongodb+srv" ? "mongodb" :
+                parsed.protocol === "sqlite" ? "sqlite" :
                     parsed.protocol || "";
 
             form.setValue("databaseType", dbType);
+
+            // Handle hosted SQLite connections
+            if (dbType === "sqlite") {
+                form.setValue("sqliteType", "hosted");
+            }
+
             form.setValue("host", parsed.hostname || "");
             form.setValue("port", parsed.port ? String(parsed.port) : "");
             form.setValue("username", parsed.user || "");
@@ -69,7 +86,7 @@ export default function ConnectionStringTab({
                     <FormLabel>Connection URL</FormLabel>
                     <FormControl>
                         <Input
-                            placeholder="postgresql://username:password@localhost:5432/database"
+                            placeholder="Examples: /path/to/database.sqlite, file:my.db, sqlite://user:pass@host:port/dbname"
                             value={connectionString}
                             onChange={handleInputChange}
                             onBlur={() => {
@@ -80,6 +97,9 @@ export default function ConnectionStringTab({
                             }}
                         />
                     </FormControl>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        For SQLite: Use a file path directly, prefix with 'file:' for local files, or use a full connection string for hosted databases.
+                    </p>
                 </FormItem>
 
                 <DetectedConnectionDetails form={form} />

@@ -7,22 +7,25 @@ import { z } from "zod"
 const baseConnectionSchema = z.object({
   connectionName: z.string().min(1, "Connection name is required").optional(),
   databaseType: z.string().min(1, "Database type is required").optional(),
-  host: z.string().min(1, "Host is required").optional(),
-  port: z.string().min(1, "Port is required").optional(),
-  username: z.string().min(1, "Username is required").optional(),
-  password: z.string().min(1, "Password is required").optional(),
-  database: z.string().min(1, "Database name is required").optional(),
+  sqliteType: z.enum(["file", "hosted"]).optional(),
+  host: z.string().optional(),
+  port: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  database: z.string().optional(),
 });
 
 // Schema for a complete connection that matches the Rust-side expectations
 const completeConnectionSchema = z.object({
   connectionName: z.string().min(1, "Connection name is required"),
   databaseType: z.string().min(1, "Database type is required"),
-  host: z.string().min(1, "Host is required"),
-  port: z.string().min(1, "Port is required"),
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-  database: z.string().min(1, "Database name is required"),
+  sqliteType: z.enum(["file", "hosted"]).optional(),
+  database: z.string().min(1, "Database path/name is required"),
+  // These fields are conditional based on database type
+  host: z.string(),
+  port: z.string(),
+  username: z.string(),
+  password: z.string(),
 }).transform(data => ({
   // Transform to match NewConnection struct
   connection_name: data.connectionName,
@@ -45,7 +48,108 @@ const connectionSchema = baseConnectionSchema.refine(
     message: "Please select a database type",
     path: ["databaseType"]
   }
-);
+).superRefine((data, ctx) => {
+  // If we have a database type selected, validate the required fields
+  if (data.databaseType) {
+    // For SQLite, validate based on connection type
+    if (data.databaseType === 'sqlite') {
+      if (!data.sqliteType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select a SQLite connection type",
+          path: ["sqliteType"]
+        });
+        return;
+      }
+
+      if (data.sqliteType === 'file') {
+        // For file-based SQLite, only validate the database path
+        if (!data.database) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Database file path is required",
+            path: ["database"]
+          });
+        }
+      } else {
+        // For hosted SQLite, validate all connection fields
+        if (!data.host) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Host is required",
+            path: ["host"]
+          });
+        }
+        if (!data.port) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Port is required",
+            path: ["port"]
+          });
+        }
+        if (!data.username) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Username is required",
+            path: ["username"]
+          });
+        }
+        if (!data.password) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Password is required",
+            path: ["password"]
+          });
+        }
+        if (!data.database) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Database name is required",
+            path: ["database"]
+          });
+        }
+      }
+      return;
+    }
+
+    // For other database types, validate all connection fields
+    if (!data.host) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Host is required",
+        path: ["host"]
+      });
+    }
+    if (!data.port) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Port is required",
+        path: ["port"]
+      });
+    }
+    if (!data.username) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Username is required",
+        path: ["username"]
+      });
+    }
+    if (!data.password) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Password is required",
+        path: ["password"]
+      });
+    }
+    if (!data.database) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Database name is required",
+        path: ["database"]
+      });
+    }
+  }
+});
 
 // Helper function to validate and transform connection data
 export const validateAndTransformConnection = (data: CreateProjectFormData) => {
@@ -55,6 +159,17 @@ export const validateAndTransformConnection = (data: CreateProjectFormData) => {
     .some(([_, value]) => Boolean(value));
 
   if (!hasConnectionData) return null;
+
+  // For SQLite file-based connections, set default values for unused fields
+  if (data.databaseType === 'sqlite' && data.sqliteType === 'file') {
+    data = {
+      ...data,
+      host: 'localhost',
+      port: '0',
+      username: '',
+      password: '',
+    };
+  }
 
   // Validate and transform the connection data
   try {
@@ -96,6 +211,7 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       icon: "",
       connectionName: "",
       databaseType: "",
+      sqliteType: "file",
       host: "",
       port: "",
       username: "",

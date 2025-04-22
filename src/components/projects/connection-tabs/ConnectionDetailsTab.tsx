@@ -5,6 +5,8 @@ import { TabsContent } from "../../ui/tabs";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
+import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
+import { Label } from "../../ui/label";
 
 const databaseTypes = [
     {
@@ -28,7 +30,7 @@ const databaseTypes = [
     {
         id: "sqlite",
         name: "SQLite",
-        description: "Connect to a SQLite database",
+        description: "Connect to a SQLite database file or hosted SQLite database",
         icon: () => <SiSqlite className="h-5 w-5 text-primary" />,
     },
 ];
@@ -36,6 +38,7 @@ const databaseTypes = [
 export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
     const watchDatabaseType = form.watch("databaseType");
+    const watchSqliteType = form.watch("sqliteType") || "file";
 
     return (
         <TabsContent value="standard" className="space-y-6 pt-4">
@@ -59,6 +62,13 @@ export default function ConnectionDetailsTab() {
                         onClick={() => {
                             form.setValue("databaseType", type.id);
                             form.trigger("databaseType");
+                            // Reset connection fields when changing database type
+                            form.setValue("host", "");
+                            form.setValue("port", "");
+                            form.setValue("username", "");
+                            form.setValue("password", "");
+                            form.setValue("database", "");
+                            form.setValue("sqliteType", type.id === "sqlite" ? "file" : undefined);
                         }}
                     >
                         {watchDatabaseType === type.id && (
@@ -75,7 +85,103 @@ export default function ConnectionDetailsTab() {
                 ))}
             </div>
 
-            {watchDatabaseType && (
+            {watchDatabaseType === "sqlite" && (
+                <div className="space-y-6">
+                    <RadioGroup
+                        defaultValue="file"
+                        value={watchSqliteType}
+                        onValueChange={(value: "file" | "hosted") => {
+                            form.setValue("sqliteType", value);
+                            // Reset fields when changing SQLite type
+                            form.setValue("host", "");
+                            form.setValue("port", "");
+                            form.setValue("username", "");
+                            form.setValue("password", "");
+                            form.setValue("database", "");
+                        }}
+                    >
+                        <div className="flex items-center space-x-6">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="file" id="file" />
+                                <Label htmlFor="file">Local File</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="hosted" id="hosted" />
+                                <Label htmlFor="hosted">Hosted Database</Label>
+                            </div>
+                        </div>
+                    </RadioGroup>
+
+                    {watchSqliteType === "file" ? (
+                        <div className="grid grid-cols-1 gap-4">
+                            <ValidatedFormField
+                                form={form}
+                                name="database"
+                                label="Database File Path"
+                                className="col-span-1"
+                                inputProps={{
+                                    placeholder: "/path/to/database.sqlite"
+                                }}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Enter the path to your SQLite database file. If the file doesn't exist, it will be created.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <ValidatedFormField
+                                form={form}
+                                name="host"
+                                label="Host"
+                                inputProps={{
+                                    placeholder: "db.example.com"
+                                }}
+                            />
+
+                            <ValidatedFormField
+                                form={form}
+                                name="port"
+                                label="Port"
+                                inputProps={{
+                                    placeholder: "5432",
+                                    type: "number"
+                                }}
+                            />
+
+                            <ValidatedFormField
+                                form={form}
+                                name="username"
+                                label="Username"
+                                inputProps={{
+                                    placeholder: "username"
+                                }}
+                            />
+
+                            <ValidatedFormField
+                                form={form}
+                                name="password"
+                                label="Password"
+                                inputProps={{
+                                    type: "password",
+                                    placeholder: "••••••••"
+                                }}
+                            />
+
+                            <ValidatedFormField
+                                form={form}
+                                name="database"
+                                label="Database Name"
+                                className="md:col-span-2"
+                                inputProps={{
+                                    placeholder: "my_database"
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {watchDatabaseType && watchDatabaseType !== "sqlite" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ValidatedFormField
                         form={form}

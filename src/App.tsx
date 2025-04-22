@@ -1,11 +1,10 @@
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter, useRoutes } from 'react-router-dom';
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import { LoadingSpinner, Toaster } from '@/components/ui';
 import { TitleBar } from '@/components/navigation';
-import { AppLayout } from '@/components/layouts/AppLayout';
-import { useAppDispatch, useAuthGuard } from '@/hooks';
-import { detectOS } from '@/store/slices/systemSlice';
+import AppLayout from '@/components/layouts/AppLayout';
+import { useAuthGuard } from '@/hooks';
 import routes from '~react-pages';
 
 function RoutesGuard() {
@@ -24,12 +23,6 @@ function RoutesGuard() {
 }
 
 function AppContent() {
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    dispatch(detectOS());
-  }, [dispatch]);
-
   return (
     <div className="flex-1 flex flex-col">
       <TitleBar />

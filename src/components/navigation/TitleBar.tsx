@@ -1,4 +1,3 @@
-import { appWindow } from '@tauri-apps/api/window';
 import { useDetectOSQuery } from '@/store/api/system.api';
 
 export default function TitleBar() {

@@ -14,12 +14,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { useAppSelector } from "@/hooks/useStore"
+import { useGetCurrentUserQuery } from '@/store/api/auth.api'
 import { useCreateProjectMutation } from "@/store/api/projects.api"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
-import { selectAuthUser } from "@/store/selectors"
 import CreateConnectionForm from "./CreateConnectionForm"
 
 const CreateProjectForm = () => {
@@ -30,7 +29,8 @@ const CreateProjectForm = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const user = useAppSelector(selectAuthUser);
+  const { data: authState } = useGetCurrentUserQuery();
+  const user = authState?.user;
   const navigate = useNavigate();
   const [createProject] = useCreateProjectMutation();
 
@@ -166,14 +166,17 @@ const CreateProjectForm = () => {
                         onChange={handleFileChange}
                       />
                       {!previewUrl ? (
-                        <FileUploadTrigger>
+                        <FileUploadTrigger inputId="project-icon">
                           <FileUploadIcon />
                           <span>Upload Icon</span>
                         </FileUploadTrigger>
                       ) : (
                         <FileUploadPreview
-                          src={previewUrl}
+                          fileName={currentFile?.name || "Project Icon"}
+                          fileUrl={previewUrl}
+                          fileType={currentFile?.type}
                           onDelete={handleFileDelete}
+                          size="icon"
                         />
                       )}
                     </FileUpload>
@@ -197,10 +200,12 @@ const CreateProjectForm = () => {
 
       {showCropper && selectedFile && (
         <ImageCropModal
-          file={selectedFile}
-          onComplete={handleCropComplete}
+          open={true}
+          image={selectedFile}
+          onCropComplete={handleCropComplete}
           onClose={handleCloseCropper}
-          aspect={1}
+          aspectRatio={1}
+          cropShape="round"
         />
       )}
     </Form>

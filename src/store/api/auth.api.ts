@@ -1,59 +1,46 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
-import { tauriBaseQuery } from './base';
-import { User, LoginCredentials, RegisterCredentials, AuthState } from '@/types/auth';
+import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
+import { User, AuthState } from '@/types/auth';
+
+// Create a simple in-memory store for the current user
+let currentUser: User | null = null;
+let returnToPath: string | null = null;
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: tauriBaseQuery,
+  baseQuery: fakeBaseQuery(),
   tagTypes: ['User'],
   endpoints: (builder) => ({
-    login: builder.mutation<User, LoginCredentials>({
-      query: (credentials) => ({
-        command: 'login',
-        args: credentials,
-      }),
-      invalidatesTags: ['User'],
-    }),
-    register: builder.mutation<User, RegisterCredentials>({
-      query: (credentials) => ({
-        command: 'register',
-        args: credentials,
-      }),
-      invalidatesTags: ['User'],
-    }),
-    logout: builder.mutation<void, void>({
-      query: () => ({
-        command: 'logout',
-      }),
-      invalidatesTags: ['User'],
-    }),
-    setUser: builder.mutation<void, User>({
-      query: (user) => ({
-        command: 'set_user',
-        args: { user },
-      }),
-      invalidatesTags: ['User'],
-    }),
     getCurrentUser: builder.query<AuthState, void>({
-      query: () => ({
-        command: 'get_current_user',
-      }),
-      transformResponse: (response: User | null) => ({
-        user: response,
-        isAuthenticated: !!response,
-        isLoading: false,
-        returnTo: null,
-        error: null
+      queryFn: () => ({
+        data: {
+          user: currentUser,
+          isAuthenticated: !!currentUser,
+          isLoading: false,
+          returnTo: returnToPath,
+          error: null
+        }
       }),
       providesTags: ['User'],
+    }),
+    setUser: builder.mutation<void, User | null>({
+      queryFn: (user) => {
+        currentUser = user;
+        return { data: undefined };
+      },
+      invalidatesTags: ['User'],
+    }),
+    setReturnTo: builder.mutation<void, string | null>({
+      queryFn: (path) => {
+        returnToPath = path;
+        return { data: undefined };
+      },
+      invalidatesTags: ['User'],
     }),
   }),
 });
 
 export const {
-  useLoginMutation,
-  useRegisterMutation,
-  useLogoutMutation,
-  useSetUserMutation,
   useGetCurrentUserQuery,
+  useSetUserMutation,
+  useSetReturnToMutation,
 } = authApi; 

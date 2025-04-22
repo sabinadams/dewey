@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import { Label } from "../../ui/label";
+import { Button } from "../../ui/button";
+import { useTestConnection } from "@/hooks/useTestConnection";
 
 const databaseTypes = [
     {
@@ -39,17 +41,44 @@ export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
     const watchDatabaseType = form.watch("databaseType");
     const watchSqliteType = form.watch("sqliteType") || "file";
+    const { testConnection, isLoading } = useTestConnection();
+
+    const handleTestConnection = async () => {
+        const values = form.getValues();
+        const isFileSqlite = values.databaseType === "sqlite" && values.sqliteType === "file";
+
+        await testConnection({
+            dbType: values.databaseType || "",
+            host: isFileSqlite ? "localhost" : (values.host || ""),
+            port: isFileSqlite ? "0" : (values.port || ""),
+            username: isFileSqlite ? "" : (values.username || ""),
+            password: isFileSqlite ? "" : (values.password || ""),
+            database: values.database || ""
+        });
+    };
 
     return (
         <TabsContent value="standard" className="space-y-6 pt-4">
-            <ValidatedFormField
-                form={form}
-                name="connectionName"
-                label="Connection Name"
-                inputProps={{
-                    placeholder: "My Database Connection"
-                }}
-            />
+            <div className="flex justify-between items-center">
+                <ValidatedFormField
+                    form={form}
+                    name="connectionName"
+                    label="Connection Name"
+                    inputProps={{
+                        placeholder: "My Database Connection"
+                    }}
+                />
+                {watchDatabaseType && (
+                    <Button
+                        variant="outline"
+                        onClick={handleTestConnection}
+                        disabled={isLoading}
+                        className="mt-8"
+                    >
+                        {isLoading ? "Testing..." : "Test Connection"}
+                    </Button>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {databaseTypes.map((type) => (

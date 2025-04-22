@@ -1,7 +1,21 @@
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector } from '@/hooks/useStore';
+import { useGetProjectsQuery } from '@/store/api/projects.api';
+import { selectAuthUser } from '@/store/selectors';
+import { LoadingSpinner } from '@/components/ui';
 
 export default function HomePage() {
-  const projects = useAppSelector(state => state.projects.items);
+  const user = useAppSelector(selectAuthUser);
+  const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center">

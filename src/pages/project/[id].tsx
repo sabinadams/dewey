@@ -1,11 +1,25 @@
 import { useParams } from 'react-router-dom';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector } from '@/hooks/useStore';
+import { useGetProjectsQuery } from '@/store/api/projects.api';
+import { selectAuthUser } from '@/store/selectors';
+import { LoadingSpinner } from '@/components/ui';
 
 export default function ProjectPage() {
   const { id } = useParams();
-  const project = useAppSelector(state => 
-    state.projects.items.find(p => p.id === Number(id))
-  );
+  const user = useAppSelector(selectAuthUser);
+  const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
+  });
+
+  const project = projects.find(p => p.id === Number(id));
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!project) {
     return (

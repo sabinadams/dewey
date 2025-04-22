@@ -1,14 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { useAppDispatch, useAppSelector } from '@/hooks/useStore';
-import {
-  setAuthenticated,
-  setUnauthenticated,
-  setLoading,
-  setReturnTo,
-} from '@/store/slices/authSlice';
-import { selectAuthState } from '@/store/selectors';
+import { useGetCurrentUserQuery, useSetUserMutation } from '@/store/api/auth.api';
 import { useGetProjectsQuery } from '@/store/api/projects.api';
 
 // Public routes that don't require authentication
@@ -19,8 +12,10 @@ export function useAuthGuard() {
   const { isLoaded: isUserLoaded, user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { returnTo, isAuthenticated, isLoading: authLoading } = useAppSelector(selectAuthState);
+  const [setUser] = useSetUserMutation();
+  const { data: authState, isLoading: isAuthStateLoading } = useGetCurrentUserQuery();
+  const isAuthenticated = authState?.isAuthenticated ?? false;
+  const returnTo = authState?.returnTo;
 
   // Prefetch projects if user is authenticated
   useGetProjectsQuery(user?.id || '', {
@@ -28,39 +23,31 @@ export function useAuthGuard() {
   });
 
   useEffect(() => {
-    if (isAuthLoaded && isUserLoaded) {
-      if (isSignedIn && user) {
-        dispatch(setAuthenticated({
-          id: user.id,
-          email: user.primaryEmailAddress?.emailAddress || undefined,
-          firstName: user.firstName || undefined,
-          lastName: user.lastName || undefined,
-          imageUrl: user.imageUrl || undefined,
-          username: user.username || undefined
-        }));
-      } else {
-        dispatch(setUnauthenticated());
-      }
-    } else {
-      dispatch(setLoading(true));
+    if (isAuthLoaded && isUserLoaded && isSignedIn && user) {
+      setUser({
+        id: user.id,
+        email: user.primaryEmailAddress?.emailAddress || '',
+        name: user.fullName || user.firstName || '',
+        avatar_url: user.imageUrl
+      }).catch(console.error);
     }
-  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
+  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, setUser]);
 
   useEffect(() => {
     if (!isAuthenticated && !publicRoutes.some(route => location.pathname.startsWith(route))) {
       if (!location.pathname.startsWith('/auth')) {
-        dispatch(setReturnTo(location.pathname));
+        // Store the return path in the URL instead of Redux
+        navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
+      } else {
+        navigate('/auth?mode=signin', { replace: true });
       }
-      navigate('/auth?mode=signin', { replace: true });
     } else if (returnTo && isAuthenticated) {
-      const path = returnTo;
-      dispatch(setReturnTo(null));
-      navigate(path, { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [isAuthenticated, location.pathname, returnTo, navigate, dispatch]);
+  }, [isAuthenticated, location.pathname, returnTo, navigate]);
 
   const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
-  const isLoading = !isAuthLoaded || !isUserLoaded;
+  const isLoading = !isAuthLoaded || !isUserLoaded || isAuthStateLoading;
 
   return {
     isLoading,

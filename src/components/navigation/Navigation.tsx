@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAppSelector } from '@/hooks';
-import { selectIsMac, selectAuthUser } from '@/store/selectors';
+import { useGetCurrentUserQuery } from '@/store/api/auth.api';
+import { useDetectOSQuery } from '@/store/api/system.api';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -86,8 +86,10 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
 }
 
 export default function Navigation() {
-  const isMac = useAppSelector(selectIsMac);
-  const user = useAppSelector(selectAuthUser);
+  const { data: authState } = useGetCurrentUserQuery();
+  const { data: osInfo } = useDetectOSQuery();
+  const user = authState?.user;
+  const isMac = osInfo?.isMac ?? false;
   const navigate = useNavigate();
   
   const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
@@ -124,55 +126,53 @@ export default function Navigation() {
       </div>
 
       {/* Projects Navigation */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="grid auto-rows-max justify-items-center gap-3 p-2">
-            {projects.map(project => (
-              <NavItem
-                key={project.id}
-                to={`/project/${project.id}`}
-                imageSrc={project.icon_path || undefined}
-                label={project.name}
-              />
-            ))}
-            <TooltipProvider>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="grid place-items-center w-10 h-10 border border-sidebar-border rounded-lg hover:bg-sidebar-accent cursor-pointer"
-                      onClick={() => navigate('/project/create')}
-                    >
-                      <Plus size={20} className="text-sidebar-foreground" />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>New Project</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </ScrollArea>
-      </div>
+      <ScrollArea className="flex-1">
+        <nav className="flex flex-col gap-1 p-2">
+          {projects.map((project) => (
+            <NavLink
+              key={project.id}
+              to={`/project/${project.id}`}
+              className={({ isActive }) =>
+                cn(
+                  buttonVariants({
+                    variant: isActive ? "secondary" : "ghost",
+                    size: "sm",
+                  }),
+                  "justify-start gap-2"
+                )
+              }
+            >
+              <Folder className="h-4 w-4" />
+              <span className="truncate">{project.name}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </ScrollArea>
 
-      {/* Bottom Section with Theme Toggle and User Menu */}
-      <div className="shrink-0 grid place-items-center gap-2 py-4">
+      {/* Bottom Section */}
+      <div className="shrink-0 p-2 flex flex-col gap-2">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div>
-                <ThemeToggle />
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-full"
+                onClick={() => navigate('/project/new')}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Toggle Theme</p>
+            <TooltipContent>
+              <p>Create New Project</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <UserMenu />
+
+        <div className="flex items-center justify-between gap-2">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
       </div>
     </aside>
   );

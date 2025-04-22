@@ -1,56 +1,44 @@
-import { useAppSelector, useAppDispatch } from '@/hooks';
-import { selectAuthUser } from '@/store/selectors';
-import { useClerk } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
-import { setUnauthenticated } from '@/store/slices/authSlice';
+import { useGetCurrentUserQuery } from '@/store/api/auth.api';
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui';
+} from "@/components/ui";
+import { useClerk } from "@clerk/clerk-react";
 
 export default function UserMenu() {
-  const user = useAppSelector(selectAuthUser);
   const { signOut } = useClerk();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
+  const { data: authState } = useGetCurrentUserQuery();
+  const user = authState?.user;
 
   if (!user) return null;
-
-  const handleSignOut = async () => {
-    await signOut();
-    dispatch(setUnauthenticated());
-    navigate('/auth?mode=signin');
-  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="w-10 h-10 rounded-lg hover:bg-sidebar-accent transition-colors p-1">
-          {user.imageUrl ? (
-            <img 
-              src={user.imageUrl} 
-              alt="Profile" 
-              className="w-full h-full rounded-lg object-cover"
-            />
-          ) : (
-            <div className="w-full h-full rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-accent-foreground text-sm">
-              {user.firstName?.[0] || user.email?.[0] || '?'}
-            </div>
-          )}
-        </button>
+        <Avatar className="h-8 w-8 cursor-pointer">
+          <AvatarImage src={user.avatar_url} alt={user.name} />
+          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bg-popover border-border">
+      <DropdownMenuContent align="end">
         <DropdownMenuLabel>
-          <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+          </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-border" />
-        <DropdownMenuItem onClick={handleSignOut} className="text-foreground focus:bg-accent focus:text-accent-foreground">
-          Sign Out
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut()}>
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

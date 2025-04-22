@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { tauriBaseQuery } from './base';
-import { User, LoginCredentials, RegisterCredentials } from '@/types/auth';
+import { User, LoginCredentials, RegisterCredentials, AuthState } from '@/types/auth';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
@@ -27,9 +27,23 @@ export const authApi = createApi({
       }),
       invalidatesTags: ['User'],
     }),
-    getCurrentUser: builder.query<User | null, void>({
+    setUser: builder.mutation<void, User>({
+      query: (user) => ({
+        command: 'set_user',
+        args: { user },
+      }),
+      invalidatesTags: ['User'],
+    }),
+    getCurrentUser: builder.query<AuthState, void>({
       query: () => ({
         command: 'get_current_user',
+      }),
+      transformResponse: (response: User | null) => ({
+        user: response,
+        isAuthenticated: !!response,
+        isLoading: false,
+        returnTo: null,
+        error: null
       }),
       providesTags: ['User'],
     }),
@@ -40,5 +54,6 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useLogoutMutation,
+  useSetUserMutation,
   useGetCurrentUserQuery,
 } = authApi; 

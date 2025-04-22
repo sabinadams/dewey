@@ -1,11 +1,11 @@
-import { FormControl, FormLabel, FormItem } from "../ui/form";
-import { Input } from "../ui/input";
-import { ValidatedFormField } from "../ui/form-field";
-import { TabsContent } from "../ui/tabs";
+import { FormControl, FormLabel, FormItem } from "../../ui/form";
+import { Input } from "../../ui/input";
+import { ValidatedFormField } from "../../ui/form-field";
+import { TabsContent } from "../../ui/tabs";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { ConnectionString } from "connection-string";
 import { toast } from "sonner";
-import DetectedConnectionDetails from "./DetectedConnectionDetails";
+import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
 
 export default function ConnectionStringTab({

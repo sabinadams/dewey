@@ -1,7 +1,7 @@
 import { SiMysql, SiPostgresql, SiSqlite, SiMongodb } from "@icons-pack/react-simple-icons";
-import { Card } from "../ui/card";
-import { ValidatedFormField } from "../ui/form-field";
-import { TabsContent } from "../ui/tabs";
+import { Card } from "../../ui/card";
+import { ValidatedFormField } from "../../ui/form-field";
+import { TabsContent } from "../../ui/tabs";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateProjectContext } from "@/contexts/create-project.context";

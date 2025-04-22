@@ -3,9 +3,9 @@ import { Sparkles } from "lucide-react";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { useState } from "react";
 import { GradientIcon } from "@/components/ui/gradient-icon";
-import ConnectionDetailsTab from "./ConnectionDetailsTab";
-import ConnectionStringTab from "./ConnectionStringTab";
-import ConnectionHelperTab from "./ConnectionHelperTab";
+import ConnectionDetailsTab from "./connection-tabs/ConnectionDetailsTab";
+import ConnectionStringTab from "./connection-tabs/ConnectionStringTab";
+import ConnectionHelperTab from "./connection-tabs/ConnectionHelperTab";
 
 export default function CreateConnectionForm() {
     const { form } = useCreateProjectContext();
@@ -14,9 +14,12 @@ export default function CreateConnectionForm() {
     return (
         <>
             <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-semibold">Initial Database Connection</h2>
+                <h2 className="text-xl font-semibold">
+                    Initial Database Connection 
+                    <span className="text-base font-normal text-muted-foreground ml-1">(Optional)</span>
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                    You can add more connections to this project later
+                    You can skip this for now and add database connections to your project later
                 </p>
             </div>
             <Tabs

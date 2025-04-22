@@ -1,12 +1,12 @@
-import { Card } from "../ui/card";
-import { FormControl, FormItem, FormLabel } from "../ui/form";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
+import { Card } from "../../ui/card";
+import { FormControl, FormItem, FormLabel } from "../../ui/form";
+import { Textarea } from "../../ui/textarea";
+import { Button } from "../../ui/button";
 import { Sparkles, HelpCircle } from "lucide-react";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { useState } from "react";
-import DetectedConnectionDetails from "./DetectedConnectionDetails";
-import { TabsContent } from "../ui/tabs";
+import DetectedConnectionDetails from "../DetectedConnectionDetails";
+import { TabsContent } from "../../ui/tabs";
 
 export default function ConnectionHelperTab() {
     const { form } = useCreateProjectContext();

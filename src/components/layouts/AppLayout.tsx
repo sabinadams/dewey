@@ -1,16 +1,15 @@
 import { Navigation } from '@/components/navigation';
-import { Card } from '@/components/ui/card';
+import { Card, ScrollArea } from '@/components/ui';
 import { useAppSelector } from '@/hooks';
 import { LoadingSpinner } from '@/components/ui';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { selectProjectsLoading } from '@/store/selectors';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  // Get projects loading state
-  const { isLoading: projectsLoading } = useAppSelector(state => state.projects);
+  const projectsLoading = useAppSelector(selectProjectsLoading);
 
   return (
     <div className="flex flex-1 h-screen bg-background text-foreground">

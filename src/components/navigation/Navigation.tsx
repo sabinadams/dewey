@@ -4,16 +4,17 @@ import { selectIsMac, selectProjects } from '@/store/selectors';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import {
+  ScrollArea,
+  Button,
+  buttonVariants,
+  ThemeToggle,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from '@/components/ui';
+import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import { useEffect, useState } from 'react';
 
 interface NavItemProps {

@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/hooks';
-import { selectIsMac, selectProjects } from '@/store/selectors';
+import { selectIsMac, selectAuthUser } from '@/store/selectors';
 import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -13,9 +13,11 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  LoadingSpinner
 } from '@/components/ui';
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import { useEffect, useState } from 'react';
+import { useGetProjectsQuery } from '@/store/api/projects.api';
 
 interface NavItemProps {
   to: string;
@@ -85,8 +87,24 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
 
 export default function Navigation() {
   const isMac = useAppSelector(selectIsMac);
-  const projects = useAppSelector(selectProjects);
+  const user = useAppSelector(selectAuthUser);
   const navigate = useNavigate();
+  
+  const { data: projects = [], isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
+  });
+
+  if (isLoading) {
+    return (
+      <aside className={cn(
+        "min-w-18 flex flex-col items-center justify-center",
+        isMac ? "mt-10" : "",
+        "h-[calc(100vh-2.5rem)]"
+      )}>
+        <LoadingSpinner />
+      </aside>
+    );
+  }
 
   return (
     <aside 

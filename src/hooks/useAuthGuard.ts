@@ -8,8 +8,8 @@ import {
   setLoading,
   setReturnTo,
 } from '@/store/slices/authSlice';
-import { fetchProjects } from '@/store/slices/projectsSlice';
-import { selectAuthState, selectProjects } from '@/store/selectors';
+import { selectAuthState } from '@/store/selectors';
+import { useGetProjectsQuery } from '@/store/api/projects.api';
 
 // Public routes that don't require authentication
 export const publicRoutes = ['/auth'];
@@ -21,7 +21,11 @@ export function useAuthGuard() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { returnTo, isAuthenticated, isLoading: authLoading } = useAppSelector(selectAuthState);
-  const projects = useAppSelector(selectProjects);
+
+  // Prefetch projects if user is authenticated
+  useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
+  });
 
   useEffect(() => {
     if (isAuthLoaded && isUserLoaded) {
@@ -34,7 +38,6 @@ export function useAuthGuard() {
           imageUrl: user.imageUrl || undefined,
           username: user.username || undefined
         }));
-        dispatch(fetchProjects(user.id));
       } else {
         dispatch(setUnauthenticated());
       }
@@ -43,25 +46,21 @@ export function useAuthGuard() {
     }
   }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
 
+  useEffect(() => {
+    if (!isAuthenticated && !publicRoutes.some(route => location.pathname.startsWith(route))) {
+      if (!location.pathname.startsWith('/auth')) {
+        dispatch(setReturnTo(location.pathname));
+      }
+      navigate('/auth?mode=signin', { replace: true });
+    } else if (returnTo && isAuthenticated) {
+      const path = returnTo;
+      dispatch(setReturnTo(null));
+      navigate(path, { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, returnTo, navigate, dispatch]);
+
   const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
   const isLoading = !isAuthLoaded || !isUserLoaded;
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated && !isPublicRoute) {
-        if (!location.pathname.startsWith('/auth')) {
-          dispatch(setReturnTo(location.pathname));
-        }
-        navigate('/auth?mode=signin', { replace: true });
-      } else if (isAuthenticated && returnTo) {
-        const path = returnTo;
-        dispatch(setReturnTo(null));
-        navigate(path, { replace: true });
-      } else if (isAuthenticated && projects.length > 0 && location.pathname === '/') {
-        navigate(`/project/${projects[0].id}`, { replace: true });
-      }
-    }
-  }, [isLoading, isAuthenticated, isPublicRoute, location.pathname, returnTo, projects]);
 
   return {
     isLoading,

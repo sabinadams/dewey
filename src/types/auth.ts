@@ -1,10 +1,8 @@
 export interface User {
     id: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    imageUrl?: string;
-    username?: string;
+    email: string;
+    name: string;
+    avatar_url?: string;
 }
 
 export interface AuthState {
@@ -13,4 +11,13 @@ export interface AuthState {
     isLoading: boolean;
     returnTo: string | null;
     error: string | null;
+}
+
+export interface LoginCredentials {
+    email: string;
+    password: string;
+}
+
+export interface RegisterCredentials extends LoginCredentials {
+    name: string;
 } 

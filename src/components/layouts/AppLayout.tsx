@@ -1,22 +1,25 @@
 import { Navigation } from '@/components/navigation';
-import { Card, ScrollArea } from '@/components/ui';
+import { Card, ScrollArea, LoadingSpinner } from '@/components/ui';
 import { useAppSelector } from '@/hooks';
-import { LoadingSpinner } from '@/components/ui';
-import { selectProjectsLoading } from '@/store/selectors';
+import { selectAuthUser } from '@/store/selectors';
+import { useGetProjectsQuery } from '@/store/api/projects.api';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const projectsLoading = useAppSelector(selectProjectsLoading);
+  const user = useAppSelector(selectAuthUser);
+  const { isLoading } = useGetProjectsQuery(user?.id || '', {
+    skip: !user?.id,
+  });
 
   return (
     <div className="flex flex-1 h-screen bg-background text-foreground">
       <Navigation />
       <main className="flex-1 p-2 pl-0 h-full overflow-hidden">
         <Card className="h-full bg-card text-card-foreground">
-          {projectsLoading ? (
+          {isLoading ? (
             <div className="h-full grid place-items-center">
               <LoadingSpinner />
             </div>

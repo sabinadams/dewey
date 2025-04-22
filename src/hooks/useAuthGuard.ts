@@ -1,49 +1,37 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { setReturnToPath } from '@/store/slices/ui.slice';
 import { useAuth as useAuthStore } from './useAuth';
 
 // Public routes that don't require authentication
 export const publicRoutes = ['/auth'];
 
 export function useAuthGuard() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { isSignedIn } = useAuth();
-  const { isLoaded } = useUser();
-  const returnToPath = useSelector((state: RootState) => state.ui.returnToPath);
-  const { user } = useAuthStore();
+  const { isLoaded, user: clerkUser } = useUser();
+  const { updateUser } = useAuthStore();
+  const prevUserRef = useRef<string | null>(null);
 
+  // Handle user data sync
   useEffect(() => {
-    // Wait for Clerk to load
     if (!isLoaded) return;
 
-    const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+    const currentUserJson = clerkUser ? JSON.stringify({
+      id: clerkUser.id,
+      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      firstName: clerkUser.firstName,
+      lastName: clerkUser.lastName,
+      imageUrl: clerkUser.imageUrl,
+    }) : null;
 
-    // If we're on a public route and authenticated, redirect to home
-    if (isPublicRoute && isSignedIn) {
-      navigate('/', { replace: true });
-      return;
+    // Only update if the user data has actually changed
+    if (currentUserJson !== prevUserRef.current) {
+      prevUserRef.current = currentUserJson;
+      updateUser(currentUserJson ? JSON.parse(currentUserJson) : null);
     }
+  }, [clerkUser, isLoaded, updateUser]);
 
-    // If we're not on a public route and not authenticated, redirect to auth
-    if (!isPublicRoute && !isSignedIn) {
-      dispatch(setReturnToPath(location.pathname));
-      navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
-      return;
-    }
-
-    // If we're authenticated and have a return path, redirect there
-    if (returnToPath && isSignedIn) {
-      const path = returnToPath;
-      dispatch(setReturnToPath(null));
-      navigate(path, { replace: true });
-    }
-  }, [isSignedIn, isLoaded, location.pathname, returnToPath, navigate, dispatch]);
-
-  return { isLoading: !isLoaded, isAuthenticated: isSignedIn, user };
+  return {
+    isLoading: !isLoaded,
+    isAuthenticated: !!isSignedIn
+  };
 } 

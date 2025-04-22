@@ -5,24 +5,24 @@ import { z } from "zod"
 
 // Define the database connection schema
 const baseConnectionSchema = z.object({
-  connectionName: z.string().optional(),
-  databaseType: z.string().optional(),
-  host: z.string().optional(),
-  port: z.string().optional(),
-  username: z.string().optional(),
-  password: z.string().optional(),
-  database: z.string().optional(),
+  connectionName: z.string().min(1, "Connection name is required").optional(),
+  databaseType: z.string().min(1, "Database type is required").optional(),
+  host: z.string().min(1, "Host is required").optional(),
+  port: z.string().min(1, "Port is required").optional(),
+  username: z.string().min(1, "Username is required").optional(),
+  password: z.string().min(1, "Password is required").optional(),
+  database: z.string().min(1, "Database name is required").optional(),
 });
 
 // Schema for a complete connection that matches the Rust-side expectations
 const completeConnectionSchema = z.object({
-  connectionName: z.string(),
-  databaseType: z.string(),
-  host: z.string(),
-  port: z.string(),
-  username: z.string(),
-  password: z.string(),
-  database: z.string(),
+  connectionName: z.string().min(1, "Connection name is required"),
+  databaseType: z.string().min(1, "Database type is required"),
+  host: z.string().min(1, "Host is required"),
+  port: z.string().min(1, "Port is required"),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+  database: z.string().min(1, "Database name is required"),
 }).transform(data => ({
   // Transform to match NewConnection struct
   connection_name: data.connectionName,
@@ -43,7 +43,18 @@ const connectionSchema = baseConnectionSchema.refine(
     return !hasAnyField || hasAllFields;
   },
   {
-    message: "All connection fields must be filled if any are filled",
+    message: "All connection fields must be filled out to create a connection",
+    path: ["connectionName"], // This will show the error at the connection name field
+  }
+).refine(
+  (data) => {
+    // If any field is filled, database type must be selected
+    const hasAnyField = Object.values(data).some(Boolean);
+    return !hasAnyField || data.databaseType;
+  },
+  {
+    message: "Please select a database type",
+    path: ["databaseType"]
   }
 );
 
@@ -70,9 +81,30 @@ const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   icon: z.string().optional(),
   
-  // Database connection details
-  ...baseConnectionSchema.shape
-});
+  // Database connection details - using the connection schema
+}).and(connectionSchema.refine(
+  (data) => {
+    const connectionFields = [
+      data.connectionName,
+      data.databaseType,
+      data.host,
+      data.port,
+      data.username,
+      data.password,
+      data.database
+    ];
+    
+    // If any field is filled, all must be filled
+    const hasAnyField = connectionFields.some(Boolean);
+    const hasAllFields = connectionFields.every(Boolean);
+    
+    return !hasAnyField || hasAllFields;
+  },
+  {
+    message: "All connection fields must be filled out to create a connection",
+    path: ["connectionName"]
+  }
+));
 
 // Export types for use in other components
 export type ConnectionData = z.infer<typeof connectionSchema>

@@ -206,12 +206,16 @@ const CreateProjectForm = () => {
                       <FormItem>
                         <FormLabel>Project Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="My Project" {...field} />
+                          <Input 
+                            placeholder="My Project" 
+                            {...field} 
+                            onBlur={field.onBlur}
+                          />
                         </FormControl>
                         <FormDescription>
                           This will be the display name for your project
                         </FormDescription>
-                        <FormMessage />
+                        <FormMessage className="text-sm text-destructive" />
                       </FormItem>
                     )}
                   />

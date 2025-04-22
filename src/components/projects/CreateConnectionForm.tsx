@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GradientIcon } from "@/components/ui/gradient-icon";
 import DetectedConnectionDetails from "./DetectedConnectionDetails";
 import { toast } from "sonner";
+import { ValidatedFormField } from "@/components/ui/form-field";
 
 const databaseTypes = [
     {
@@ -152,18 +153,11 @@ export default function CreateConnectionForm() {
                 </TabsList>
 
                 <TabsContent value="standard" className="space-y-6 pt-4">
-                    <FormField
-                        control={form.control}
+                    <ValidatedFormField
+                        form={form}
                         name="connectionName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Connection Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="My Database Connection" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        label="Connection Name"
+                        placeholder="My Database Connection"
                     />
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -174,7 +168,10 @@ export default function CreateConnectionForm() {
                                     "relative cursor-pointer p-4 transition-all hover:border-primary flex flex-col gap-1",
                                     watchDatabaseType === type.id && "border-2 border-primary",
                                 )}
-                                onClick={() => form.setValue("databaseType", type.id)}
+                                onClick={() => {
+                                    form.setValue("databaseType", type.id);
+                                    form.trigger("databaseType");
+                                }}
                             >
                                 {watchDatabaseType === type.id && (
                                     <div className="absolute right-2 top-2 h-5 w-5 rounded-full bg-primary text-primary-foreground">
@@ -189,78 +186,48 @@ export default function CreateConnectionForm() {
                             </Card>
                         ))}
                     </div>
+                    {form.formState.touchedFields.databaseType && (
+                        <FormMessage className="text-sm text-destructive">{form.formState.errors.databaseType?.message}</FormMessage>
+                    )}
 
-                    {/* Standard connection fields will be added here */}
                     {watchDatabaseType && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <FormField
-                                control={form.control}
+                            <ValidatedFormField
+                                form={form}
                                 name="host"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Host</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="localhost" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Host"
+                                placeholder="localhost"
                             />
 
-                            <FormField
-                                control={form.control}
+                            <ValidatedFormField
+                                form={form}
                                 name="port"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Port</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="5432" type="number" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Port"
+                                placeholder="5432"
+                                type="number"
                             />
 
-                            <FormField
-                                control={form.control}
+                            <ValidatedFormField
+                                form={form}
                                 name="username"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Username</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="username" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Username"
+                                placeholder="username"
                             />
 
-                            <FormField
-                                control={form.control}
+                            <ValidatedFormField
+                                form={form}
                                 name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="••••••••" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Password"
+                                placeholder="••••••••"
+                                type="password"
                             />
 
-                            <FormField
-                                control={form.control}
+                            <ValidatedFormField
+                                form={form}
                                 name="database"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Database Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="my_database" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Database Name"
+                                placeholder="my_database"
+                                className="md:col-span-2"
                             />
                         </div>
                     )}
@@ -268,18 +235,11 @@ export default function CreateConnectionForm() {
 
                 <TabsContent value="url" className="pt-4">
                     <div className="flex flex-col gap-4">
-                        <FormField
-                            control={form.control}
+                        <ValidatedFormField
+                            form={form}
                             name="connectionName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Connection Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="My Database Connection" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            label="Connection Name"
+                            placeholder="My Database Connection"
                         />
 
                         <FormItem>
@@ -288,10 +248,26 @@ export default function CreateConnectionForm() {
                                 <Input
                                     placeholder="postgresql://username:password@localhost:5432/database"
                                     value={connectionString}
-                                    onChange={(e) => handleConnectionStringChange(e.target.value)}
+                                    onChange={(e) => {
+                                        handleConnectionStringChange(e.target.value);
+                                        // Only trigger validation for fields that have been touched
+                                        const touchedFields = Object.keys(form.formState.touchedFields);
+                                        if (touchedFields.length > 0) {
+                                            form.trigger(touchedFields as any);
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Only validate fields that have been touched
+                                        const touchedFields = Object.keys(form.formState.touchedFields);
+                                        if (touchedFields.length > 0) {
+                                            form.trigger(touchedFields as any);
+                                        }
+                                    }}
                                 />
                             </FormControl>
-                            <FormMessage />
+                            {Object.keys(form.formState.touchedFields).length > 0 && (
+                                <FormMessage className="text-sm text-destructive" />
+                            )}
                         </FormItem>
 
                         <DetectedConnectionDetails form={form} />
@@ -327,11 +303,15 @@ export default function CreateConnectionForm() {
                                             value={aiQuestion}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                                                 setAiQuestion(e.target.value);
-                                                // TODO: Implement real-time suggestions
+                                                form.trigger();
                                             }}
+                                            onBlur={() => form.trigger()}
                                             className="min-h-[120px]"
                                         />
                                     </FormControl>
+                                    {form.formState.touchedFields.database && (
+                                        <FormMessage className="text-sm text-destructive" />
+                                    )}
                                     <p className="text-sm text-muted-foreground mt-2">
                                         Dewey will analyze your input and help fill out the connection details
                                     </p>
@@ -342,7 +322,6 @@ export default function CreateConnectionForm() {
                                         <Sparkles className="h-4 w-4" />
                                         <span>Dewey's suggestions will appear here</span>
                                     </div>
-                                    {/* TODO: Add real-time suggestions component */}
                                 </div>
 
                                 <div className="flex items-center gap-4">

@@ -51,28 +51,28 @@ export default function DetectedConnectionDetails({ form }: DetectedConnectionDe
                 )}
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
+                <div className="grid grid-cols-[80px,1fr] items-center">
                     <span className="text-muted-foreground">Type:</span>
-                    <span className="ml-2">{databaseType || "Not detected"}</span>
+                    <span>{databaseType || "Not detected"}</span>
                 </div>
                 {isSQLite ? (
-                    <div className="col-span-2">
+                    <div className="col-span-2 grid grid-cols-[80px,1fr] items-center">
                         <span className="text-muted-foreground">File Path:</span>
-                        <span className="ml-2">{form.watch("database") || "Not detected"}</span>
+                        <span>{form.watch("database") || "Not detected"}</span>
                     </div>
                 ) : (
                     <>
-                        <div>
+                        <div className="grid grid-cols-[80px,1fr] items-center">
                             <span className="text-muted-foreground">Host:</span>
-                            <span className="ml-2">{form.watch("host") || "Not detected"}</span>
+                            <span>{form.watch("host") || "Not detected"}</span>
                         </div>
-                        <div>
+                        <div className="grid grid-cols-[80px,1fr] items-center">
                             <span className="text-muted-foreground">Port:</span>
-                            <span className="ml-2">{form.watch("port") || "Not detected"}</span>
+                            <span>{form.watch("port") || "Not detected"}</span>
                         </div>
-                        <div>
+                        <div className="grid grid-cols-[80px,1fr] items-center">
                             <span className="text-muted-foreground">Database:</span>
-                            <span className="ml-2">{form.watch("database") || "Not detected"}</span>
+                            <span>{form.watch("database") || "Not detected"}</span>
                         </div>
                     </>
                 )}

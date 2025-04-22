@@ -7,21 +7,26 @@ interface FormFieldProps {
     form: UseFormReturn<any>;
     name: string;
     label: string;
-    placeholder?: string;
-    type?: string;
-    className?: string;
     description?: React.ReactNode;
+    className?: string;
+    inputProps?: React.ComponentPropsWithoutRef<typeof Input>;
 }
 
 export function ValidatedFormField({
     form,
     name,
     label,
-    placeholder,
-    type = "text",
+    description,
     className,
-    description
+    inputProps = {},
 }: FormFieldProps) {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        form.setValue(name, e.target.value);
+        if (form.formState.touchedFields[name]) {
+            form.trigger(name);
+        }
+    };
+
     return (
         <FormField
             control={form.control}
@@ -31,27 +36,22 @@ export function ValidatedFormField({
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
                         <Input
-                            placeholder={placeholder}
-                            type={type}
+                            {...inputProps}
                             {...field}
-                            onChange={(e) => {
-                                field.onChange(e);
-                                if (form.formState.touchedFields[name]) {
-                                    form.trigger(name);
-                                }
-                            }}
+                            onChange={handleChange}
                             onBlur={() => {
                                 field.onBlur();
                                 form.trigger(name);
                             }}
                             className={cn(
+                                inputProps.className,
                                 form.formState.errors[name] && "border-destructive"
                             )}
                         />
                     </FormControl>
                     {description}
                     {form.formState.touchedFields[name] && (
-                        <FormMessage className="text-sm text-destructive" />
+                        <FormMessage />
                     )}
                 </FormItem>
             )}

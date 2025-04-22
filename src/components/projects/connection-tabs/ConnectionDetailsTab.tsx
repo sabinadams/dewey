@@ -10,6 +10,7 @@ import { Label } from "../../ui/label";
 import { Button } from "../../ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
 import { toast } from "sonner";
+
 const databaseTypes = [
     {
         id: "postgres",
@@ -150,7 +151,7 @@ export default function ConnectionDetailsTab() {
                         </div>
                     </RadioGroup>
 
-                    {watchSqliteType === "file" ? (
+                    {watchSqliteType === "file" && (
                         <div className="grid grid-cols-1 gap-4">
                             <ValidatedFormField
                                 form={form}
@@ -165,61 +166,11 @@ export default function ConnectionDetailsTab() {
                                 Enter the path to your SQLite database file. If the file doesn't exist, it will be created.
                             </p>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <ValidatedFormField
-                                form={form}
-                                name="host"
-                                label="Host"
-                                inputProps={{
-                                    placeholder: "db.example.com"
-                                }}
-                            />
-
-                            <ValidatedFormField
-                                form={form}
-                                name="port"
-                                label="Port"
-                                inputProps={{
-                                    placeholder: "5432",
-                                    type: "number"
-                                }}
-                            />
-
-                            <ValidatedFormField
-                                form={form}
-                                name="username"
-                                label="Username"
-                                inputProps={{
-                                    placeholder: "username"
-                                }}
-                            />
-
-                            <ValidatedFormField
-                                form={form}
-                                name="password"
-                                label="Password"
-                                inputProps={{
-                                    type: "password",
-                                    placeholder: "••••••••"
-                                }}
-                            />
-
-                            <ValidatedFormField
-                                form={form}
-                                name="database"
-                                label="Database Name"
-                                className="md:col-span-2"
-                                inputProps={{
-                                    placeholder: "my_database"
-                                }}
-                            />
-                        </div>
                     )}
                 </div>
             )}
 
-            {watchDatabaseType && watchDatabaseType !== "sqlite" && (
+            {(watchDatabaseType !== "sqlite" || watchSqliteType === "hosted") && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ValidatedFormField
                         form={form}

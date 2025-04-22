@@ -1,7 +1,7 @@
 import { Window } from '@tauri-apps/api/window';
 import { X, Minus, Square } from 'lucide-react';
 import { useOS } from '@/hooks/useOS';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
@@ -56,10 +56,18 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
 export default function TitleBar() {
   const win = Window.getCurrent();
   const { isMac } = useOS();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    console.log('TitleBar mounted, isMac:', isMac);
+    // Only set ready after the initial OS detection
+    if (isMac !== null) {
+      setIsReady(true);
+    }
   }, [isMac]);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <div 

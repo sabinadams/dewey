@@ -1,104 +1,93 @@
-import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
 import { LoadingSpinner, Toaster, Card, ScrollArea } from '@/components/ui';
 import TitleBar from '@/components/navigation/TitleBar';
 import { Navigation } from '@/components/navigation';
-import { useAuthGuard } from '@/hooks';
-import { publicRoutes } from '@/hooks/useAuthGuard';
+import { useAuth } from '@clerk/clerk-react';
 import routes from '~react-pages';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch } from 'react-redux';
 import { setReturnToPath } from '@/store/slices/ui.slice';
 
-function SuspenseFallback() {
+function LoadingScreen() {
   return (
-    <div className="absolute inset-0 bg-background">
-      <div className="flex flex-1 h-screen">
-        <main className="flex-1 p-2 h-full overflow-hidden flex items-center justify-center">
-          <LoadingSpinner />
+    <div className="h-screen flex items-center justify-center bg-background">
+      <LoadingSpinner />
+    </div>
+  );
+}
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="h-screen flex flex-col bg-background">
+      <TitleBar />
+      <div className="flex-1 flex overflow-hidden">
+        <Navigation />
+        <main className="flex-1 overflow-hidden">
+          <Card className="h-full bg-card text-card-foreground">
+            <ScrollArea className="h-full w-full px-6">
+              {children}
+            </ScrollArea>
+          </Card>
         </main>
       </div>
+    </div>
+  );
+}
+
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="h-screen flex flex-col bg-background">
+      <TitleBar />
+      <main className="flex-1 flex items-center justify-center">
+        {children}
+      </main>
     </div>
   );
 }
 
 function RoutesGuard() {
-  const { isLoading, isAuthenticated } = useAuthGuard();
+  const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const returnToPath = useSelector((state: RootState) => state.ui.returnToPath);
   const element = useRoutes(routes);
-  const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
 
+  // Handle auth redirects
   useEffect(() => {
-    if (isLoading) return;
+    if (!isLoaded) return;
 
-    // Handle authentication redirects
-    if (isPublicRoute && isAuthenticated) {
+    const isPublicRoute = location.pathname === '/auth';
+    
+    if (isSignedIn && isPublicRoute) {
       navigate('/', { replace: true });
-    } else if (!isPublicRoute && !isAuthenticated) {
+    } else if (!isSignedIn && !isPublicRoute) {
       dispatch(setReturnToPath(location.pathname));
-      navigate('/auth?mode=signin&returnTo=' + encodeURIComponent(location.pathname), { replace: true });
-    } else if (returnToPath && isAuthenticated) {
-      navigate(returnToPath, { replace: true });
-      dispatch(setReturnToPath(null));
+      navigate('/auth', { replace: true });
     }
-  }, [isAuthenticated, isLoading, location.pathname, isPublicRoute, returnToPath, navigate, dispatch]);
+  }, [isLoaded, isSignedIn, location.pathname, navigate, dispatch]);
 
-  if (isLoading) {
-    return (
-      <div className="absolute inset-0 bg-background">
-        <div className="flex flex-1 h-screen">
-          <main className="flex-1 p-2 h-full overflow-hidden flex items-center justify-center">
-            <LoadingSpinner />
-          </main>
-        </div>
-      </div>
-    );
+  if (!isLoaded) {
+    return <LoadingScreen />;
   }
 
-  return (
-    <div className="absolute inset-0 bg-background">
-      <div className="flex flex-1 h-screen">
-        {!isPublicRoute && isAuthenticated && <Navigation />}
-        <main className={`flex-1 p-2 ${!isPublicRoute && isAuthenticated ? 'pl-0' : ''} h-full overflow-hidden`}>
-          {isPublicRoute || !isAuthenticated ? (
-            <div className="h-full flex items-center justify-center">
-              {element || <LoadingSpinner />}
-            </div>
-          ) : (
-            <Card className="h-full bg-card text-card-foreground">
-              <ScrollArea className="h-full w-full px-6">
-                {element || <LoadingSpinner />}
-              </ScrollArea>
-            </Card>
-          )}
-        </main>
-      </div>
-    </div>
-  );
-}
+  const isPublicRoute = location.pathname === '/auth';
+  
+  if (isPublicRoute) {
+    return <PublicLayout>{element}</PublicLayout>;
+  }
 
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  return <AppLayout>{element}</AppLayout>;
+}
 
 export default function App() {
   return (
-    <ClerkProvider publishableKey={clerkPubKey}>
-      <BrowserRouter>
-        <div className="relative min-h-screen flex flex-col rounded-lg overflow-hidden">
-          <div className="relative flex-1">
-            <TitleBar />
-            <div className="pt-10">
-              <Suspense fallback={<SuspenseFallback />}>
-                <RoutesGuard />
-              </Suspense>
-            </div>
-          </div>
-          <Toaster />
-        </div>
-      </BrowserRouter>
-    </ClerkProvider>
+    <BrowserRouter>
+      <div className="h-screen flex flex-col bg-background">
+        <Suspense fallback={<LoadingScreen />}>
+          <RoutesGuard />
+        </Suspense>
+        <Toaster />
+      </div>
+    </BrowserRouter>
   );
 }

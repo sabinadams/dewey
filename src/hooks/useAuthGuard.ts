@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useAuth as useAuthStore } from './useAuth';
 
@@ -10,6 +10,11 @@ export function useAuthGuard() {
   const { isLoaded, user: clerkUser } = useUser();
   const { updateUser } = useAuthStore();
   const prevUserRef = useRef<string | null>(null);
+  const [stableAuthState, setStableAuthState] = useState<{ isLoading: boolean; isAuthenticated: boolean }>({
+    isLoading: true,
+    isAuthenticated: false
+  });
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Handle user data sync
   useEffect(() => {
@@ -25,7 +30,7 @@ export function useAuthGuard() {
 
     // Only update if the user data has actually changed
     if (currentUserJson !== prevUserRef.current) {
-      console.log('Auth state changed:', {
+      console.log('User data changed:', {
         isSignedIn,
         isLoaded,
         prevUser: prevUserRef.current,
@@ -36,8 +41,31 @@ export function useAuthGuard() {
     }
   }, [clerkUser, isLoaded, updateUser, isSignedIn]);
 
-  return {
-    isLoading: !isLoaded,
-    isAuthenticated: !!isSignedIn
-  };
+  // Debounce auth state changes
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      const newState = {
+        isLoading: !isLoaded,
+        isAuthenticated: !!isSignedIn
+      };
+
+      // Only update if the state has actually changed
+      if (JSON.stringify(newState) !== JSON.stringify(stableAuthState)) {
+        console.log('Stable auth state changed:', newState);
+        setStableAuthState(newState);
+      }
+    }, 50);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoaded, isSignedIn, stableAuthState]);
+
+  return stableAuthState;
 } 

@@ -1,6 +1,6 @@
 use crate::constants;
 use crate::services::storage::icon::IconGenerator;
-use crate::services::storage::repositories::connections::{Connection, ConnectionRepository};
+use crate::services::storage::repositories::connections::{NewConnection, ConnectionRepository};
 use crate::services::storage::repositories::projects::{Project, ProjectRepository};
 use crate::utils;
 use crate::AppState;
@@ -40,7 +40,7 @@ pub async fn create_project(
     name: String,
     user_id: String,
     custom_icon_data: Option<String>,
-    initial_connection: Option<Connection>,
+    initial_connection: Option<NewConnection>,
     state: State<'_, AppState>,
 ) -> Result<i64, String> {
     info!("Creating new project '{}' for user: {}", name, user_id);
@@ -96,18 +96,15 @@ pub async fn create_project(
     // If an initial connection was provided, create it
     if let Some(initial_connection) = initial_connection {
         info!("Creating initial connection for project {}", project_id);
-        let connection = Connection {
-            id: 0,
+        let connection = NewConnection {
             connection_name: initial_connection.connection_name,
-            project_id,
+            project_id: Some(project_id),
             db_type: initial_connection.db_type,
             host: initial_connection.host,
             port: initial_connection.port,
             username: initial_connection.username,
             password: initial_connection.password,
-            database: initial_connection.database,
-            created_at: None,
-            updated_at: None,
+            database: initial_connection.database
         };
 
         connection_repo.create(&connection).await.map_err(|e| {

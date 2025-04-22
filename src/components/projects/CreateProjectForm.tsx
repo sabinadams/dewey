@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { ImageCropModal } from "@/components/ui/image-crop-modal"
 import { FileUpload, FileUploadIcon, FileUploadInput, FileUploadPreview, FileUploadTrigger } from "@/components/ui/file-upload"
 import { useRef, useState, useEffect } from "react"
-import { useCreateProjectContext, CreateProjectFormData } from "@/contexts/create-project.context"
+import { useCreateProjectContext, CreateProjectFormData, validateAndTransformConnection } from "@/contexts/create-project.context"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -20,6 +20,22 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
+
+// Define the interface for the project params that matches the Tauri backend
+interface ProjectParams {
+  name: string;
+  user_id: string;
+  custom_icon_data?: string;
+  initial_connection: {
+    connection_name: string;
+    db_type: string;
+    host: string;
+    port: string;
+    username: string;
+    password: string;
+    database: string;
+  };
+}
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -100,24 +116,26 @@ const CreateProjectForm = () => {
   const onSubmit = form.handleSubmit(async (data: CreateProjectFormData) => {
     try {
       setIsSubmitting(true);
-
-      // Create a loading toast that will be updated with the result
       const loadingToastId = toast.loading('Creating project...', {
-        duration: Infinity, // Don't auto-dismiss
+        duration: Infinity,
       });
 
       // Create the project params object for Redux
       const projectParams: CreateProjectParams = {
         name: data.name,
-        user_id: user?.id || ''
+        user_id: user?.id || '',
       };
 
       // If there's a file to upload, add it to the project params
       if (currentFile) {
         const fileBase64 = await fileToBase64(currentFile);
         projectParams.custom_icon_data = fileBase64;
-      } else {
-        console.log("No custom icon selected, backend will generate one");
+      }
+
+      // Validate and transform connection data if present
+      const connection = validateAndTransformConnection(data);
+      if (connection) {
+        projectParams.initial_connection = connection;
       }
 
       // Use the Redux thunk to create the project

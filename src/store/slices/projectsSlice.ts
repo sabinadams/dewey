@@ -30,11 +30,24 @@ export const fetchProjects = createAsyncThunk(
     }
 )
 
+// Define the Connection interface
+export interface Connection {
+    connection_name: string
+    db_type: string
+    host: string
+    port: string
+    username: string
+    password: string
+    database: string
+}
+
+
 // Define the CreateProjectParams interface
 export interface CreateProjectParams {
     name: string
     user_id: string
     custom_icon_data?: string
+    initial_connection?: Connection
 }
 
 export const createProject = createAsyncThunk(
@@ -44,7 +57,8 @@ export const createProject = createAsyncThunk(
         const projectId = await invoke<number>('create_project', {
             name: params.name,
             userId: params.user_id, // Convert snake_case to camelCase for Tauri
-            customIconData: params.custom_icon_data // Convert snake_case to camelCase for Tauri
+            customIconData: params.custom_icon_data, // Convert snake_case to camelCase for Tauri
+            initialConnection: params.initial_connection
         });
         
         // After creating, fetch the updated list

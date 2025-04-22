@@ -22,6 +22,19 @@ pub struct Connection {
     pub updated_at: Option<i64>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewConnection {
+    pub connection_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<i64>,
+    pub db_type: String,
+    pub host: String,
+    pub port: String,
+    pub username: String,
+    pub password: String,
+    pub database: String,
+}
+
 #[derive(Debug, FromRow)]
 struct EncryptedConnection {
     pub id: i64,
@@ -64,7 +77,7 @@ impl ConnectionRepository {
         Self { pool }
     }
     
-    pub async fn create(&self, connection: &Connection) -> AppResult<i64> {
+    pub async fn create(&self, connection: &NewConnection) -> AppResult<i64> {
         debug!("Creating new connection: {:?}", connection);
         
         let result = sqlx::query(
@@ -79,7 +92,7 @@ impl ConnectionRepository {
             "#
         )
         .bind(&connection.connection_name)
-        .bind(connection.project_id)
+        .bind(connection.project_id.expect("project_id is required for database insertion"))
         .bind(&connection.db_type)
         .bind(encrypt_string(&connection.host)?)
         .bind(encrypt_string(&connection.port)?)

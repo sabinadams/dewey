@@ -98,11 +98,17 @@ export default function CreateConnectionForm() {
         // Only parse if we have a non-empty string
         if (value.trim()) {
             const parsedValues = parseConnectionString(value);
+            const currentConnectionName = form.getValues("connectionName");
 
-            // Update form with parsed values
+            // Update form with parsed values, preserving the connection name if it exists
             Object.entries(parsedValues).forEach(([field, value]) => {
                 form.setValue(field as any, value);
             });
+
+            // Restore connection name if it was previously set
+            if (currentConnectionName) {
+                form.setValue("connectionName", currentConnectionName);
+            }
         }
     };
 
@@ -140,6 +146,20 @@ export default function CreateConnectionForm() {
                 </TabsList>
 
                 <TabsContent value="standard" className="space-y-6 pt-4">
+                    <FormField
+                        control={form.control}
+                        name="connectionName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Connection Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="My Database Connection" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {databaseTypes.map((type) => (
                             <Card
@@ -241,17 +261,33 @@ export default function CreateConnectionForm() {
                 </TabsContent>
 
                 <TabsContent value="url" className="pt-4">
-                    <FormItem>
-                        <FormLabel>Connection URL</FormLabel>
-                        <FormControl>
-                            <Input
-                                placeholder="postgresql://username:password@localhost:5432/database"
-                                value={connectionString}
-                                onChange={(e) => handleConnectionStringChange(e.target.value)}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                    <div className="flex flex-col gap-4">
+                        <FormField
+                            control={form.control}
+                            name="connectionName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Connection Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="My Database Connection" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormItem>
+                            <FormLabel>Connection URL</FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="postgresql://username:password@localhost:5432/database"
+                                    value={connectionString}
+                                    onChange={(e) => handleConnectionStringChange(e.target.value)}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="ai" className="pt-4">

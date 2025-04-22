@@ -7,6 +7,12 @@ body, html, #root {
   padding: 0;
   overflow: hidden;
   border-radius: 0.5rem;
+  background-color: var(--background);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 .titlebar-drag {
     -webkit-app-region: drag;

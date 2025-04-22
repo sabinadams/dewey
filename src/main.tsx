@@ -8,7 +8,13 @@ import "@/styles/index.css";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+// Show the root element when the app is ready
+const root = document.getElementById("root");
+if (root) {
+  root.style.display = "block";
+}
+
+ReactDOM.createRoot(root as HTMLElement).render(
   <React.StrictMode>
     <Provider store={store}>
       <ClerkProvider publishableKey={clerkPubKey}>

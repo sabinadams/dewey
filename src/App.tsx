@@ -1,6 +1,6 @@
 import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
-import { LoadingSpinner, Toaster, Card, ScrollArea } from '@/components/ui';
+import { Toaster, Card, ScrollArea } from '@/components/ui';
 import TitleBar from '@/components/navigation/TitleBar';
 import { Navigation } from '@/components/navigation';
 import { useAuth } from '@clerk/clerk-react';
@@ -10,20 +10,20 @@ import { setReturnToPath } from '@/store/slices/ui.slice';
 
 function LoadingScreen() {
   return (
-    <div className="h-screen flex items-center justify-center bg-background">
-      <LoadingSpinner />
+    <div className="fixed inset-0 flex items-center justify-center bg-background rounded-2xl overflow-hidden">
+      <div className="w-8 h-8 border-4 border-foreground border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="fixed inset-0 flex flex-col bg-background rounded-2xl overflow-hidden">
       <TitleBar />
       <div className="flex-1 flex overflow-hidden">
         <Navigation />
-        <main className="flex-1 overflow-hidden">
-          <Card className="h-full bg-card text-card-foreground">
+        <main className="flex-1 overflow-hidden pr-2 pt-2 pb-2">
+          <Card className="h-full rounded-2xl">
             <ScrollArea className="h-full w-full px-6">
               {children}
             </ScrollArea>
@@ -36,7 +36,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="fixed inset-0 flex flex-col bg-background rounded-2xl overflow-hidden">
       <TitleBar />
       <main className="flex-1 flex items-center justify-center">
         {children}
@@ -52,7 +52,6 @@ function RoutesGuard() {
   const dispatch = useDispatch();
   const element = useRoutes(routes);
 
-  // Handle auth redirects
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -71,23 +70,18 @@ function RoutesGuard() {
   }
 
   const isPublicRoute = location.pathname === '/auth';
-  
-  if (isPublicRoute) {
-    return <PublicLayout>{element}</PublicLayout>;
-  }
-
-  return <AppLayout>{element}</AppLayout>;
+  return isPublicRoute ? <PublicLayout>{element}</PublicLayout> : <AppLayout>{element}</AppLayout>;
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <div className="h-screen flex flex-col bg-background">
+    <div className="fixed inset-0 bg-background rounded-2xl overflow-hidden">
+      <BrowserRouter>
         <Suspense fallback={<LoadingScreen />}>
           <RoutesGuard />
         </Suspense>
         <Toaster />
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </div>
   );
 }

@@ -17,6 +17,8 @@ import { ConnectionString } from "connection-string";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { GradientIcon } from "@/components/ui/gradient-icon";
+import DetectedConnectionDetails from "./DetectedConnectionDetails";
+import { toast } from "sonner";
 
 const databaseTypes = [
     {
@@ -49,7 +51,7 @@ const databaseTypes = [
 function parseConnectionString(connectionString: string) {
     try {
         const parsed = new ConnectionString(connectionString);
-
+        console.log("Parsed connection string:", parsed);
         // Map protocol to database type
         let dbType = "";
         if (parsed.protocol) {
@@ -73,6 +75,10 @@ function parseConnectionString(connectionString: string) {
         };
     } catch (error) {
         console.error("Failed to parse connection string:", error);
+        toast.error("Failed to parse connection string", {
+            description: error instanceof Error ? error.message : 'Unknown error',
+            duration: 5000
+        });
         return {
             databaseType: "",
             username: "",
@@ -208,7 +214,7 @@ export default function CreateConnectionForm() {
                                     <FormItem>
                                         <FormLabel>Port</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="5432" {...field} />
+                                            <Input placeholder="5432" type="number" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -287,6 +293,8 @@ export default function CreateConnectionForm() {
                             </FormControl>
                             <FormMessage />
                         </FormItem>
+
+                        <DetectedConnectionDetails form={form} />
                     </div>
                 </TabsContent>
 
@@ -357,29 +365,8 @@ export default function CreateConnectionForm() {
                                         Let Dewey Help
                                     </Button>
                                 </div>
-                            </div>
 
-                            {/* Show detected connection details */}
-                            <div className="border rounded-lg p-4">
-                                <h4 className="text-sm font-medium mb-3">Detected Connection Details</h4>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                        <span className="text-muted-foreground">Type:</span>
-                                        <span className="ml-2">{form.watch("databaseType") || "Not detected"}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Host:</span>
-                                        <span className="ml-2">{form.watch("host") || "Not detected"}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Port:</span>
-                                        <span className="ml-2">{form.watch("port") || "Not detected"}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Database:</span>
-                                        <span className="ml-2">{form.watch("database") || "Not detected"}</span>
-                                    </div>
-                                </div>
+                                <DetectedConnectionDetails form={form} />
                             </div>
                         </div>
                     </Card>

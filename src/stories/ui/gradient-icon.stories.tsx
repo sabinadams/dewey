@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { GradientIcon } from "./gradient-icon"
+import { GradientIcon } from "@/components/ui/gradient-icon"
 import { 
   Sparkles, 
   Heart, 

@@ -1,28 +1,13 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
-import { setUser, setLoading, setError } from '@/store/slices/auth.slice';
-import { User } from '@/types/auth';
+import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 
 export function useAuth() {
-  const dispatch = useDispatch();
-  const authState = useSelector((state: RootState) => state.auth);
-
-  const updateUser = (user: User | null) => {
-    dispatch(setUser(user));
-  };
-
-  const updateLoading = (isLoading: boolean) => {
-    dispatch(setLoading(isLoading));
-  };
-
-  const updateError = (error: string | null) => {
-    dispatch(setError(error));
-  };
+  const { isLoaded, isSignedIn, userId } = useClerkAuth();
 
   return {
-    ...authState,
-    updateUser,
-    updateLoading,
-    updateError
+    isLoaded,
+    isSignedIn,
+    userId,
+    loading: !isLoaded,
+    error: null
   };
 } 

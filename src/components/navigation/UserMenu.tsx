@@ -9,21 +9,17 @@ import {
 } from "@/components/ui";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from 'react-router-dom';
-import { useDispatch as useAppDispatch } from 'react-redux';
-import { setUser } from '@/store/slices/auth.slice';
 
 export default function UserMenu() {
   const { signOut } = useClerk();
   const { userId } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   if (!userId || !user) return null;
 
   const handleSignOut = async () => {
     await signOut();
-    dispatch(setUser(null));
     navigate('/auth?mode=signin');
   };
 

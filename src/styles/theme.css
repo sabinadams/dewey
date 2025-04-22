@@ -4,13 +4,18 @@
 /* Theme transition */
 /* Background and foreground */
 :root {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
+  background-color: var(--background);
 }
 
 html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
+  background-color: var(--background);
 }
 
+body {
+  background-color: var(--background);
+}
 
 @custom-variant dark (&:is(.dark *));
 

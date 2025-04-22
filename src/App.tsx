@@ -1,86 +1,27 @@
 import { ClerkProvider } from '@clerk/clerk-react';
-import { BrowserRouter, Navigate, useLocation, useRoutes } from 'react-router-dom';
+import { BrowserRouter, useRoutes } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { TitleBar } from '@/components/TitleBar';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { LoadingSpinner, Toaster } from '@/components/ui';
+import { TitleBar } from '@/components/navigation';
 import { AppLayout } from '@/components/AppLayout';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { detectOS } from '@/store/slices/systemSlice';
-import { setAuthenticated, setUnauthenticated, setLoading, setReturnTo } from '@/store/slices/authSlice';
-import { fetchProjects } from '@/store/slices/projectsSlice';
-import { Toaster } from '@/components/ui/sonner';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import routes from '~react-pages';
 
-// Public routes that don't require authentication
-const publicRoutes = ['/auth'];
-
 function RoutesGuard() {
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
-  const { isLoaded: isUserLoaded, user } = useUser();
-  const location = useLocation();
-  const dispatch = useAppDispatch();
-  const { returnTo, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const { isLoading, isAuthenticated, isPublicRoute } = useAuthGuard();
   const element = useRoutes(routes);
 
-  // Handle auth state changes
-  useEffect(() => {
-    if (isAuthLoaded && isUserLoaded) {
-      if (isSignedIn && user) {
-        dispatch(setAuthenticated({
-          id: user.id,
-          email: user.primaryEmailAddress?.emailAddress || undefined,
-          firstName: user.firstName || undefined,
-          lastName: user.lastName || undefined,
-          imageUrl: user.imageUrl || undefined,
-          username: user.username || undefined
-        }));
-        // Fetch projects when we determine the user is signed in
-        dispatch(fetchProjects(user.id));
-      } else {
-        dispatch(setUnauthenticated());
-      }
-    } else {
-      dispatch(setLoading(true));
-    }
-  }, [isAuthLoaded, isUserLoaded, isSignedIn, user, dispatch]);
-
-  // Handle loading state - only for auth, not for projects
-  const { items: projects } = useAppSelector(state => state.projects);
-  
-  // Show loading spinner for auth loading only
-  if (isLoading || !isAuthLoaded || !isUserLoaded) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Allow access to public routes even when not signed in
-  if (publicRoutes.some(route => location.pathname.startsWith(route))) {
+  if (isPublicRoute) {
     return element ?? <LoadingSpinner />;
   }
 
-  // Redirect to sign-in if not authenticated
-  if (!isAuthenticated) {
-    // Store the current path to return to after auth
-    if (!location.pathname.startsWith('/auth')) {
-      dispatch(setReturnTo(location.pathname));
-    }
-    return <Navigate to="/auth?mode=signin" replace />;
-  }
-
-  // If we have a returnTo path and we're authenticated, redirect there
-  if (returnTo && isAuthenticated) {
-    const path = returnTo;
-    dispatch(setReturnTo(null));
-    return <Navigate to={path} replace />;
-  }
-
-  if ( isAuthenticated && projects.length > 0 && location.pathname === '/' ) {
-    // TODO: Ideally this should be stored in a user setting as the most recently used project
-    return <Navigate to={`/project/${projects[0].id}`} replace />;
-  }
-  
-  // Show protected routes if authenticated
-  return <AppLayout>{element}</AppLayout>;
+  return isAuthenticated ? <AppLayout>{element}</AppLayout> : <LoadingSpinner />;
 }
 
 function AppContent() {

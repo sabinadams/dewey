@@ -1,6 +1,7 @@
 import { Window } from '@tauri-apps/api/window';
 import { X, Minus, Square } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
+import { selectIsMac } from '@/store/selectors';
 
 function MacOSControls({ win }: { win: ReturnType<typeof Window.getCurrent> }) {
   return (
@@ -52,9 +53,9 @@ function WindowsControls({ win }: { win: ReturnType<typeof Window.getCurrent> })
   );
 }
 
-export function TitleBar() {
+export default function TitleBar() {
   const win = Window.getCurrent();
-  const { isMac } = useAppSelector(state => state.system);
+  const isMac = useAppSelector(selectIsMac);
 
   return (
     <div 

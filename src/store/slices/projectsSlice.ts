@@ -1,14 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { invoke } from '@tauri-apps/api/core'
-
-export interface Project {
-    id: number
-    name: string
-    user_id: string
-    created_at: number
-    updated_at: number
-    icon_path: string | null
-}
+import { Project, CreateProjectParams } from '@/types'
+import { projectsApi } from '@/api'
 
 interface ProjectsState {
     items: Project[]
@@ -25,8 +17,7 @@ const initialState: ProjectsState = {
 export const fetchProjects = createAsyncThunk(
     'projects/fetchProjects',
     async (userId: string) => {
-        const projects = await invoke<Project[]>('get_user_projects', { userId })
-        return projects
+        return projectsApi.getUserProjects(userId)
     }
 )
 
@@ -41,34 +32,10 @@ export interface Connection {
     database: string
 }
 
-
-// Define the CreateProjectParams interface
-export interface CreateProjectParams {
-    name: string
-    user_id: string
-    custom_icon_data?: string
-    initial_connection?: Connection
-}
-
 export const createProject = createAsyncThunk(
     'projects/createProject',
     async (params: CreateProjectParams) => {
-        // For Tauri commands, we need to use camelCase parameter names
-        const projectId = await invoke<number>('create_project', {
-            name: params.name,
-            userId: params.user_id, // Convert snake_case to camelCase for Tauri
-            customIconData: params.custom_icon_data, // Convert snake_case to camelCase for Tauri
-            initialConnection: params.initial_connection
-        });
-        
-        // After creating, fetch the updated list
-        const projects = await invoke<Project[]>('get_user_projects', { userId: params.user_id });
-        
-        // Return both the project ID and the updated projects list
-        return {
-            projectId,
-            projects
-        };
+        return projectsApi.createProject(params)
     }
 )
 

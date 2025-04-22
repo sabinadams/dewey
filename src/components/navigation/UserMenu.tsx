@@ -1,4 +1,5 @@
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { selectAuthUser } from '@/store/selectors';
 import { useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { setUnauthenticated } from '@/store/slices/authSlice';
@@ -11,8 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function UserMenu() {
-  const { user } = useAppSelector(state => state.auth);
+export default function UserMenu() {
+  const user = useAppSelector(selectAuthUser);
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();

@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
-import { UserMenu } from '@/components/UserMenu';
+import { selectIsMac, selectProjects } from '@/store/selectors';
+import UserMenu from '@/components/navigation/UserMenu';
 import { Folder, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScrollArea } from './ui/scroll-area';
-import { Button, buttonVariants } from './ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 interface NavItemProps {
   to: string;
   icon?: React.ReactNode;
@@ -81,9 +83,9 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
   );
 }
 
-export function Navigation() {
-  const { isMac } = useAppSelector(state => state.system);
-  const projects = useAppSelector(state => state.projects.items);
+export default function Navigation() {
+  const isMac = useAppSelector(selectIsMac);
+  const projects = useAppSelector(selectProjects);
   const navigate = useNavigate();
 
   return (

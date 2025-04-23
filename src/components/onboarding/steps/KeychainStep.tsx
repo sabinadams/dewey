@@ -68,6 +68,7 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
     <BaseStep
       icon={KeyRound}
       title="Secure Your Connection"
+      infoText='Dewey needs access to your system keychain to securely store your database credentials. When you connect to a database, Dewey will use the keychain to securely store your credentials. If this is skipped now, you will be asked to grant access when you connect to a database for the first time.'
       description={
         <AnimatePresence mode="wait">
           <motion.div

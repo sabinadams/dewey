@@ -66,7 +66,7 @@ export default function Onboarding() {
         <AIVectorBackground />
       </div>
       <DecorativeBlobs step={currentStep} />
-      <div className="flex flex-col relative w-full h-full py-2">
+      <div className="flex flex-col relative w-full h-full py-8">
         <div className="flex-1"/>
         <div className="flex items-center justify-center p-8 relative z-10 mx-auto">
           <div className="w-full max-w-lg relative">

@@ -203,12 +203,3 @@ pub async fn get_project_connections(
         e.to_string()
     })
 }
-
-#[tauri::command]
-pub async fn get_project_tables(
-    project_id: i64,
-    state: State<'_, AppState>,
-) -> Result<Vec<String>, String> {
-    // ... rest of the implementation ...
-    Ok(Vec::new())
-}

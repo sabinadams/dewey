@@ -19,19 +19,19 @@ const WizardStepsIndicator: React.FC<WizardStepsIndicatorProps> = ({
                     <div key={step.id} className="flex items-center flex-1">
                         <div className="w-full">
                             <div
-                                className={`rounded-full transition-all duration-500 ease-in-out ${
+                                className={`rounded-full transition-all duration-300 ease-in-out ${
                                     steps.findIndex(s => s.id === currentStep) >= index
                                         ? `bg-primary ${
                                             steps.findIndex(s => s.id === currentStep) === index 
                                                 ? `${glowEffect} h-1.5` 
-                                                : 'h-1'
+                                                : 'h-1 hover:scale-105 hover:h-1.5 hover:after:absolute hover:after:inset-[-2px] hover:after:rounded-full hover:after:outline hover:after:outline-[0.5px] hover:after:outline-primary cursor-pointer'
                                           }`
                                         : 'bg-muted h-1'
                                 }`}
                             />
                         </div>
                         {index < steps.length - 1 && (
-                            <div className="w-2 h-2 rounded-full mx-2 bg-muted" />
+                            <div className="w-1.5 h-1.5 rounded-full mx-2 bg-muted" />
                         )}
                     </div>
                 ))}

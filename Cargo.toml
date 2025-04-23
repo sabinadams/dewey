@@ -1,6 +1,0 @@
-[workspace]
-members = [
-    "src-tauri",
-    "dewey-lib/macros"
-]
-resolver = "2" 

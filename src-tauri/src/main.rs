@@ -39,7 +39,23 @@ async fn main() {
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("icon", protocols::icons::icon_protocol)
         .manage(app_state)
-        .invoke_handler(commands::collect_commands!())
+        // I hate this, but I don't know how to do it otherwise
+        .invoke_handler(tauri::generate_handler![
+            // Onboarding commands
+            commands::onboarding::store_onboarding,
+            commands::onboarding::should_run_onboarding,
+            
+            // Project commands
+            commands::projects::create_project,
+            commands::projects::get_user_projects,
+            commands::projects::update_project,
+            commands::projects::delete_project,
+            commands::projects::get_project_connections,
+            commands::projects::get_project_tables,
+            
+            // Database commands
+            commands::database::test_connection
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

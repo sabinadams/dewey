@@ -6,6 +6,9 @@ pub const APP_COMPANY: &str = "com";
 pub const APP_NAME: &str = "dewey";
 pub const APP_QUALIFIER: &str = "app";
 
+// Onboarding version - increment this when onboarding content changes
+pub const ONBOARDING_VERSION: i32 = 1;
+
 // File and directory names
 pub const DB_FILENAME: &str = "dewey.db";
 pub const ICONS_DIR: &str = "icons";

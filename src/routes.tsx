@@ -5,6 +5,7 @@ import AuthCallback from '@/pages/auth/callback';
 import ProjectPage from '@/pages/project/[id]';
 import OnboardingPage from '@/pages/onboarding';
 import NotFoundPage from '@/pages/404';
+import CreateProjectPage from './pages/project/create';
 
 export const routes: RouteObject[] = [
   {
@@ -22,6 +23,10 @@ export const routes: RouteObject[] = [
   {
     path: '/project/:id',
     element: <ProjectPage />,
+  },
+  {
+    path: '/project/create',
+    element: <CreateProjectPage />,
   },
   {
     path: '/onboarding',

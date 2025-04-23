@@ -108,7 +108,7 @@ function DecorativeBlobs({ step }: DecorativeBlobsProps) {
 
   // Update positions immediately on targetPositions change
   useEffect(() => {
-    console.log('Updating positions to target positions immediately:', targetPositions);
+    console.log('Updating positions to target positions:', targetPositions);
     setPositions(targetPositions);
   }, [targetPositions]);
 

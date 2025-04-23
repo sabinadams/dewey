@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BaseStepProps {
   icon?: LucideIcon;
@@ -10,6 +11,8 @@ interface BaseStepProps {
   onAction: () => void;
   children?: React.ReactNode;
   iconSize?: 'sm' | 'lg';
+  buttonDisabled?: boolean;
+  infoText?: string;
 }
 
 const BaseStep = ({ 
@@ -19,7 +22,9 @@ const BaseStep = ({
   buttonText, 
   onAction, 
   children,
-  iconSize = 'sm'
+  iconSize = 'sm',
+  buttonDisabled = false,
+  infoText
 }: BaseStepProps) => {
   const iconContainerSize = iconSize === 'sm' ? 'w-16 h-16' : 'w-24 h-24';
   const iconSizeClass = iconSize === 'sm' ? 'w-8 h-8' : 'w-12 h-12';
@@ -39,14 +44,27 @@ const BaseStep = ({
             <Icon className={`${iconSizeClass} text-primary`} />
           </div>
         )}
-        <h2 className="text-2xl font-bold mb-2">{title}</h2>
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="text-2xl font-bold">{title}</h2>
+          {infoText && (
+            <Tooltip >
+              <TooltipTrigger asChild>
+                <Info className="h-5 w-5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px] break-words" side="bottom">
+                <p className="whitespace-normal">{infoText}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         <p className="text-muted-foreground mb-6">{description}</p>
       </div>
       {children}
       <Button
         size="lg"
-        className="w-full"
+        className="w-full transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
         onClick={onAction}
+        disabled={buttonDisabled}
       >
         {buttonText}
       </Button>

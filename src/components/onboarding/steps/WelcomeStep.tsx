@@ -12,8 +12,8 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
         <LogoSVG className="w-full h-full" />
       </div>
       <BaseStep
-        title="Let's get you started"
-        description="Let's set up everything you need to get started."
+        title="Let's get started"
+        description="Get ready to supercharge your database workflow with AI! Your data is powerful - it deserves an equally powerful tool."
         buttonText="Begin Setup"
         onAction={onNext}
       />

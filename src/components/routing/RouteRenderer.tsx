@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useRoutes, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { useDispatch } from 'react-redux';
 import { setReturnToPath } from '@/store/slices/ui.slice';
-import routes from '~react-pages';
+import { routes } from '@/routes';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen'; // Import LoadingScreen
 import { AppLayout } from '@/components/layouts/AppLayout'; // Import AppLayout
 import { PublicLayout } from '@/components/layouts/PublicLayout'; // Import PublicLayout
@@ -20,7 +20,8 @@ export function RouteRenderer() {
 
   useEffect(() => {
     console.log("[RouteRenderer] shouldRunOnboarding", shouldRunOnboarding);
-  }, [shouldRunOnboarding]);
+    console.log("[RouteRenderer] current path:", location.pathname);
+  }, [shouldRunOnboarding, location.pathname]);
   // Fetch projects conditionally
   const {
     data: projects,
@@ -30,7 +31,7 @@ export function RouteRenderer() {
   });
 
 
-  const publicPaths = ['/auth'];
+  const publicPaths = ['/auth', '/onboarding'];
   const isPublic = publicPaths.includes(location.pathname);
   const isOnRoot = location.pathname === '/';
 
@@ -42,7 +43,7 @@ export function RouteRenderer() {
 
   if (isAuthLoaded) {
     if (isSignedIn && userId) {
-      if (isPublic) {
+      if (isPublic && location.pathname !== '/onboarding') {
         shouldRedirectToRoot = true;
       } else if (isOnRoot) {
         // Only consider redirecting from root if projects have successfully loaded
@@ -61,8 +62,12 @@ export function RouteRenderer() {
 
   // --- Perform Redirects using useEffect --- 
   useEffect(() => {
-    // No need to check isAuthLoaded here, decision flags depend on it already
-    if (shouldRedirectToRoot) {
+    // Only redirect to onboarding if we're not already there
+    if (shouldRunOnboarding && location.pathname !== '/onboarding') {
+      console.log("[RouteRenderer] Redirecting to onboarding");
+      navigate('/onboarding', { replace: true });
+    } else if (shouldRedirectToRoot) {
+      // No need to check isAuthLoaded here, decision flags depend on it already
       console.log("[RouteRenderer] Redirecting to / (from public)");
       navigate('/', { replace: true });
     } else if (shouldRedirectToAuth) {
@@ -72,12 +77,9 @@ export function RouteRenderer() {
     } else if (shouldRedirectToProject) {
       console.log(`[RouteRenderer] Redirecting to project: ${targetProjectRoute}`);
       navigate(targetProjectRoute, { replace: true });
-    } else if (shouldRunOnboarding) {
-      console.log("[RouteRenderer] Redirecting to onboarding");
-      navigate('/onboarding', { replace: true });
     }
     // Re-run effect if redirect conditions change
-  }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname]);
+  }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname, shouldRunOnboarding]);
 
 
   // --- Loading State --- 

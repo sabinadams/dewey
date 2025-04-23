@@ -30,7 +30,7 @@ impl OnboardingRepository {
     /// Returns a string error if there was a problem accessing the database or the onboarding could not be stored
     pub async fn store(&self, has_completed: bool) -> AppResult<Onboarding> {
         let result =
-            sqlx::query_as::<_, Onboarding>("INSERT INTO onboarding (has_completed, onboarding_version) VALUES (?, ?) RETURNING *")
+            sqlx::query_as::<_, Onboarding>("INSERT INTO onboarding (has_completed, version) VALUES (?, ?) RETURNING *")
                 .bind(has_completed)
                 .bind(ONBOARDING_VERSION)
                 .fetch_one(&*self.pool)
@@ -45,7 +45,7 @@ impl OnboardingRepository {
     /// Returns a string error if there was a problem accessing the database or the onboarding could not be retrieved
     pub async fn should_run(&self) -> AppResult<bool> {
         let has_completed = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM onboarding WHERE has_completed = 1 AND onboarding_version = ?)"
+            "SELECT EXISTS(SELECT 1 FROM onboarding WHERE has_completed = 1 AND version = ?)"
         )
         .bind(ONBOARDING_VERSION)
         .fetch_one(&*self.pool)

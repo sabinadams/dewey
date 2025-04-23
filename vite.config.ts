@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from '@tailwindcss/vite'
-import Pages from 'vite-plugin-pages'
 import { resolve } from 'path'
 import svgr from 'vite-plugin-svgr'
 
@@ -19,10 +18,6 @@ export default defineConfig({
       include: '**/*.svg',
     }),
     tailwindcss(),
-    Pages({
-      dirs: 'src/pages',
-      resolver: 'react',
-    }),
   ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

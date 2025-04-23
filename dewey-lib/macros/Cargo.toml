@@ -1,0 +1,15 @@
+[package]
+name = "dewey-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+inventory = "0.3"
+dewey-lib = { path = ".." }
+tauri = { version = "2" } 

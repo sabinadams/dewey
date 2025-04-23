@@ -13,12 +13,13 @@ use crate::{
 use blake3;
 use tauri::State;
 use tracing::{error, info};
+use dewey_macros::command;
 
 /// Command to fetch all projects for a user
 ///
 /// # Errors
 /// Returns a string error if there was a problem accessing the database or the projects could not be retrieved
-#[tauri::command]
+#[command]
 pub async fn get_user_projects(
     user_id: String,
     state: State<'_, AppState>,
@@ -41,7 +42,7 @@ pub async fn get_user_projects(
 /// - The icon fails to generate or save
 /// - The image data could not be decoded (if custom icon is provided)
 /// - There was a problem creating the project in the database
-#[tauri::command]
+#[command]
 pub async fn create_project(
     name: String,
     user_id: String,
@@ -128,7 +129,7 @@ pub async fn create_project(
 /// Returns a string error if:
 /// - The project doesn't exist or doesn't belong to the user
 /// - There was a database error updating the project
-#[tauri::command]
+#[command]
 pub async fn update_project(
     id: i64,
     name: String,
@@ -161,7 +162,7 @@ pub async fn update_project(
 /// Returns a string error if:
 /// - The project doesn't exist or doesn't belong to the user
 /// - There was a database error deleting the project
-#[tauri::command]
+#[command]
 pub async fn delete_project(
     id: i64,
     user_id: String,
@@ -191,7 +192,7 @@ pub async fn delete_project(
 ///
 /// # Errors
 /// Returns a string error if there was a problem accessing the database
-#[tauri::command]
+#[command]
 pub async fn get_project_connections(
     project_id: i64,
     state: State<'_, AppState>,

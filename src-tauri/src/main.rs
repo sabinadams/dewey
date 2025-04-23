@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use dewey_lib::{
-    commands,
     state,
     utils,
     services,
@@ -10,6 +9,7 @@ use dewey_lib::{
 use tracing::{info, error};
 
 mod protocols;
+mod commands;
 
 #[tokio::main]
 async fn main() {
@@ -41,14 +41,12 @@ async fn main() {
         .register_uri_scheme_protocol("icon", protocols::icons::icon_protocol)
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            commands::create_project,
             commands::get_user_projects,
-            commands::get_project_connections,
+            commands::create_project,
             commands::update_project,
             commands::delete_project,
-            commands::test_connection,
-            commands::should_run_onboarding,
-            commands::store_onboarding,
+            commands::get_project_connections,
+            commands::test_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

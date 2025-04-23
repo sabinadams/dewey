@@ -5,6 +5,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import React from 'react';
 
+/**
+ * These will all be downloaded from Dewey's CDN
+ * There will be an AI manifest json file that has the following information:
+ * - The version of the AI models 
+ * - The date and time the models were downloaded
+ * - The size of the models
+ * - The MD5 hash of the models
+ * - The URL of the models
+ * - The models that are included in the manifest
+ * 
+ * Later on when the user has already been using a model it will routinely check for updates to the model
+ * and if there is an update it will ask if you want to update to the new model. 
+ */
+
+
 interface AiModel {
   id: string;
   name: string;

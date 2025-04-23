@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WizardStepsIndicatorProps {
     steps: { id: string; title: string }[];
@@ -14,8 +15,44 @@ const WizardStepsIndicator: React.FC<WizardStepsIndicatorProps> = ({
     currentStep,
     onStepClick
 }) => {
+    const currentIndex = steps.findIndex(s => s.id === currentStep);
+    const canGoBack = currentIndex > 0;
+    const canGoForward = currentIndex < steps.length - 1;
+
+    const handleNavigation = (direction: 'prev' | 'next') => {
+        if (direction === 'prev' && canGoBack) {
+            onStepClick?.(steps[currentIndex - 1].id);
+        } else if (direction === 'next' && canGoForward) {
+            onStepClick?.(steps[currentIndex + 1].id);
+        }
+    };
+
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-2">
+            <div className="flex justify-between items-center w-full px-4">
+                <button
+                    onClick={() => handleNavigation('prev')}
+                    disabled={!canGoBack}
+                    className={`p-2 rounded-full transition-colors ${
+                        canGoBack 
+                            ? 'text-primary hover:bg-primary/10' 
+                            : 'text-muted/70 bg-muted/10 cursor-not-allowed'
+                    }`}
+                >
+                    <ChevronLeft size={24} />
+                </button>
+                <button
+                    onClick={() => handleNavigation('next')}
+                    disabled={!canGoForward}
+                    className={`p-2 rounded-full transition-colors ${
+                        canGoForward 
+                            ? 'text-primary hover:bg-primary/10' 
+                            : 'text-muted/70 bg-muted/10 cursor-not-allowed'
+                    }`}
+                >
+                    <ChevronRight size={24} />
+                </button>
+            </div>
             <div className="flex justify-between items-center w-full">
                 {steps.map((step, index) => (
                     <div 

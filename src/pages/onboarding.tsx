@@ -9,6 +9,8 @@ import AiModelsStep from '@/components/onboarding/steps/AiModelsStep';
 import KeychainStep from '@/components/onboarding/steps/KeychainStep';
 import CompleteStep from '@/components/onboarding/steps/CompleteStep';
 import WizardStepsIndicator from '@/components/onboarding/WizardStepsIndicator';
+import { ThemeToggle } from '@/components/ui';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 
 type OnboardingStep = 'welcome' | 'ai-models' | 'keychain' | 'complete';
 
@@ -71,7 +73,22 @@ export default function Onboarding() {
       </div>
       <DecorativeBlobs step={currentStep} />
       <div className="flex flex-col relative w-full h-full py-8">
-        <div className="flex-1"/>
+        <div className="flex-1">
+          <div className="absolute top-4 right-4 z-50">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <ThemeToggle />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>Toggle Theme</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
         <div className="flex items-center justify-center p-8 relative z-10 mx-auto">
           <div className="w-full max-w-lg relative">
             <AnimatePresence mode="wait">

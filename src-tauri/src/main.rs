@@ -50,8 +50,8 @@ async fn main() {
             commands::database::test_connection,
 
             // Encryption commands
-            commands::encryption::initialize_encryption_key,
-            commands::encryption::has_encryption_key,
+            commands::keychain::initialize_encryption_key,
+            commands::keychain::has_encryption_key,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

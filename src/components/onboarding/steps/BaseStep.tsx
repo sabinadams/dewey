@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 interface BaseStepProps {
   icon?: LucideIcon;
   title: string;
-  description: string;
+  description: React.ReactNode;
   buttonText: string;
   onAction: () => void;
   children?: React.ReactNode;
@@ -62,7 +62,7 @@ const BaseStep = ({
               </Tooltip>
             )}
           </div>
-          <p className="text-muted-foreground mb-6">{description}</p>
+          <div className="text-muted-foreground mb-6">{description}</div>
         </div>
         <div className="min-h-0 overflow-y-auto">
           {children}

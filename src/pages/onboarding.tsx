@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useStoreOnboardingMutation } from '@/store/api/onboarding.api';
 import { useState, useCallback } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Download, KeyRound } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import AIVectorBackground from '@/components/onboarding/AiVectorBackground';
 import DecorativeBlobs from '@/components/onboarding/DecorativeBlobs';
+import WelcomeStep from '@/components/onboarding/steps/WelcomeStep';
+import AiModelsStep from '@/components/onboarding/steps/AiModelsStep';
+import KeychainStep from '@/components/onboarding/steps/KeychainStep';
+import CompleteStep from '@/components/onboarding/steps/CompleteStep';
 
 type OnboardingStep = 'welcome' | 'ai-models' | 'keychain' | 'complete';
 
@@ -57,6 +60,9 @@ function ProgressBar({ isDownloading, downloadProgress, handleDownloadModels }: 
   );
 }
 
+// Update the glowEffect class to include a transition for the box-shadow
+const glowEffect = 'shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-shadow duration-300';
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [storeOnboarding] = useStoreOnboardingMutation();
@@ -93,105 +99,15 @@ export default function Onboarding() {
   }, []);
 
   const getStepContent = useCallback(() => {
-    const variants = {
-      enter: {
-        opacity: 0
-      },
-      center: {
-        opacity: 1
-      },
-      exit: {
-        opacity: 0
-      }
-    };
-
-    const stepIndex = steps.findIndex(step => step.id === currentStep);
-    const direction = stepIndex - steps.findIndex(step => step.id === currentStep);
-
     switch (currentStep) {
       case 'welcome':
-        return (
-          <motion.div
-            key="welcome"
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" }
-            }}
-            className="text-center space-y-6"
-          >
-            <div className="w-32 h-32 mx-auto flex items-center justify-center">
-              <LogoSVG className="w-full h-full" />
-            </div>
-            <h1 className="text-4xl font-bold">Let's get you started</h1>
-            <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-              Let's set up everything you need to get started.
-            </p>
-            <Button size="lg" onClick={() => setCurrentStep('ai-models')}>
-              Begin Setup
-            </Button>
-          </motion.div>
-        );
+        return <WelcomeStep onNext={() => setCurrentStep('ai-models')} />;
       case 'ai-models':
-        return <ProgressBar isDownloading={isDownloading} downloadProgress={downloadProgress} handleDownloadModels={handleDownloadModels} />;
+        return <AiModelsStep isDownloading={isDownloading} downloadProgress={downloadProgress} onDownload={handleDownloadModels} />;
       case 'keychain':
-        return (
-          <motion.div
-            key="keychain"
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" }
-            }}
-            className="space-y-6"
-          >
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <KeyRound className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">Secure Your Data</h2>
-              <p className="text-muted-foreground mb-6">
-                Dewey needs access to your system keychain to securely store your database credentials.
-              </p>
-            </div>
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={() => setCurrentStep('complete')}
-            >
-              Grant Keychain Access
-            </Button>
-          </motion.div>
-        );
+        return <KeychainStep onNext={() => setCurrentStep('complete')} />;
       case 'complete':
-        return (
-          <motion.div
-            key="complete"
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" }
-            }}
-            className="text-center space-y-6"
-          >
-            <div className="w-24 h-24 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-12 h-12 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">You're All Set!</h2>
-            <p className="text-muted-foreground">
-              Dewey is ready to help you manage your databases with AI assistance.
-            </p>
-            <Button size="lg" onClick={handleComplete}>
-              Start Using Dewey
-            </Button>
-          </motion.div>
-        );
+        return <CompleteStep onComplete={handleComplete} />;
     }
   }, [currentStep, handleDownloadModels, isDownloading, downloadProgress]);
 
@@ -218,7 +134,7 @@ export default function Onboarding() {
                     <div
                       className={`h-1 rounded-full transition-all duration-300 ${
                         steps.findIndex(s => s.id === currentStep) >= index
-                          ? 'bg-primary'
+                          ? `bg-primary ${steps.findIndex(s => s.id === currentStep) === index ? glowEffect : ''}`
                           : 'bg-muted'
                       }`}
                       style={{

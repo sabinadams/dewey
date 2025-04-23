@@ -60,6 +60,10 @@ export default function Onboarding() {
     }
   }, [currentStep, handleDownloadModels, isDownloading, downloadProgress]);
 
+  const handleStepClick = useCallback((stepId: string) => {
+    setCurrentStep(stepId as OnboardingStep);
+  }, []);
+
   return (
     <>
       <div className="fixed inset-0 z-0">
@@ -88,6 +92,7 @@ export default function Onboarding() {
           <WizardStepsIndicator
             steps={steps}
             currentStep={currentStep}
+            onStepClick={handleStepClick}
           />
         </div>
       </div>

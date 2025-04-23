@@ -3,6 +3,7 @@ import React from 'react';
 interface WizardStepsIndicatorProps {
     steps: { id: string; title: string }[];
     currentStep: string;
+    onStepClick?: (stepId: string) => void;
 }
 
 // Update the glowEffect class to include a transition for the box-shadow
@@ -10,13 +11,22 @@ const glowEffect = 'relative before:absolute before:inset-0 before:rounded-full 
 
 const WizardStepsIndicator: React.FC<WizardStepsIndicatorProps> = ({
     steps,
-    currentStep
+    currentStep,
+    onStepClick
 }) => {
     return (
         <div className="flex flex-col items-center">
             <div className="flex justify-between items-center w-full">
                 {steps.map((step, index) => (
-                    <div key={step.id} className="flex items-center flex-1">
+                    <div 
+                        key={step.id} 
+                        className="flex items-center flex-1"
+                        onClick={() => {
+                            if (steps.findIndex(s => s.id === currentStep) >= index) {
+                                onStepClick?.(step.id);
+                            }
+                        }}
+                    >
                         <div className="w-full">
                             <div
                                 className={`rounded-full transition-all duration-300 ease-in-out ${

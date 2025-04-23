@@ -11,6 +11,52 @@ import DecorativeBlobs from '@/components/onboarding/DecorativeBlobs';
 
 type OnboardingStep = 'welcome' | 'ai-models' | 'keychain' | 'complete';
 
+// Define types for ProgressBar props
+interface ProgressBarProps {
+  isDownloading: boolean;
+  downloadProgress: number;
+  handleDownloadModels: () => void;
+}
+
+// Correct the ProgressBar component to use the props
+function ProgressBar({ isDownloading, downloadProgress, handleDownloadModels }: ProgressBarProps) {
+  return (
+    <motion.div
+      key="ai-models"
+      variants={{ enter: { opacity: 0 }, center: { opacity: 1 }, exit: { opacity: 0 } }}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ opacity: { duration: 0.3, ease: "easeInOut" } }}
+      className="space-y-6"
+    >
+      <div className="text-center">
+        <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Download className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Download AI Models</h2>
+        <p className="text-muted-foreground mb-6">
+          Dewey needs to download some AI models to power its features. This may take a few minutes.
+        </p>
+      </div>
+      <div className="space-y-4">
+        <Progress value={downloadProgress} className="h-2" />
+        <p className="text-sm text-muted-foreground text-center">
+          {isDownloading ? 'Downloading models...' : 'Ready to download'}
+        </p>
+      </div>
+      <Button
+        size="lg"
+        className="w-full"
+        onClick={handleDownloadModels}
+        disabled={isDownloading}
+      >
+        {isDownloading ? 'Downloading...' : 'Download Models'}
+      </Button>
+    </motion.div>
+  );
+}
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [storeOnboarding] = useStoreOnboardingMutation();
@@ -89,43 +135,7 @@ export default function Onboarding() {
           </motion.div>
         );
       case 'ai-models':
-        return (
-          <motion.div
-            key="ai-models"
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" }
-            }}
-            className="space-y-6"
-          >
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Download className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">Download AI Models</h2>
-              <p className="text-muted-foreground mb-6">
-                Dewey needs to download some AI models to power its features. This may take a few minutes.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <Progress value={downloadProgress} className="h-2" />
-              <p className="text-sm text-muted-foreground text-center">
-                {isDownloading ? 'Downloading models...' : 'Ready to download'}
-              </p>
-            </div>
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleDownloadModels}
-              disabled={isDownloading}
-            >
-              {isDownloading ? 'Downloading...' : 'Download Models'}
-            </Button>
-          </motion.div>
-        );
+        return <ProgressBar isDownloading={isDownloading} downloadProgress={downloadProgress} handleDownloadModels={handleDownloadModels} />;
       case 'keychain':
         return (
           <motion.div
@@ -183,7 +193,7 @@ export default function Onboarding() {
           </motion.div>
         );
     }
-  }, [currentStep, downloadProgress, isDownloading]);
+  }, [currentStep, handleDownloadModels, isDownloading, downloadProgress]);
 
   return (
     <>

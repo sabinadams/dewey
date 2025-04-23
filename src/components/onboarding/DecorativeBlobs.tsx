@@ -1,6 +1,5 @@
 import { motion } from "framer-motion"
-import { useMemo, useRef, useEffect, useState } from "react"
-import React from "react"
+import { useRef, useEffect, useState, memo } from "react"
 
 interface BlobProps {
   color: string
@@ -14,7 +13,7 @@ interface BlobProps {
   currentY?: number
 }
 
-const Blob = ({ color, size, x, y, delay = 0, targetSide, index, currentX = 0, currentY = 0 }: BlobProps) => {
+const Blob = ({ color, size, x, y, delay = 0, currentX = 0, currentY = 0 }: BlobProps) => {
   return (
     <motion.div
       style={{
@@ -32,10 +31,12 @@ const Blob = ({ color, size, x, y, delay = 0, targetSide, index, currentX = 0, c
       initial={{
         x: `${currentX}%`,
         y: `${currentY}%`,
+        scale: 1
       }}
       animate={{
         x: `${x}%`,
         y: `${y}%`,
+        scale: 1
       }}
       transition={{
         duration: 1.5,
@@ -51,11 +52,12 @@ interface DecorativeBlobsProps {
   step: 'welcome' | 'ai-models' | 'keychain' | 'complete'
 }
 
-export default function DecorativeBlobs({ step }: DecorativeBlobsProps) {
+export default memo(DecorativeBlobs, (prevProps, nextProps) => prevProps.step === nextProps.step)
+
+function DecorativeBlobs({ step }: DecorativeBlobsProps) {
   const numBlobs = useRef(2) 
   const [positions, setPositions] = useState<{ x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }[]>([])
   const [targetPositions, setTargetPositions] = useState<{ x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }[]>([])
-  const [debouncedStep, setDebouncedStep] = useState(step)
 
   const getRandomPosition = (index: number): { x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' } => {
     const ranges: [number, number] = [-95, 95]
@@ -97,30 +99,18 @@ export default function DecorativeBlobs({ step }: DecorativeBlobsProps) {
     }
   }, [])
 
-  // Debounce step changes
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedStep(step)
-    }, 300) // Adjust the debounce delay as needed
-
-    return () => clearTimeout(handler)
-  }, [step])
-
-  // Update target positions on debounced step change
+  // Update target positions on step change directly
   useEffect(() => {
     setTargetPositions(Array.from({ length: numBlobs.current }, (_, i) => getRandomPosition(i)))
-  }, [debouncedStep])
+  }, [step])
 
   const getRandomSize = () => Math.random() * 200 + 300
 
-  // Update current positions after animation
+  // Update positions immediately on targetPositions change
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setPositions(targetPositions)
-    }, 1500) // Match the animation duration
-
-    return () => clearTimeout(timeout)
-  }, [targetPositions])
+    console.log('Updating positions to target positions immediately:', targetPositions);
+    setPositions(targetPositions);
+  }, [targetPositions]);
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">

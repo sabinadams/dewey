@@ -4,7 +4,6 @@
 use dewey_lib::{
     state,
     utils,
-    services,
     commands,
     protocols,
 };
@@ -15,11 +14,6 @@ async fn main() {
     // Initialize logging first
     utils::setup_logging();
     info!("Starting Dewey application...");
-
-    info!("Initializing encryption key...");
-    // Initialize encryption key at startup
-    services::encryption::initialize_encryption_key()
-        .expect("Failed to initialize encryption key");
 
     // Initialize app state
     let app_state = state::initialize_app_state().await.unwrap_or_else(|e| {
@@ -53,7 +47,11 @@ async fn main() {
             commands::projects::get_project_connections,
             
             // Database commands
-            commands::database::test_connection
+            commands::database::test_connection,
+
+            // Encryption commands
+            commands::encryption::initialize_encryption_key,
+            commands::encryption::has_encryption_key,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -56,6 +56,19 @@ impl KeyManager {
         }
     }
 
+    /// Check if a key exists in the keyring
+    pub fn has_key_in_keyring(&self) -> Result<bool, AppError> {
+        match self.keyring_entry.get_password() {
+            Ok(_) => Ok(true),
+            Err(_) => Ok(false)
+        }
+    }
+
+    /// Check if a key exists in the fallback file
+    pub fn has_key_in_file(&self) -> Result<bool, AppError> {
+        Ok(self.key_file_path.exists())
+    }
+
     fn get_key_from_keyring(&self) -> Result<[u8; 32], AppError> {
         let key_str = self.keyring_entry
             .get_password()

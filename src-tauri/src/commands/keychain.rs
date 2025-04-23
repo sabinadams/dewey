@@ -11,7 +11,7 @@ pub fn initialize_encryption_key() -> Result<bool, String> {
             match (manager.has_key_in_keyring(), manager.has_key_in_file()) {
                 (Ok(true), _) | (_, Ok(true)) => {
                     info!("Encryption key already exists");
-                    Ok(false) // Return false to indicate key already existed
+                    Err("Encryption key already exists".to_string())
                 }
                 _ => {
                     // No key exists, create one

@@ -8,7 +8,7 @@ export const tauriBaseQuery = async ({ command, args }: { command: string; args?
     return {
       error: {
         status: 'CUSTOM_ERROR',
-        error: error instanceof Error ? error.message : 'An error occurred',
+        error: error instanceof Error ? error.message : String(error),
       },
     };
   }

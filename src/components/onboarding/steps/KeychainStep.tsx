@@ -35,14 +35,18 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
 
     if (!hasEncryptionKey) {
       try {
-        await initializeEncryptionKey();
-        toast.success('Encryption key created successfully', {
-          duration: 1500
-        });
-        onNext();
-      } catch (error) {
+        const result = await initializeEncryptionKey();
+        if (result.data) {
+          toast.success('Encryption key created', {
+            description: 'Your connections will now be secured with an encryption key.'
+          });
+          onNext();
+        } else if (result.error && typeof result.error === 'object' && 'error' in result.error) {
+          throw new Error((result.error as { error: string }).error);
+        }
+      } catch (error: any) {
         toast.error('Failed to create encryption key', {
-          duration: 1500
+          description: error?.message || 'An unknown error occurred'
         });
       }
     }

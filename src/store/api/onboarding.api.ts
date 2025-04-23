@@ -10,12 +10,14 @@ export const onboardingApi = createApi({
       query: () => ({
         command: 'should_run_onboarding',
       }),
+      providesTags: ['Onboarding'],
     }),
     storeOnboarding: builder.mutation<void, boolean>({
       query: (hasCompleted) => ({
         command: 'store_onboarding',
         args: { hasCompleted },
       }),
+      invalidatesTags: ['Onboarding'],
     }),
   }),
 });

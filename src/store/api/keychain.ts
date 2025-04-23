@@ -15,6 +15,7 @@ export const keychainApi = createApi({
       query: () => ({
         command: 'initialize_encryption_key',
       }),
+      invalidatesTags: ['Keychain'],
     }),
   }),
 });

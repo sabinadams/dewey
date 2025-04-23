@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
-import { useMemo, useRef, useEffect } from "react"
+import { useMemo, useRef, useEffect, useState } from "react"
+import React from "react"
 
 interface BlobProps {
   color: string
@@ -50,131 +51,91 @@ interface DecorativeBlobsProps {
   step: 'welcome' | 'ai-models' | 'keychain' | 'complete'
 }
 
-type Range = [number, number]
-
 export default function DecorativeBlobs({ step }: DecorativeBlobsProps) {
-  const currentPositions = useRef<{ x: number; y: number }[]>([])
-  const targetPositions = useRef<{ x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }[]>([])
-  const numBlobs = useRef(4) // Always 4 blobs, one for each side
-  const previousStep = useRef(step)
+  const numBlobs = useRef(2) 
+  const [positions, setPositions] = useState<{ x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }[]>([])
+  const [targetPositions, setTargetPositions] = useState<{ x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }[]>([])
+  const [debouncedStep, setDebouncedStep] = useState(step)
 
   const getRandomPosition = (index: number): { x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' } => {
-    // Define position ranges
-    const ranges = {
-      x: [-95, 95] as Range,
-      y: [-95, 95] as Range
-    }
+    const ranges: [number, number] = [-95, 95]
 
-    // Get current position
-    const currentPos = currentPositions.current[index] || { x: 0, y: 0 }
-
-    // Generate new position ensuring it's different from current
     let newPosition: { x: number; y: number; targetSide: 'left' | 'right' | 'top' | 'bottom' }
-    let attempts = 0
-    const maxAttempts = 20
 
-    do {
-      // Generate position based on index to ensure one blob per side
-      switch (index) {
-        case 0: // Left side
-          newPosition = {
-            x: Math.random() * (0 - ranges.x[0]) + ranges.x[0],
-            y: Math.random() * (ranges.y[1] - ranges.y[0]) + ranges.y[0],
-            targetSide: 'left'
-          }
-          break
-        case 1: // Right side
-          newPosition = {
-            x: Math.random() * (ranges.x[1] - 0) + 0,
-            y: Math.random() * (ranges.y[1] - ranges.y[0]) + ranges.y[0],
-            targetSide: 'right'
-          }
-          break
-        case 2: // Top side
-          // Ensure this blob stays on the left side
-          newPosition = {
-            x: Math.random() * (0 - ranges.x[0]) + ranges.x[0],
-            y: Math.random() * (0 - ranges.y[0]) + ranges.y[0],
-            targetSide: 'top'
-          }
-          break
-        case 3: // Bottom side
-          // Ensure this blob stays on the right side
-          newPosition = {
-            x: Math.random() * (ranges.x[1] - 0) + 0,
-            y: Math.random() * (ranges.y[1] - 0) + 0,
-            targetSide: 'bottom'
-          }
-          break
-        default:
-          newPosition = {
-            x: Math.random() * (ranges.x[1] - ranges.x[0]) + ranges.x[0],
-            y: Math.random() * (ranges.y[1] - ranges.y[0]) + ranges.y[0],
-            targetSide: 'left'
-          }
-      }
-
-      attempts++
-    } while (
-      attempts < maxAttempts && 
-      Math.abs(newPosition.x - currentPos.x) < 60 && 
-      Math.abs(newPosition.y - currentPos.y) < 60
-    )
+    switch (index) {
+      case 0: // Left side
+        newPosition = {
+          x: Math.random() * (0 - ranges[0]) + ranges[0],
+          y: Math.random() * (ranges[1] - ranges[0]) + ranges[0],
+          targetSide: 'left'
+        }
+        break
+      case 1: // Right side
+        newPosition = {
+          x: Math.random() * (ranges[1] - 0) + 0,
+          y: Math.random() * (ranges[1] - ranges[0]) + ranges[0],
+          targetSide: 'right'
+        }
+        break
+      default:
+        newPosition = {
+          x: Math.random() * (ranges[1] - ranges[0]) + ranges[0],
+          y: Math.random() * (ranges[1] - ranges[0]) + ranges[0],
+          targetSide: 'left'
+        }
+    }
 
     return newPosition
   }
 
-  // Initialize positions if they don't exist
+  // Initialize positions on mount
   useEffect(() => {
-    if (currentPositions.current.length === 0) {
-      currentPositions.current = Array.from({ length: numBlobs.current }, (_, i) => {
-        const pos = getRandomPosition(i)
-        return { x: pos.x, y: pos.y }
-      })
-      targetPositions.current = currentPositions.current.map(pos => ({
-        ...pos,
-        targetSide: 'left' as const
-      }))
+    if (positions.length === 0) {
+      const initialPositions = Array.from({ length: numBlobs.current }, (_, i) => getRandomPosition(i))
+      setPositions(initialPositions)
+      setTargetPositions(initialPositions)
     }
   }, [])
 
-  // Update target positions when step changes
+  // Debounce step changes
   useEffect(() => {
-    if (previousStep.current !== step) {
-      targetPositions.current = Array.from({ length: numBlobs.current }, (_, i) => getRandomPosition(i))
-      previousStep.current = step
-    }
+    const handler = setTimeout(() => {
+      setDebouncedStep(step)
+    }, 300) // Adjust the debounce delay as needed
+
+    return () => clearTimeout(handler)
   }, [step])
 
-  const blobs = useMemo(() => {
-    const getRandomSize = () => {
-      return Math.random() * 200 + 300
-    }
+  // Update target positions on debounced step change
+  useEffect(() => {
+    setTargetPositions(Array.from({ length: numBlobs.current }, (_, i) => getRandomPosition(i)))
+  }, [debouncedStep])
 
-    // Generate blobs for each step with the same positions
-    const generateBlobs = (hue: number) => 
-      targetPositions.current.map((pos, i) => ({
-        color: `hsl(${hue}, 100%, 50%)`,
-        size: getRandomSize(),
-        ...pos,
-        index: i,
-        delay: i * 0.1, // Consistent delay based on index
-        currentX: currentPositions.current[i]?.x || 0,
-        currentY: currentPositions.current[i]?.y || 0
-      }))
+  const getRandomSize = () => Math.random() * 200 + 300
 
-    return {
-      welcome: generateBlobs(210),
-      'ai-models': generateBlobs(220),
-      keychain: generateBlobs(230),
-      complete: generateBlobs(240),
-    }
-  }, [step])
+  // Update current positions after animation
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPositions(targetPositions)
+    }, 1500) // Match the animation duration
+
+    return () => clearTimeout(timeout)
+  }, [targetPositions])
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      {blobs[step].map((blob, index) => (
-        <Blob key={`${step}-${index}`} {...blob} />
+      {positions.map((pos, index) => (
+        <Blob
+          key={`${step}-${index}`}
+          color={`hsl(${210 + index * 10}, 100%, 50%)`}
+          size={getRandomSize()}
+          index={index}
+          currentX={pos.x}
+          currentY={pos.y}
+          x={targetPositions[index]?.x || pos.x}
+          y={targetPositions[index]?.y || pos.y}
+          targetSide={pos.targetSide}
+        />
       ))}
     </div>
   )

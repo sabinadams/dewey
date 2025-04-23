@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useStoreOnboardingMutation } from '@/store/api/onboarding.api';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Download, KeyRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,7 @@ export default function Onboarding() {
     { id: 'complete', title: 'Complete' },
   ];
 
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
     try {
         setCurrentStep('welcome');
     //   await storeOnboarding(true);
@@ -33,9 +33,9 @@ export default function Onboarding() {
     } catch (error) {
       console.error('Failed to store onboarding completion:', error);
     }
-  };
+  }, [storeOnboarding]);
 
-  const handleDownloadModels = async () => {
+  const handleDownloadModels = useCallback(async () => {
     setIsDownloading(true);
     // Simulate download progress
     for (let i = 0; i <= 100; i += 10) {
@@ -44,9 +44,9 @@ export default function Onboarding() {
     }
     setIsDownloading(false);
     setCurrentStep('keychain');
-  };
+  }, []);
 
-  const getStepContent = () => {
+  const getStepContent = useCallback(() => {
     const variants = {
       enter: {
         opacity: 0
@@ -183,7 +183,7 @@ export default function Onboarding() {
           </motion.div>
         );
     }
-  };
+  }, [currentStep, downloadProgress, isDownloading]);
 
   return (
     <>

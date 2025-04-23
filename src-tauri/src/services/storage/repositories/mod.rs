@@ -4,3 +4,4 @@
 /// access to database entities and tables.
 pub mod projects; 
 pub mod connections;
+pub mod onboarding;

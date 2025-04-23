@@ -36,9 +36,9 @@ const BaseStep = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="space-y-6"
+      className="h-[calc(100vh-12rem)] flex flex-col"
     >
-      <div className="text-center">
+      <div className="shrink-0 text-center">
         {Icon && (
           <div className={`${iconContainerSize} mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4`}>
             <Icon className={`${iconSizeClass} text-primary`} />
@@ -59,15 +59,19 @@ const BaseStep = ({
         </div>
         <p className="text-muted-foreground mb-6">{description}</p>
       </div>
-      {children}
-      <Button
-        size="lg"
-        className="w-full transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
-        onClick={onAction}
-        disabled={buttonDisabled}
-      >
-        {buttonText}
-      </Button>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {children}
+      </div>
+      <div className="shrink-0 pt-4">
+        <Button
+          size="lg"
+          className="w-full transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+          onClick={onAction}
+          disabled={buttonDisabled}
+        >
+          {buttonText}
+        </Button>
+      </div>
     </motion.div>
   );
 };

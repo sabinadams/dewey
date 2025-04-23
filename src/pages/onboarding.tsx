@@ -186,49 +186,51 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative">
+    <>
       <div className="fixed inset-0 z-0">
         <AIVectorBackground />
-        <DecorativeBlobs step={currentStep} />
       </div>
-      <div className="flex-1 flex items-center justify-center p-8 relative z-10">
-        <div className="w-full max-w-lg relative">
-          <AnimatePresence mode="wait">
-            {getStepContent()}
-          </AnimatePresence>
+      <DecorativeBlobs step={currentStep} />
+      <div className="min-h-screen flex flex-col relative">
+        <div className="flex-1 flex items-center justify-center p-8 relative z-10">
+          <div className="w-full max-w-lg relative">
+            <AnimatePresence mode="wait">
+              {getStepContent()}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-      <div className="border-t py-4 px-8 relative z-10">
-        <div className="max-w-lg mx-auto">
-          <div className="flex justify-between items-center">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex-1 flex items-center">
-                <div className="flex-1 flex items-center">
-                  <div
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      steps.findIndex(s => s.id === currentStep) >= index
-                        ? 'bg-primary'
-                        : 'bg-muted'
-                    }`}
-                    style={{
-                      width: steps.findIndex(s => s.id === currentStep) === index ? '100%' : '100%',
-                      transform: steps.findIndex(s => s.id === currentStep) === index ? 'scaleY(1.5)' : 'scaleY(1)',
-                    }}
-                  />
+        <div className="border-t py-4 px-8 relative z-10">
+          <div className="max-w-lg mx-auto">
+            <div className="flex justify-between items-center">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex-1 flex items-center">
+                  <div className="flex-1 flex items-center">
+                    <div
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        steps.findIndex(s => s.id === currentStep) >= index
+                          ? 'bg-primary'
+                          : 'bg-muted'
+                      }`}
+                      style={{
+                        width: steps.findIndex(s => s.id === currentStep) === index ? '100%' : '100%',
+                        transform: steps.findIndex(s => s.id === currentStep) === index ? 'scaleY(1.5)' : 'scaleY(1)',
+                      }}
+                    />
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className="w-2 h-2 rounded-full mx-2 bg-muted" />
+                  )}
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="w-2 h-2 rounded-full mx-2 bg-muted" />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-2">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {steps.find(step => step.id === currentStep)?.title}
-            </h3>
+              ))}
+            </div>
+            <div className="text-center mt-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                {steps.find(step => step.id === currentStep)?.title}
+              </h3>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

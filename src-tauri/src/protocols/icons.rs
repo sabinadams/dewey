@@ -8,8 +8,8 @@ use std::fs;
 use std::path::Path;
 use tracing::{debug, error};
 use urlencoding::decode;
-use dewey_lib::constants;
-use dewey_lib::utils;
+use crate::constants;
+use crate::utils;
 
 /// Handle custom icon URI requests to serve project icons
 /// 
@@ -74,4 +74,4 @@ pub fn icon_protocol<R: tauri::Runtime>(
             utils::response_not_found()
         }
     }
-}
+} 

@@ -1,14 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod constants;
-mod protocols;
-mod commands;
-
 use dewey_lib::{
     state,
     utils,
     services,
+    commands,
+    protocols,
 };
 use tracing::{info, error};
 

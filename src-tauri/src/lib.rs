@@ -16,10 +16,14 @@ pub mod services;
 /// Global constants
 pub mod constants;
 
+/// Custom protocol handlers for the application
+pub mod protocols;
+
 /// Utility functions
 pub mod utils;
 
 pub use error::AppError;
 pub use types::AppResult;
 pub use services::storage::LocalStorage;
-pub use state::AppState; 
+pub use state::AppState;
+pub use constants::*;

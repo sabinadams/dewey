@@ -139,44 +139,44 @@ const AiModelsStep = ({ isDownloading, downloadProgress, onDownload }: AiModelsS
       onAction={handleDownload}
       buttonDisabled={selectedModels.length === 0 || isDownloading}
       infoText={`These models are used to optionally power some of Dewey's features. You can download them later if you want. They will be downloaded from Dewey's CDN and stored on your machine. You will be notified when updates to those models are available.`}
-    >
-      <div className="flex flex-col h-full">
-        <div className="space-y-4">
-          {displayedModels.map((model) => (
-            <div key={model.id} className="flex items-start space-x-2">
-              <Checkbox
-                id={model.id}
-                checked={selectedModels.includes(model.id)}
-                onCheckedChange={() => handleModelToggle(model.id)}
-                disabled={isDownloading}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor={model.id} className="text-sm font-medium leading-none">
-                  {model.name} ({model.size})
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {model.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-        {!showAllModels && AVAILABLE_MODELS.length > 2 && (
-          <button
-            onClick={() => setShowAllModels(true)}
-            className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Show More Models
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        )}
-        <div className="mt-4 space-y-2">
+      footer={
+        <div className="space-y-2">
           <Progress value={downloadProgress} className="h-2" />
           <p className="text-sm text-muted-foreground text-center">
             {isDownloading ? 'Downloading models...' : 'Ready to download'}
           </p>
         </div>
+      }
+    >
+      <div className="space-y-4">
+        {displayedModels.map((model) => (
+          <div key={model.id} className="flex items-start space-x-2">
+            <Checkbox
+              id={model.id}
+              checked={selectedModels.includes(model.id)}
+              onCheckedChange={() => handleModelToggle(model.id)}
+              disabled={isDownloading}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label htmlFor={model.id} className="text-sm font-medium leading-none">
+                {model.name} ({model.size})
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {model.description}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
+      {!showAllModels && AVAILABLE_MODELS.length > 2 && (
+        <button
+          onClick={() => setShowAllModels(true)}
+          className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Show More Models
+          <ChevronDown className="h-4 w-4" />
+        </button>
+      )}
     </BaseStep>
   );
 };

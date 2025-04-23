@@ -13,6 +13,7 @@ interface BaseStepProps {
   iconSize?: 'sm' | 'lg';
   buttonDisabled?: boolean;
   infoText?: string;
+  footer?: React.ReactNode;
 }
 
 const BaseStep = ({ 
@@ -24,7 +25,8 @@ const BaseStep = ({
   children,
   iconSize = 'sm',
   buttonDisabled = false,
-  infoText
+  infoText,
+  footer
 }: BaseStepProps) => {
   const iconContainerSize = iconSize === 'sm' ? 'w-16 h-16' : 'w-24 h-24';
   const iconSizeClass = iconSize === 'sm' ? 'w-8 h-8' : 'w-12 h-12';
@@ -62,7 +64,7 @@ const BaseStep = ({
       <div className="flex-1 min-h-0 overflow-y-auto">
         {children}
       </div>
-      <div className="shrink-0 pt-4">
+      <div className="shrink-0 pt-4 space-y-4">
         <Button
           size="lg"
           className="w-full transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
@@ -71,6 +73,7 @@ const BaseStep = ({
         >
           {buttonText}
         </Button>
+        {footer}
       </div>
     </motion.div>
   );

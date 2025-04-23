@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub struct Onboarding {
     pub id: i64,
     pub has_completed: bool,
-    pub onboarding_version: i32,
+    pub version: i32,
     pub created_at: i64,
     pub updated_at: i64,
 }

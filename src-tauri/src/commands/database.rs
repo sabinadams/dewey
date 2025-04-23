@@ -1,6 +1,7 @@
 use crate::services::database;
+use dewey_macros::command;
 
-#[tauri::command]
+#[command]
 pub async fn test_connection(
     db_type: String,
     host: String,

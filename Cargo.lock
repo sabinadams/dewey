@@ -1174,8 +1174,8 @@ dependencies = [
  "base64 0.21.7",
  "blake3",
  "chrono",
- "dewey-lib",
  "dewey-macros",
+ "dewey_core",
  "directories",
  "hex",
  "identicon-rs",
@@ -1200,22 +1200,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "dewey-lib"
-version = "0.1.0"
-dependencies = [
- "inventory",
-]
-
-[[package]]
 name = "dewey-macros"
 version = "0.1.0"
 dependencies = [
- "dewey-lib",
+ "dewey_core",
  "inventory",
  "proc-macro2",
  "quote",
  "syn 2.0.100",
  "tauri",
+]
+
+[[package]]
+name = "dewey_core"
+version = "0.1.0"
+dependencies = [
+ "inventory",
 ]
 
 [[package]]

@@ -1,15 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod constants;
+mod protocols;
+mod commands;
+
 use dewey_lib::{
     state,
     utils,
     services,
 };
 use tracing::{info, error};
-
-mod protocols;
-mod commands;
 
 #[tokio::main]
 async fn main() {
@@ -40,14 +41,7 @@ async fn main() {
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("icon", protocols::icons::icon_protocol)
         .manage(app_state)
-        .invoke_handler(tauri::generate_handler![
-            commands::get_user_projects,
-            commands::create_project,
-            commands::update_project,
-            commands::delete_project,
-            commands::get_project_connections,
-            commands::test_connection
-        ])
+        .invoke_handler(commands::collect_commands!())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

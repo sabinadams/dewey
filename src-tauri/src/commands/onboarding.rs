@@ -1,7 +1,6 @@
-use crate::{
-    services::storage::repositories::onboarding::OnboardingRepository,
-    AppState,
-};
+use crate::services::storage::repositories::onboarding::OnboardingRepository;
+use crate::state::AppState;
+use dewey_macros::command;
 use tauri::State;
 use tracing::error;
 
@@ -9,7 +8,7 @@ use tracing::error;
 /// 
 /// # Errors
 /// Returns a string error if there was a problem accessing the database or the onboarding could not be stored
-#[tauri::command]
+#[command]
 pub async fn store_onboarding(
     has_completed: bool,
     state: State<'_, AppState>,
@@ -30,7 +29,7 @@ pub async fn store_onboarding(
 /// 
 /// # Errors
 /// Returns a string error if there was a problem accessing the database or the onboarding could not be retrieved
-#[tauri::command]
+#[command]
 pub async fn should_run_onboarding(
     state: State<'_, AppState>,
 ) -> Result<bool, String> {

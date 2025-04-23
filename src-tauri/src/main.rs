@@ -51,7 +51,6 @@ async fn main() {
             commands::projects::update_project,
             commands::projects::delete_project,
             commands::projects::get_project_connections,
-            commands::projects::get_project_tables,
             
             // Database commands
             commands::database::test_connection

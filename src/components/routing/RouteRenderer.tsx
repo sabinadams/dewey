@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { useDispatch } from 'react-redux';
@@ -8,6 +8,7 @@ import { LoadingScreen } from '@/components/feedback/LoadingScreen'; // Import L
 import { AppLayout } from '@/components/layouts/AppLayout'; // Import AppLayout
 import { PublicLayout } from '@/components/layouts/PublicLayout'; // Import PublicLayout
 import { useGetProjectsQuery } from '@/store/api/projects.api'; // Re-import project query
+import { useShouldRunOnboardingQuery } from '@/store/api/onboarding.api';
 
 export function RouteRenderer() {
   const { isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth(); // Get userId
@@ -15,18 +16,19 @@ export function RouteRenderer() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const element = useRoutes(routes); // Get the matched route element early
+  const { data: shouldRunOnboarding } = useShouldRunOnboardingQuery();
 
+  useEffect(() => {
+    console.log("[RouteRenderer] shouldRunOnboarding", shouldRunOnboarding);
+  }, [shouldRunOnboarding]);
   // Fetch projects conditionally
   const {
     data: projects,
-    isLoading: projectsLoading,
-    isFetching: projectsFetching,
     isSuccess: projectsSuccess
   } = useGetProjectsQuery(userId ?? "", {
     skip: !isSignedIn || !userId, // Skip if not signed in or userId unknown
   });
 
-  const isLoadingProjects = projectsLoading || projectsFetching;
 
   const publicPaths = ['/auth'];
   const isPublic = publicPaths.includes(location.pathname);
@@ -70,6 +72,9 @@ export function RouteRenderer() {
     } else if (shouldRedirectToProject) {
       console.log(`[RouteRenderer] Redirecting to project: ${targetProjectRoute}`);
       navigate(targetProjectRoute, { replace: true });
+    } else if (shouldRunOnboarding) {
+      console.log("[RouteRenderer] Redirecting to onboarding");
+      navigate('/onboarding', { replace: true });
     }
     // Re-run effect if redirect conditions change
   }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname]);

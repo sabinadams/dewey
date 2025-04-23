@@ -41,10 +41,14 @@ async fn main() {
         .register_uri_scheme_protocol("icon", protocols::icons::icon_protocol)
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            commands::projects::create_project,
-            commands::projects::get_user_projects,
-            commands::projects::get_project_connections,
-            commands::database::test_connection,
+            commands::create_project,
+            commands::get_user_projects,
+            commands::get_project_connections,
+            commands::update_project,
+            commands::delete_project,
+            commands::test_connection,
+            commands::should_run_onboarding,
+            commands::store_onboarding,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

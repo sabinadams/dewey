@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, useRoutes, useLocation, useNavigate } from 'react-router-dom';
+import { useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { useDispatch } from 'react-redux';
 import { setReturnToPath } from '@/store/slices/ui.slice';

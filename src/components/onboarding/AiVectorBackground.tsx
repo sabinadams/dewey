@@ -40,99 +40,71 @@ export default function AIVectorBackground() {
     const updateDimensions = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
-        const oldWidth = dimensions.width
-        const oldHeight = dimensions.height
         setDimensions({ width, height })
-
-        // Calculate how many new nodes we need based on the area change
-        const oldArea = oldWidth * oldHeight
-        const newArea = width * height
-        const areaRatio = newArea / oldArea
-        const targetNodeCount = Math.floor((width * height) / 25000)
-        const currentNodeCount = nodes.length
-
-        if (areaRatio > 1) {
-          // Screen got bigger - add nodes to new areas
-          const nodesToAdd = Math.max(0, targetNodeCount - currentNodeCount)
-          const newNodes = [...nodes]
-
-          for (let i = 0; i < nodesToAdd; i++) {
-            // Only add nodes in the newly visible areas
-            const isNewWidth = Math.random() < (width - oldWidth) / width
-            const isNewHeight = Math.random() < (height - oldHeight) / height
-            
-            if (isNewWidth || isNewHeight) {
-              newNodes.push({
-                x: isNewWidth ? oldWidth + Math.random() * (width - oldWidth) : Math.random() * width,
-                y: isNewHeight ? oldHeight + Math.random() * (height - oldHeight) : Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.3,
-                vy: (Math.random() - 0.5) * 0.3,
-                radius: Math.random() * 2.5 + 1.5,
-              })
-            }
-          }
-
-          setNodes(newNodes)
-        } else {
-          // Screen got smaller - remove nodes that are now outside
-          const nodesToKeep = nodes.filter(node => 
-            node.x <= width && node.y <= height
-          )
-          
-          // If we still have too many nodes, remove some randomly
-          if (nodesToKeep.length > targetNodeCount) {
-            const excess = nodesToKeep.length - targetNodeCount
-            for (let i = 0; i < excess; i++) {
-              const indexToRemove = Math.floor(Math.random() * nodesToKeep.length)
-              nodesToKeep.splice(indexToRemove, 1)
-            }
-          }
-
-          setNodes(nodesToKeep)
-        }
-
-        // Update connections based on new node positions
-        const newConnections: Connection[] = []
-        const connectionDistance = Math.min(width, height) / 4
-
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const dx = nodes[i].x - nodes[j].x
-            const dy = nodes[i].y - nodes[j].y
-            const distance = Math.sqrt(dx * dx + dy * dy)
-
-            if (distance < connectionDistance) {
-              newConnections.push({
-                source: i,
-                target: j,
-                strength: 1 - distance / connectionDistance,
-              })
-            }
-          }
-        }
-
-        setConnections(newConnections)
       }
     }
 
-    // Initial setup
+    // Initial dimensions update
     updateDimensions()
 
-    // Add resize listener with debounce
-    let resizeTimeout: NodeJS.Timeout
-    const handleResize = () => {
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(updateDimensions, 100)
+    // Add resize listener
+    window.addEventListener('resize', updateDimensions)
+    return () => window.removeEventListener('resize', updateDimensions)
+  }, []) // Empty dependency array since we only want to set up the listener once
+
+  // Update nodes when dimensions change
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const { width, height } = dimensions
+    const targetNodeCount = Math.floor((width * height) / 25000)
+    const currentNodeCount = nodes.length
+
+    if (currentNodeCount < targetNodeCount) {
+      // Add new nodes
+      const newNodes = [...nodes]
+      const nodesToAdd = targetNodeCount - currentNodeCount
+
+      for (let i = 0; i < nodesToAdd; i++) {
+        newNodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          radius: Math.random() * 2.5 + 1.5,
+        })
+      }
+
+      setNodes(newNodes)
+    } else if (currentNodeCount > targetNodeCount) {
+      // Remove excess nodes
+      const nodesToKeep = nodes.slice(0, targetNodeCount)
+      setNodes(nodesToKeep)
     }
 
-    window.addEventListener('resize', handleResize)
+    // Update connections
+    const newConnections: Connection[] = []
+    const connectionDistance = Math.min(width, height) / 4
 
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      clearTimeout(resizeTimeout)
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x
+        const dy = nodes[i].y - nodes[j].y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        if (distance < connectionDistance) {
+          newConnections.push({
+            source: i,
+            target: j,
+            strength: 1 - distance / connectionDistance,
+          })
+        }
+      }
     }
-  }, [dimensions, nodes]) // Add dependencies for smooth updates
+
+    setConnections(newConnections)
+    setInitialized(true)
+  }, [dimensions]) // Only update nodes when dimensions change
 
   // Create new data packets occasionally
   const createDataPacket = () => {
@@ -230,7 +202,7 @@ export default function AIVectorBackground() {
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-0 w-full h-full overflow-hidden bg-background">
+    <div ref={containerRef} className="fixed inset-0 w-full h-full overflow-hidden bg-transparent">
       <svg
         width={dimensions.width}
         height={dimensions.height}

@@ -7,6 +7,7 @@ import { CheckCircle2, Download, KeyRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import AIVectorBackground from '@/components/onboarding/AiVectorBackground';
+import DecorativeBlobs from '@/components/onboarding/DecorativeBlobs';
 
 type OnboardingStep = 'welcome' | 'ai-models' | 'keychain' | 'complete';
 
@@ -186,9 +187,12 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      <AIVectorBackground />
+      <div className="fixed inset-0 z-0">
+        <AIVectorBackground />
+        <DecorativeBlobs step={currentStep} />
+      </div>
       <div className="flex-1 flex items-center justify-center p-8 relative z-10">
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-lg relative">
           <AnimatePresence mode="wait">
             {getStepContent()}
           </AnimatePresence>

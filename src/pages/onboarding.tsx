@@ -30,9 +30,8 @@ export default function Onboarding() {
 
   const handleComplete = useCallback(async () => {
     try {
-      setCurrentStep('welcome');
-      //   await storeOnboarding(true);
-      //   navigate('/');
+        await storeOnboarding(true);
+        navigate('/');
     } catch (error) {
       console.error('Failed to store onboarding completion:', error);
     }

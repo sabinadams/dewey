@@ -22,6 +22,7 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
       exit="exit"
       transition={{ opacity: { duration: 0.3, ease: 'easeInOut' } }}
       className="text-center space-y-6"
+      style={{ width: '100%' }}
     >
       <div className="w-32 h-32 mx-auto flex items-center justify-center">
         <LogoSVG className="w-full h-full" />

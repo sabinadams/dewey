@@ -11,11 +11,45 @@ pub enum ErrorSeverity {
 }
 
 /// The main error type for the application
-#[derive(Debug, Snafu, Serialize)]
+#[derive(Debug, Snafu)]
 pub struct AppError {
     pub message: String,
     pub category: ErrorCategory,
     pub severity: ErrorSeverity,
+}
+
+// Custom serialization for AppError
+impl Serialize for AppError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        
+        let category_str = match &self.category {
+            ErrorCategory::Database(_) => "Database",
+            ErrorCategory::Migration(_) => "Migration",
+            ErrorCategory::Io(_) => "Io",
+            ErrorCategory::Config(_) => "Config",
+            ErrorCategory::IconGeneration(_) => "IconGeneration",
+            ErrorCategory::Icon(_) => "Icon",
+            ErrorCategory::Keyring(_) => "Keyring",
+            ErrorCategory::KeyGeneration(_) => "KeyGeneration",
+            ErrorCategory::Project(_) => "Project",
+            ErrorCategory::Encryption(_) => "Encryption",
+            ErrorCategory::KeyManagement(_) => "KeyManagement",
+            ErrorCategory::Connection(_) => "Connection",
+            ErrorCategory::Validation(_) => "Validation",
+            ErrorCategory::Auth(_) => "Auth",
+            ErrorCategory::Unknown(_) => "Unknown",
+        };
+
+        let mut state = serializer.serialize_struct("AppError", 3)?;
+        state.serialize_field("message", &self.message)?;
+        state.serialize_field("category", category_str)?;
+        state.serialize_field("severity", &self.severity)?;
+        state.end()
+    }
 }
 
 impl AppError {

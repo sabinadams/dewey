@@ -1,3 +1,8 @@
+//! Main entry point for the Dewey application.
+//! 
+//! This module contains the main function that initializes and runs the Tauri application.
+//! It sets up logging, initializes the application state, and configures the Tauri builder.
+
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -9,6 +14,17 @@ use dewey_lib::{
 };
 use tracing::{info, error};
 
+/// Main entry point for the Dewey application
+///
+/// This function:
+/// 1. Initializes logging
+/// 2. Initializes the application state
+/// 3. Configures and runs the Tauri application
+///
+/// # Errors
+/// * Returns an error if logging initialization fails
+/// * Returns an error if application state initialization fails
+/// * Returns an error if Tauri application initialization fails
 #[tokio::main]
 async fn main() {
     // Initialize logging first

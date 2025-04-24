@@ -1,3 +1,9 @@
+//! Error handling for the application.
+//! 
+//! This module defines the error types and utilities used throughout the application.
+//! It provides a unified error handling system that categorizes errors by type
+//! and severity, and includes detailed error information for debugging and user feedback.
+
 use snafu::{Snafu, IntoError, ErrorCompat};
 use std::error::Error as StdError;
 use identicon_rs::error::IdenticonError;
@@ -6,11 +12,18 @@ use chrono::Utc;
 use crate::error_subcategories::*;
 
 /// Severity levels for errors
+/// 
+/// This enum defines the severity levels that can be assigned to errors in the application.
+/// The severity level helps determine how errors should be handled and displayed to users.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ErrorSeverity {
+    /// Informational messages that don't indicate an error
     Info,
+    /// Warning messages that indicate potential issues
     Warning,
+    /// Error messages that indicate a problem that needs attention
     Error,
+    /// Critical error messages that indicate a serious problem
     Critical,
 }
 

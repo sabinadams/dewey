@@ -20,7 +20,7 @@ impl IconGenerator {
     /// # Errors
     /// Returns an error if the icons directory cannot be created
     pub fn new() -> AppResult<Self> {
-        let icons_dir = LocalStorage::get_app_dir().join(constants::ICONS_DIR);
+        let icons_dir = LocalStorage::get_app_dir().join(constants::files::ICONS_DIR);
         utils::ensure_dir_exists(&icons_dir)
             .map_err(ErrorCategory::from)?;
         
@@ -46,7 +46,7 @@ impl IconGenerator {
         // Generate and save the identicon
         let path_str = file_path.to_str()
             .ok_or_else(|| ErrorCategory::IconGeneration {
-                message: constants::INVALID_FILE_PATH.to_string(),
+                message: constants::errors::INVALID_FILE_PATH.to_string(),
                 subcategory: None,
                 code: 4000,
                 severity: ErrorSeverity::Error,

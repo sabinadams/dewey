@@ -35,7 +35,7 @@ pub fn icon_protocol<R: tauri::Runtime>(
     
     // Get icons directory from the app data directory
     let base_path = match ctx.app_handle().path().app_data_dir() {
-        Ok(path) => path.join(constants::ICONS_DIR),
+        Ok(path) => path.join(constants::files::ICONS_DIR),
         Err(e) => {
             error!("Failed to get app data directory: {}", e);
             return utils::response_not_found();
@@ -53,16 +53,16 @@ pub fn icon_protocol<R: tauri::Runtime>(
             // Determine content type based on file extension
             let content_type = if let Some(extension) = Path::new(&icon_name).extension() {
                 match extension.to_str().unwrap_or("").to_lowercase().as_str() {
-                    "svg" => constants::SVG_CONTENT_TYPE,
-                    _ => constants::PNG_CONTENT_TYPE,
+                    "svg" => constants::content::SVG,
+                    _ => constants::content::PNG,
                 }
             } else {
-                constants::PNG_CONTENT_TYPE // Default to PNG if no extension
+                constants::content::PNG // Default to PNG if no extension
             };
             
             Response::builder()
                 .header("Content-Type", content_type)
-                .header("Cache-Control", constants::ICON_CACHE_CONTROL)
+                .header("Cache-Control", constants::cache::ICON)
                 .body(data)
                 .unwrap_or_else(|e| {
                     error!("Failed to build response: {}", e);

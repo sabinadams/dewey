@@ -5,7 +5,7 @@ use std::fs;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
-use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
+use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
 use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
 use std::sync::Arc;
@@ -21,7 +21,7 @@ pub struct KeyManager {
 
 impl KeyManager {
     pub fn new() -> Result<Self, ErrorCategory> {
-        let keyring_entry = Entry::new(KEY_SERVICE_NAME, KEY_ACCOUNT_NAME)
+        let keyring_entry = Entry::new(SERVICE_NAME, ACCOUNT_NAME)
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
                 subcategory: Some(KeyringSubcategory::KeyringUnavailable),
@@ -171,7 +171,7 @@ impl KeyManager {
                 severity: ErrorSeverity::Error,
             })?;
         
-        Ok(proj_dirs.config_dir().join(KEY_FILE_NAME))
+        Ok(proj_dirs.config_dir().join(FILE_NAME))
     }
 
     pub async fn set_key(&self, key: Vec<u8>) {

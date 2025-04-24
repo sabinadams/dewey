@@ -129,17 +129,18 @@ const CreateProjectForm = () => {
         navigate(`/project/${result}`);
       } catch (error) {
         const appError = parseError(error);
+        toast.dismiss(loadingToastId);
         
         // Handle keychain errors differently
         if (appError.category === ErrorCategory.ENCRYPTION && 
             appError.subcategory === KeyringSubcategory.KeyNotFound) {
-              console.log("Made it to here")
-          toast.dismiss(loadingToastId);
           // Navigate to onboarding to set up encryption key
           // navigate('/onboarding');
           // a toast with an action to navigate to onboarding
           toast.error('Encryption Key Error', {
             description: 'Please set up an encryption key to continue.',
+            duration: Infinity,
+            dismissible: true,
             action: {
               label: 'Set Up',
               onClick: () => {
@@ -147,11 +148,11 @@ const CreateProjectForm = () => {
               },
             },
           });
+        } else {
+          // For all other errors, show the error toast
+          showErrorToast(appError);
         }
         
-        toast.dismiss(loadingToastId);
-        // For all other errors, show the error toast
-        showErrorToast(appError);
       }
     } catch (error) {
       toast.dismiss(loadingToastId);

@@ -77,45 +77,48 @@ The application uses a comprehensive error handling system that ensures consiste
 
 ### Error Categories
 
-The system supports the following error categories:
+The system supports the following error categories, each of which may have optional subcategories for more granular error handling:
 
-| Category | Description | Example Use Case |
-|----------|-------------|------------------|
-| DATABASE | Database-related errors | SQL query failures |
-| MIGRATION | Database migration errors | Failed schema updates |
-| IO | File system and I/O errors | File read/write failures |
-| CONFIG | Configuration errors | Invalid settings |
-| ICON_GENERATION | Icon generation errors | Failed icon creation |
-| IMAGE | Image processing errors | Invalid image format |
-| FILE_NOT_FOUND | File not found errors | Missing resource files |
-| KEYRING | Keyring-related errors | Failed key storage |
-| KEY_GENERATION | Key generation errors | Failed key creation |
-| PROJECT | Project-related errors | Invalid project data |
-| ICON | Icon-related errors | Invalid icon data |
-| CONNECTION | Connection errors | Network failures |
-| VALIDATION | Input validation errors | Invalid user input |
-| AUTH | Authentication errors | Failed login |
-| UNKNOWN | Unknown errors | Unhandled exceptions |
+| Category | Description | Example Use Case | Common Subcategories |
+|----------|-------------|------------------|----------------------|
+| DATABASE | Database-related errors | SQL query failures | `CONNECTION`, `QUERY`, `TRANSACTION` |
+| MIGRATION | Database migration errors | Failed schema updates | `VERSION`, `SCHEMA`, `DATA` |
+| IO | File system and I/O errors | File read/write failures | `READ`, `WRITE`, `PERMISSION` |
+| CONFIG | Configuration errors | Invalid settings | `PARSE`, `VALIDATION`, `MISSING` |
+| ICON_GENERATION | Icon generation errors | Failed icon creation | `FORMAT`, `SIZE`, `PROCESSING` |
+| IMAGE | Image processing errors | Invalid image format | `FORMAT`, `SIZE`, `PROCESSING` |
+| FILE_NOT_FOUND | File not found errors | Missing resource files | `RESOURCE`, `CONFIG`, `ASSET` |
+| KEYRING | Keyring-related errors | Failed key storage | `ACCESS`, `STORAGE`, `LOCKED` |
+| KEY_GENERATION | Key generation errors | Failed key creation | `ALGORITHM`, `LENGTH`, `ENTROPY` |
+| PROJECT | Project-related errors | Invalid project data | `NOT_FOUND`, `INVALID`, `CONFLICT` |
+| ICON | Icon-related errors | Invalid icon data | `FORMAT`, `SIZE`, `METADATA` |
+| CONNECTION | Connection errors | Network failures | `TIMEOUT`, `REFUSED`, `RESET` |
+| VALIDATION | Input validation errors | Invalid user input | `FORMAT`, `REQUIRED`, `RANGE` |
+| AUTH | Authentication errors | Failed login | `CREDENTIALS`, `EXPIRED`, `LOCKED` |
+| UNKNOWN | Unknown errors | Unhandled exceptions | `UNEXPECTED`, `SYSTEM`, `EXTERNAL` |
 
 ### Error Handling Components
 
 1. **Backend (Rust)**
-   - `AppError` enum: Defines all possible error types
+   - `AppError` enum: Defines all possible error types with optional subcategories
    - `ErrorCategory` trait: Provides consistent error categorization
-   - `create_error_response`: Converts errors to JSON format
+   - `create_error_response`: Converts errors to JSON format with subcategory support
+   - `ErrorSubcategory` enum: Defines available subcategories for each error type
 
 2. **Frontend (TypeScript)**
    - `ErrorCategory` enum: Matches backend error categories
-   - `AppError` interface: Defines error structure
+   - `ErrorSubcategory` enum: Matches backend error subcategories
+   - `AppError` interface: Defines error structure with optional subcategory
    - `parseError`: Converts raw errors to AppError format
    - `showErrorToast`: Displays error messages to users
    - `ErrorBoundary`: Catches and displays React errors
    - `useErrorHandler`: Hook for handling errors in components
 
-### Using the Error Handler Hook
+### Using the Error Handler Hook with Subcategories
 
 ```typescript
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { ErrorCategory, ErrorSubcategory } from '@/types/errors';
 
 function MyComponent() {
   const { handleErrorWithToast, handleErrorSilently, handleErrorWithAction } = useErrorHandler();
@@ -130,9 +133,16 @@ function MyComponent() {
       // Or handle silently
       const appError = handleErrorSilently(error);
       
-      // Or handle with custom action
-      handleErrorWithAction(error, () => {
-        // Custom error handling logic
+      // Or handle with custom action based on subcategory
+      handleErrorWithAction(error, (error) => {
+        if (error.category === ErrorCategory.KEYRING && 
+            error.subcategory === ErrorSubcategory.ACCESS) {
+          // Prompt user for keychain access
+          promptForKeychainAccess();
+        } else {
+          // Default error handling
+          showErrorToast(error);
+        }
       });
     }
   };
@@ -161,23 +171,50 @@ function App() {
    - Use specific error variants when possible
    - Include descriptive error messages
    - Add relevant details when available
+   - Use subcategories to provide more context about the error
+   - Example:
+   ```rust
+   AppError::Keyring {
+       message: "Failed to access keychain".to_string(),
+       subcategory: Some(ErrorSubcategory::ACCESS),
+       details: None
+   }
+   ```
 
 2. **Frontend Error Handling**
    - Always use the error handler hook
    - Handle errors at the appropriate level
    - Provide user-friendly error messages
    - Log errors for debugging
+   - Use subcategories to implement specific error handling logic
+   - Example:
+   ```typescript
+   if (error.category === ErrorCategory.KEYRING) {
+     switch (error.subcategory) {
+       case ErrorSubcategory.ACCESS:
+         // Handle keychain access error
+         break;
+       case ErrorSubcategory.STORAGE:
+         // Handle storage error
+         break;
+       default:
+         // Handle other keyring errors
+     }
+   }
+   ```
 
-3. **Error Categories**
-   - Use the most specific category possible
-   - Add new categories when needed
-   - Document new categories in this README
+3. **Error Categories and Subcategories**
+   - Use the most specific category and subcategory possible
+   - Add new categories and subcategories when needed
+   - Document new categories and subcategories in this README
+   - Keep subcategories consistent within each category
 
 4. **Error Messages**
    - Be clear and concise
    - Include actionable information
    - Avoid technical jargon
    - Consider localization
+   - Include subcategory-specific guidance when relevant
 
 ### Example Error Flow
 

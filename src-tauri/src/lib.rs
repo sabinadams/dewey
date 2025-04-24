@@ -4,6 +4,9 @@ pub mod commands;
 /// Error handling definitions
 pub mod error;
 
+/// Error handling subcategories
+pub mod error_subcategories;
+
 /// Common types used throughout the application
 pub mod types;
 
@@ -27,3 +30,11 @@ pub use types::AppResult;
 pub use services::storage::LocalStorage;
 pub use state::AppState;
 pub use constants::*;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}

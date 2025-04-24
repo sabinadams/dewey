@@ -9,6 +9,8 @@ use serde_json;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, error};
 use crate::error::ErrorCategory;
+use crate::error_subcategories::EncryptionSubcategory;
+use tokio::sync::Mutex;
 
 use super::key_management::KeyManager;
 
@@ -21,11 +23,12 @@ struct EncryptedData {
 }
 
 /// Initialize the encryption key. This should be called once at application startup.
-pub fn initialize_encryption_key() -> Result<(), ErrorCategory> {
-    match KeyManager::new().and_then(|km| km.get_or_create_key()) {
+pub async fn initialize_encryption_key() -> Result<(), ErrorCategory> {
+    let key_manager = KeyManager::new()?;
+    match key_manager.get_or_create_key().await {
         Ok(key) => {
             debug!("Successfully initialized encryption key");
-            if ENCRYPTION_KEY.set(Arc::new(key)).is_err() {
+            if ENCRYPTION_KEY.set(Arc::new(key.try_into().unwrap())).is_err() {
                 error!("Encryption key already initialized");
             }
             Ok(())
@@ -43,7 +46,7 @@ fn get_encryption_key() -> Result<Arc<[u8; 32]>, ErrorCategory> {
         .map(Arc::clone)
         .ok_or_else(|| ErrorCategory::Encryption {
             message: "Encryption key not initialized".to_string(),
-            subcategory: Some("KeyNotInitialized".to_string()),
+            subcategory: Some(EncryptionSubcategory::KeyNotInitialized),
         })
 }
 
@@ -60,7 +63,7 @@ pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
         .encrypt(Nonce::from_slice(&nonce), value.as_bytes())
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("EncryptionFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::EncryptionFailed),
         })?;
 
     let encrypted_data = EncryptedData {
@@ -71,7 +74,7 @@ pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
     serde_json::to_string(&encrypted_data)
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("SerializationFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::SerializationFailed),
         })
 }
 
@@ -83,43 +86,106 @@ pub fn decrypt_string(encrypted_value: &str) -> Result<String, ErrorCategory> {
     let encrypted_data: EncryptedData = serde_json::from_str(encrypted_value)
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("DeserializationFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::DeserializationFailed),
         })?;
 
     let nonce = BASE64
         .decode(encrypted_data.nonce)
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("Base64DecodeFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::Base64DecodeFailed),
         })?;
     let ciphertext = BASE64
         .decode(encrypted_data.ciphertext)
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("Base64DecodeFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::Base64DecodeFailed),
         })?;
 
     let plaintext = cipher
         .decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("DecryptionFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::DecryptionFailed),
         })?;
 
     String::from_utf8(plaintext)
         .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
-            subcategory: Some("Utf8DecodeFailed".to_string()),
+            subcategory: Some(EncryptionSubcategory::Utf8DecodeFailed),
         })
+}
+
+pub struct EncryptionService {
+    key: Arc<Mutex<Option<Vec<u8>>>>,
+}
+
+impl EncryptionService {
+    pub fn new() -> Self {
+        Self {
+            key: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub async fn initialize_key(&self, key: Vec<u8>) {
+        let mut key_guard = self.key.lock().await;
+        *key_guard = Some(key);
+    }
+
+    pub async fn get_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+        self.key
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| ErrorCategory::Encryption {
+                message: "Key not initialized".to_string(),
+                subcategory: Some(EncryptionSubcategory::KeyNotInitialized),
+            })
+    }
+
+    pub async fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, ErrorCategory> {
+        let key = self.get_key().await?;
+        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| ErrorCategory::Encryption {
+            message: e.to_string(),
+            subcategory: Some(EncryptionSubcategory::InvalidKey),
+        })?;
+
+        let mut nonce = [0u8; 12];
+        rand::thread_rng().fill_bytes(&mut nonce);
+        let nonce = Nonce::from_slice(&nonce);
+
+        cipher
+            .encrypt(nonce, data)
+            .map_err(|e| ErrorCategory::Encryption {
+                message: e.to_string(),
+                subcategory: Some(EncryptionSubcategory::EncryptionFailed),
+            })
+    }
+
+    pub async fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, ErrorCategory> {
+        let key = self.get_key().await?;
+        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| ErrorCategory::Encryption {
+            message: e.to_string(),
+            subcategory: Some(EncryptionSubcategory::InvalidKey),
+        })?;
+
+        let nonce = Nonce::from_slice(&data[..12]);
+        cipher
+            .decrypt(nonce, &data[12..])
+            .map_err(|e| ErrorCategory::Encryption {
+                message: e.to_string(),
+                subcategory: Some(EncryptionSubcategory::DecryptionFailed),
+            })
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_encryption_decryption() {
-        initialize_encryption_key().unwrap();
+    #[tokio::test]
+    async fn test_encryption_decryption() {
+        initialize_encryption_key().await.unwrap();
         
         let original = "sensitive data";
         let encrypted = encrypt_string(original).unwrap();

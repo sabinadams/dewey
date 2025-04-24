@@ -1,18 +1,19 @@
 use crate::services::key_management;
-use crate::error::{ErrorCategory, KeyGenerationSubcategory};
-use tracing::info;
+use crate::error::ErrorCategory;
+use crate::error_subcategories::KeyGenerationSubcategory;
+use tracing::{info, debug, error};
 
 /// Initialize the encryption key
 ///
 /// # Errors
 /// Returns an error if there was a problem generating or storing the key
 #[tauri::command]
-pub fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
+pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
     info!("Initializing encryption key");
     
     let key_manager = key_management::KeyManager::new()?;
     
-    match key_manager.get_or_create_key() {
+    match key_manager.get_or_create_key().await {
         Ok(_) => {
             info!("Encryption key initialized successfully");
             Ok(true)
@@ -32,14 +33,16 @@ pub fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
 /// # Errors
 /// Returns an error if there was a problem checking for the key
 #[tauri::command]
-pub fn has_encryption_key() -> Result<bool, ErrorCategory> {
-    info!("Checking if encryption key exists");
-    
+pub async fn check_key_exists() -> Result<bool, ErrorCategory> {
     let key_manager = key_management::KeyManager::new()?;
-    
-    // Check both keyring and file
-    let has_key = key_manager.has_key_in_keyring()? || key_manager.has_key_in_file()?;
-    
-    info!("Encryption key exists: {}", has_key);
-    Ok(has_key)
+    match key_manager.get_or_create_key().await {
+        Ok(_) => {
+            debug!("Key exists");
+            Ok(true)
+        }
+        Err(e) => {
+            error!("Error checking key: {}", e);
+            Ok(false)
+        }
+    }
 }

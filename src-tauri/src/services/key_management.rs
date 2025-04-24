@@ -6,13 +6,17 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
-use crate::error::{ErrorCategory, KeyringSubcategory, KeyGenerationSubcategory};
+use crate::error::ErrorCategory;
+use crate::error_subcategories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary
 pub struct KeyManager {
     keyring_entry: Entry,
     key_file_path: PathBuf,
+    key: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 impl KeyManager {
@@ -28,11 +32,12 @@ impl KeyManager {
         Ok(Self {
             keyring_entry,
             key_file_path,
+            key: Arc::new(Mutex::new(None)),
         })
     }
 
     /// Gets the encryption key, generating and storing a new one if it doesn't exist
-    pub fn get_or_create_key(&self) -> Result<[u8; 32], ErrorCategory> {
+    pub async fn get_or_create_key(&self) -> Result<Vec<u8>, ErrorCategory> {
         // Try to get the key from the system keyring first
         match self.get_key_from_keyring() {
             Ok(key) => {
@@ -72,7 +77,7 @@ impl KeyManager {
         Ok(self.key_file_path.exists())
     }
 
-    fn get_key_from_keyring(&self) -> Result<[u8; 32], ErrorCategory> {
+    fn get_key_from_keyring(&self) -> Result<Vec<u8>, ErrorCategory> {
         let key_str = self.keyring_entry
             .get_password()
             .map_err(|e| ErrorCategory::Keyring {
@@ -86,36 +91,32 @@ impl KeyManager {
                 subcategory: Some(KeyringSubcategory::InvalidKey),
             })?;
         
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        Ok(key)
+        Ok(key_bytes)
     }
 
-    fn get_key_from_file(&self) -> Result<[u8; 32], ErrorCategory> {
+    fn get_key_from_file(&self) -> Result<Vec<u8>, ErrorCategory> {
         let key_str = fs::read_to_string(&self.key_file_path)
             .map_err(|e| ErrorCategory::Io {
                 source: e,
-                subcategory: None,
+                subcategory: Some(IoSubcategory::ReadFailed),
             })?;
         
         let key_bytes = BASE64.decode(key_str.trim())
             .map_err(|e| ErrorCategory::KeyGeneration {
                 message: e.to_string(),
-                subcategory: Some(KeyGenerationSubcategory::InvalidKeyLength),
+                subcategory: Some(KeyGenerationSubcategory::InvalidLength),
             })?;
         
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        Ok(key)
+        Ok(key_bytes)
     }
 
-    fn generate_new_key(&self) -> Result<[u8; 32], ErrorCategory> {
-        let mut key = [0u8; 32];
+    fn generate_new_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+        let mut key = Vec::new();
         OsRng.fill_bytes(&mut key);
         Ok(key)
     }
 
-    fn store_key(&self, key: &[u8; 32]) -> Result<(), ErrorCategory> {
+    fn store_key(&self, key: &[u8]) -> Result<(), ErrorCategory> {
         let key_str = BASE64.encode(key);
         
         // Try to store in system keyring first
@@ -155,5 +156,21 @@ impl KeyManager {
             })?;
         
         Ok(proj_dirs.config_dir().join(KEY_FILE_NAME))
+    }
+
+    pub async fn set_key(&self, key: Vec<u8>) {
+        let mut key_guard = self.key.lock().await;
+        *key_guard = Some(key);
+    }
+
+    pub async fn get_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+        self.key
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| ErrorCategory::KeyManagement {
+                message: "Key not initialized".to_string(),
+                subcategory: Some(KeyManagementSubcategory::KeyNotInitialized),
+            })
     }
 } 

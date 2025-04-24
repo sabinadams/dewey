@@ -8,11 +8,14 @@ use crate::services::storage::{
 };
 use crate::utils;
 use crate::state::AppState;
-use crate::error::{ErrorCategory, ProjectSubcategory};
+use crate::error::ErrorCategory;
+use crate::error_subcategories::{ProjectSubcategory, DatabaseSubcategory, IconSubcategory, ConnectionSubcategory};
 use blake3;
 use tauri::State;
 use tracing::info;
 use snafu::ResultExt;
+use serde::{Deserialize, Serialize};
+use tracing::{debug, error};
 
 /// Command to fetch all projects for a user
 ///
@@ -28,9 +31,9 @@ pub async fn get_user_projects(
     let project_repo = ProjectRepository::new(state.db.clone());
 
     project_repo.get_by_user(&user_id).await
-        .context(ErrorCategory::Project {
+        .context(ErrorCategory::Database {
             message: format!("Failed to fetch projects for user {}", user_id),
-            subcategory: None,
+            subcategory: Some(DatabaseSubcategory::QueryFailed),
         })
 }
 
@@ -56,7 +59,7 @@ pub async fn create_project(
     let icon_generator = IconGenerator::new()
         .context(ErrorCategory::Icon {
             message: "Failed to initialize icon generator".to_string(),
-            subcategory: None,
+            subcategory: Some(IconSubcategory::GenerationFailed),
         })?;
 
     let final_icon_path = if let Some(icon_data) = custom_icon_data {
@@ -67,7 +70,7 @@ pub async fn create_project(
             .save_custom_icon(&icon_data, &name, &user_id)
             .context(ErrorCategory::Icon {
                 message: "Failed to save custom icon".to_string(),
-                subcategory: None,
+                subcategory: Some(IconSubcategory::SaveFailed),
             })?
     } else {
         // Generate a default icon
@@ -80,7 +83,7 @@ pub async fn create_project(
             .generate_and_save(hash.as_bytes())
             .context(ErrorCategory::Icon {
                 message: "Failed to generate default icon".to_string(),
-                subcategory: None,
+                subcategory: Some(IconSubcategory::GenerationFailed),
             })?
     };
 
@@ -98,7 +101,7 @@ pub async fn create_project(
         .await
         .context(ErrorCategory::Project {
             message: "Failed to create project".to_string(),
-            subcategory: None,
+            subcategory: Some(ProjectSubcategory::InvalidPath),
         })?;
 
     // If an initial connection was provided, create it
@@ -118,7 +121,7 @@ pub async fn create_project(
         connection_repo.create(&connection).await
             .context(ErrorCategory::Connection {
                 message: "Failed to create initial connection for project".to_string(),
-                subcategory: None,
+                subcategory: Some(ConnectionSubcategory::ConnectionFailed),
             })?;
     }
 
@@ -146,9 +149,9 @@ pub async fn update_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .context(ErrorCategory::Project {
+        .context(ErrorCategory::Database {
             message: format!("Failed to check project existence for project {}", id),
-            subcategory: None,
+            subcategory: Some(DatabaseSubcategory::QueryFailed),
         })?
     {
         return Err(ErrorCategory::Project {
@@ -161,7 +164,7 @@ pub async fn update_project(
     project_repo.update(id, &name).await
         .context(ErrorCategory::Project {
             message: "Failed to update project".to_string(),
-            subcategory: Some(ProjectSubcategory::NotFound),
+            subcategory: Some(ProjectSubcategory::InvalidName),
         })
 }
 
@@ -185,9 +188,9 @@ pub async fn delete_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .context(ErrorCategory::Project {
+        .context(ErrorCategory::Database {
             message: format!("Failed to check project existence for project {}", id),
-            subcategory: None,
+            subcategory: Some(DatabaseSubcategory::QueryFailed),
         })?
     {
         return Err(ErrorCategory::Project {
@@ -198,9 +201,9 @@ pub async fn delete_project(
 
     // Delete the project
     project_repo.delete(id).await
-        .context(ErrorCategory::Project {
+        .context(ErrorCategory::Database {
             message: "Failed to delete project".to_string(),
-            subcategory: Some(ProjectSubcategory::NotFound),
+            subcategory: Some(DatabaseSubcategory::QueryFailed),
         })
 }
 
@@ -218,8 +221,8 @@ pub async fn get_project_connections(
     let connection_repo = ConnectionRepository::new(state.db.clone());
 
     connection_repo.get_by_project(project_id).await
-        .context(ErrorCategory::Connection {
+        .context(ErrorCategory::Database {
             message: "Failed to get project connections".to_string(),
-            subcategory: None,
+            subcategory: Some(DatabaseSubcategory::QueryFailed),
         })
 }

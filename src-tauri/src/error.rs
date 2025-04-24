@@ -2,124 +2,95 @@ use snafu::{Snafu, IntoError};
 use std::error::Error as StdError;
 use identicon_rs::error::IdenticonError;
 use serde::Serialize;
+use crate::error_subcategories::*;
 
 /// Error categories for the application
-#[derive(Debug, Snafu, Serialize)]
-#[snafu(visibility(pub))]
+#[derive(Debug, Snafu)]
 pub enum ErrorCategory {
-    #[snafu(display("Database error: {}", source))]
-    Database { 
-        #[serde(serialize_with = "serialize_error")]
-        source: sqlx::Error,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+    #[snafu(display("Database error: {}", message))]
+    Database {
+        message: String,
+        subcategory: Option<DatabaseSubcategory>,
     },
-
     #[snafu(display("Migration error: {}", message))]
-    Migration { 
+    Migration {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<MigrationSubcategory>,
     },
-
     #[snafu(display("IO error: {}", source))]
-    Io { 
-        #[serde(serialize_with = "serialize_error")]
+    Io {
         source: std::io::Error,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<IoSubcategory>,
     },
-
-    #[snafu(display("Configuration error: {}", message))]
-    Config { 
+    #[snafu(display("Config error: {}", message))]
+    Config {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<ConfigSubcategory>,
     },
-
     #[snafu(display("Icon generation error: {}", message))]
-    IconGeneration { 
+    IconGeneration {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<IconGenerationSubcategory>,
     },
-
-    #[snafu(display("Image error: {}", source))]
-    Image { 
-        #[serde(serialize_with = "serialize_error")]
-        source: image::ImageError,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+    #[snafu(display("Image error: {}", message))]
+    Image {
+        message: String,
+        subcategory: Option<ImageSubcategory>,
     },
-
     #[snafu(display("File not found: {}", message))]
-    FileNotFound { 
+    FileNotFound {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<FileNotFoundSubcategory>,
     },
-
     #[snafu(display("Keyring error: {}", message))]
-    Keyring { 
+    Keyring {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<KeyringSubcategory>
+        subcategory: Option<KeyringSubcategory>,
     },
-
     #[snafu(display("Key generation error: {}", message))]
-    KeyGeneration { 
+    KeyGeneration {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<KeyGenerationSubcategory>
+        subcategory: Option<KeyGenerationSubcategory>,
     },
-
     #[snafu(display("Project error: {}", message))]
-    Project { 
+    Project {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<ProjectSubcategory>
+        subcategory: Option<ProjectSubcategory>,
     },
-
     #[snafu(display("Icon error: {}", message))]
-    Icon { 
+    Icon {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<IconSubcategory>,
     },
-
     #[snafu(display("Connection error: {}", message))]
-    Connection { 
+    Connection {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<ConnectionSubcategory>,
     },
-
     #[snafu(display("Validation error: {}", message))]
-    Validation { 
+    Validation {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<ValidationSubcategory>,
     },
-
-    #[snafu(display("Authentication error: {}", message))]
-    Auth { 
+    #[snafu(display("Auth error: {}", message))]
+    Auth {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<AuthSubcategory>,
     },
-
     #[snafu(display("Unknown error: {}", message))]
-    Unknown { 
+    Unknown {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<UnknownSubcategory>,
     },
-
     #[snafu(display("Encryption error: {}", message))]
-    Encryption { 
+    Encryption {
         message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<EncryptionSubcategory>,
+    },
+    #[snafu(display("Key management error: {}", message))]
+    KeyManagement {
+        message: String,
+        subcategory: Option<KeyManagementSubcategory>,
     },
 }
 
@@ -132,9 +103,23 @@ pub fn create_error_response(error: AppError) -> serde_json::Value {
         "category": error.category_name(),
         "message": error.to_string(),
         "subcategory": match &error {
+            ErrorCategory::Database { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Migration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Io { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Config { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::IconGeneration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Image { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::FileNotFound { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
             ErrorCategory::Keyring { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
             ErrorCategory::KeyGeneration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
-            _ => None,
+            ErrorCategory::Project { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Icon { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Connection { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Validation { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Auth { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Unknown { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Encryption { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::KeyManagement { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
         }
     })
 }
@@ -158,6 +143,7 @@ impl ErrorCategory {
             ErrorCategory::Auth { .. } => "AUTH",
             ErrorCategory::Unknown { .. } => "UNKNOWN",
             ErrorCategory::Encryption { .. } => "ENCRYPTION",
+            ErrorCategory::KeyManagement { .. } => "KEY_MANAGEMENT",
         }
     }
 }
@@ -174,7 +160,7 @@ where
 // Implement From for various error types
 impl From<sqlx::Error> for ErrorCategory {
     fn from(error: sqlx::Error) -> Self {
-        ErrorCategory::Database { source: error, subcategory: None }
+        ErrorCategory::Database { message: error.to_string(), subcategory: None }
     }
 }
 
@@ -188,14 +174,14 @@ impl From<base64::DecodeError> for ErrorCategory {
     fn from(error: base64::DecodeError) -> Self {
         ErrorCategory::Encryption { 
             message: error.to_string(), 
-            subcategory: Some("Base64DecodeFailed".to_string()) 
+            subcategory: Some(EncryptionSubcategory::InvalidFormat)
         }
     }
 }
 
 impl From<mongodb::error::Error> for ErrorCategory {
     fn from(error: mongodb::error::Error) -> Self {
-        ErrorCategory::Database { source: sqlx::Error::Protocol(error.to_string()), subcategory: None }
+        ErrorCategory::Database { message: sqlx::Error::Protocol(error.to_string()).to_string(), subcategory: None }
     }
 }
 
@@ -227,26 +213,4 @@ where
     fn into_error(self, source: Self::Source) -> E {
         source
     }
-}
-
-#[derive(Debug, Serialize)]
-pub enum KeyringSubcategory {
-    AccessDenied,
-    KeyNotFound,
-    KeyringUnavailable,
-    InvalidKey,
-}
-
-#[derive(Debug, Serialize)]
-pub enum KeyGenerationSubcategory {
-    GenerationFailed,
-    StorageFailed,
-    InvalidKeyLength,
-}
-
-#[derive(Debug, Serialize)]
-pub enum ProjectSubcategory {
-    NotFound,
-    InvalidName,
-    InvalidPath,
 } 

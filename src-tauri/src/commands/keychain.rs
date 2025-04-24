@@ -33,7 +33,7 @@ pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
 /// # Errors
 /// Returns an error if there was a problem checking for the key
 #[tauri::command]
-pub async fn check_key_exists() -> Result<bool, ErrorCategory> {
+pub async fn has_encryption_key() -> Result<bool, ErrorCategory> {
     let key_manager = key_management::KeyManager::new()?;
     match key_manager.get_or_create_key().await {
         Ok(_) => {

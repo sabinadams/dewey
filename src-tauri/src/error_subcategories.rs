@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum DatabaseSubcategory {
     ConnectionFailed,
     QueryFailed,
@@ -9,7 +9,7 @@ pub enum DatabaseSubcategory {
     InvalidData,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum MigrationSubcategory {
     VersionConflict,
     SchemaError,
@@ -17,7 +17,7 @@ pub enum MigrationSubcategory {
     RollbackFailed,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum IoSubcategory {
     ReadFailed,
     WriteFailed,
@@ -26,7 +26,7 @@ pub enum IoSubcategory {
     AlreadyExists,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ConfigSubcategory {
     ParseError,
     ValidationError,
@@ -34,7 +34,7 @@ pub enum ConfigSubcategory {
     InvalidFormat,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum IconGenerationSubcategory {
     GenerationFailed,
     SaveFailed,
@@ -42,7 +42,7 @@ pub enum IconGenerationSubcategory {
     InvalidSize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ImageSubcategory {
     ProcessingFailed,
     InvalidFormat,
@@ -50,7 +50,7 @@ pub enum ImageSubcategory {
     SaveFailed,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum FileNotFoundSubcategory {
     ResourceNotFound,
     ConfigNotFound,
@@ -58,7 +58,7 @@ pub enum FileNotFoundSubcategory {
     DatabaseNotFound,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum KeyringSubcategory {
     AccessDenied,
     KeyNotFound,
@@ -66,14 +66,14 @@ pub enum KeyringSubcategory {
     InvalidKey,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum KeyGenerationSubcategory {
     GenerationFailed,
     StorageFailed,
     InvalidLength,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ProjectSubcategory {
     NotFound,
     InvalidName,
@@ -81,7 +81,7 @@ pub enum ProjectSubcategory {
     AlreadyExists,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum IconSubcategory {
     GenerationFailed,
     SaveFailed,
@@ -89,7 +89,7 @@ pub enum IconSubcategory {
     InvalidSize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ConnectionSubcategory {
     ConnectionFailed,
     Timeout,
@@ -97,7 +97,7 @@ pub enum ConnectionSubcategory {
     ProtocolError,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ValidationSubcategory {
     InvalidFormat,
     MissingRequired,
@@ -105,7 +105,7 @@ pub enum ValidationSubcategory {
     InvalidType,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum AuthSubcategory {
     InvalidCredentials,
     TokenExpired,
@@ -113,14 +113,14 @@ pub enum AuthSubcategory {
     PermissionDenied,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum UnknownSubcategory {
     Unexpected,
     System,
     External,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum EncryptionSubcategory {
     DecryptionFailed,
     EncryptionFailed,
@@ -134,7 +134,7 @@ pub enum EncryptionSubcategory {
     KeyInitialization,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyManagementSubcategory {
     KeyNotInitialized,
     KeyNotFound,

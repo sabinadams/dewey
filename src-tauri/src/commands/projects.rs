@@ -1,4 +1,3 @@
-// use crate::constants;
 use crate::services::storage::{
     icon::IconGenerator,
     repositories::{
@@ -14,8 +13,6 @@ use blake3;
 use tauri::State;
 use tracing::info;
 use snafu::ResultExt;
-use serde::{Deserialize, Serialize};
-use tracing::{debug, error};
 
 /// Command to fetch all projects for a user
 ///

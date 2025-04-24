@@ -1,11 +1,11 @@
 use snafu::{Snafu, IntoError};
 use std::error::Error as StdError;
 use identicon_rs::error::IdenticonError;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use crate::error_subcategories::*;
 
 /// Error categories for the application
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Serialize, Deserialize)]
 pub enum ErrorCategory {
     #[snafu(display("Database error: {}", message))]
     Database {
@@ -17,9 +17,9 @@ pub enum ErrorCategory {
         message: String,
         subcategory: Option<MigrationSubcategory>,
     },
-    #[snafu(display("IO error: {}", source))]
+    #[snafu(display("IO error: {}", message))]
     Io {
-        source: std::io::Error,
+        message: String,
         subcategory: Option<IoSubcategory>,
     },
     #[snafu(display("Config error: {}", message))]
@@ -148,15 +148,6 @@ impl ErrorCategory {
     }
 }
 
-// Helper function to serialize errors
-fn serialize_error<S, E>(error: &E, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-    E: std::fmt::Display,
-{
-    serializer.serialize_str(&error.to_string())
-}
-
 // Implement From for various error types
 impl From<sqlx::Error> for ErrorCategory {
     fn from(error: sqlx::Error) -> Self {
@@ -166,7 +157,7 @@ impl From<sqlx::Error> for ErrorCategory {
 
 impl From<std::io::Error> for ErrorCategory {
     fn from(error: std::io::Error) -> Self {
-        ErrorCategory::Io { source: error, subcategory: None }
+        ErrorCategory::Io { message: error.to_string(), subcategory: None }
     }
 }
 

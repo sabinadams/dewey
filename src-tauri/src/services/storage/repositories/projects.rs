@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
 use tracing::debug;
-use snafu::prelude::*;
 
 /// Represents a user project in the application
 #[derive(Debug, Serialize, Deserialize, FromRow)]

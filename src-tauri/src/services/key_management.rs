@@ -97,7 +97,7 @@ impl KeyManager {
     fn get_key_from_file(&self) -> Result<Vec<u8>, ErrorCategory> {
         let key_str = fs::read_to_string(&self.key_file_path)
             .map_err(|e| ErrorCategory::Io {
-                source: e,
+                message: e.to_string(),
                 subcategory: Some(IoSubcategory::ReadFailed),
             })?;
         
@@ -131,7 +131,7 @@ impl KeyManager {
                 if let Some(parent) = self.key_file_path.parent() {
                     fs::create_dir_all(parent)
                         .map_err(|e| ErrorCategory::Io {
-                            source: e,
+                            message: e.to_string(),
                             subcategory: None,
                         })?;
                 }

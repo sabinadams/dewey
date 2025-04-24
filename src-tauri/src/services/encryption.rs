@@ -175,14 +175,19 @@ impl EncryptionService {
         rand::thread_rng().fill_bytes(&mut nonce);
         let nonce = Nonce::from_slice(&nonce);
 
-        cipher
+        let encrypted_data = cipher
             .encrypt(nonce, data)
             .map_err(|e| ErrorCategory::Encryption {
                 message: e.to_string(),
                 subcategory: Some(EncryptionSubcategory::EncryptionFailed),
                 code: 14002,
                 severity: ErrorSeverity::Error,
-            })
+            })?;
+
+        // Prepend the nonce to the encrypted data
+        let mut result = nonce.to_vec();
+        result.extend_from_slice(&encrypted_data);
+        Ok(result)
     }
 
     pub async fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, ErrorCategory> {

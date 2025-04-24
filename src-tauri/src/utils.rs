@@ -11,7 +11,6 @@ use crate::constants;
 use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::ConfigSubcategory;
 use crate::types::AppResult;
-use crate::create_error;
 
 /// Get the application directory
 ///

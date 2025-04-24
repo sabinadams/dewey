@@ -1,4 +1,4 @@
-use dewey_lib::error::{ErrorCategory, AppError};
+use dewey_lib::error::{ErrorCategory, AppError, ErrorSeverity};
 use dewey_lib::error_subcategories::*;
 use std::io;
 
@@ -7,6 +7,8 @@ fn test_database_error() {
     let error = ErrorCategory::Database {
         message: "Connection failed".to_string(),
         subcategory: Some(DatabaseSubcategory::ConnectionFailed),
+        code: 1001,
+        severity: ErrorSeverity::Error,
     };
 
     assert_eq!(error.category_name(), "DATABASE");
@@ -19,6 +21,8 @@ fn test_io_error() {
     let error = ErrorCategory::Io {
         message: "Permission denied".to_string(),
         subcategory: Some(IoSubcategory::PermissionDenied),
+        code: 2001,
+        severity: ErrorSeverity::Error,
     };
 
     assert_eq!(error.category_name(), "IO");
@@ -31,6 +35,8 @@ fn test_project_error() {
     let error = ErrorCategory::Project {
         message: "Project not found".to_string(),
         subcategory: Some(ProjectSubcategory::NotFound),
+        code: 3001,
+        severity: ErrorSeverity::Error,
     };
 
     assert_eq!(error.category_name(), "PROJECT");
@@ -43,6 +49,8 @@ fn test_error_serialization() {
     let error = ErrorCategory::Project {
         message: "Project not found".to_string(),
         subcategory: Some(ProjectSubcategory::NotFound),
+        code: 3001,
+        severity: ErrorSeverity::Error,
     };
 
     let response = dewey_lib::error::create_error_response(error);
@@ -65,6 +73,8 @@ fn test_error_without_subcategory() {
     let error = ErrorCategory::Project {
         message: "Project error".to_string(),
         subcategory: None,
+        code: 3001,
+        severity: ErrorSeverity::Error,
     };
 
     let response = dewey_lib::error::create_error_response(error);

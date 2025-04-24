@@ -1,6 +1,21 @@
 use serde::{Serialize, Deserialize};
 use crate::error::ErrorCategory;
 
+/// Common interface for all error categories
+pub trait ErrorCategoryTrait {
+    /// Get the error message
+    fn message(&self) -> &str;
+    
+    /// Get the error code
+    fn code(&self) -> u32;
+    
+    /// Get the error severity
+    fn severity(&self) -> ErrorSeverity;
+    
+    /// Get the error subcategory as a string
+    fn subcategory_str(&self) -> Option<String>;
+}
+
 /// Severity levels for errors
 /// 
 /// This enum defines the severity levels that can be assigned to errors in the application.

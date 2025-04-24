@@ -98,7 +98,23 @@ error/
 
 ### Error Categories and Subcategories
 
-The system supports the following error categories, each with specific subcategories:
+The system supports the following error categories, each with specific subcategories. All error categories implement the `ErrorCategoryTrait` interface which provides consistent access to error properties:
+
+```rust
+pub trait ErrorCategoryTrait {
+    /// Get the error message
+    fn message(&self) -> &str;
+    
+    /// Get the error code
+    fn code(&self) -> u32;
+    
+    /// Get the error severity
+    fn severity(&self) -> ErrorSeverity;
+    
+    /// Get the error subcategory as a string
+    fn subcategory_str(&self) -> Option<String>;
+}
+```
 
 | Category | Description | Example Use Case | Common Subcategories |
 |----------|-------------|------------------|----------------------|

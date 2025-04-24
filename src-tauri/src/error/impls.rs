@@ -3,8 +3,78 @@ use snafu::{IntoError, ErrorCompat};
 use chrono::Utc;
 use serde_json::Value;
 use identicon_rs::error::IdenticonError;
-use super::types::{ErrorSeverity, AppError};
+use super::types::{ErrorSeverity, AppError, ErrorCategoryTrait};
 use super::categories::*;
+
+impl ErrorCategoryTrait for ErrorCategory {
+    fn message(&self) -> &str {
+        match self {
+            ErrorCategory::Database { message, .. } => message,
+            ErrorCategory::Connection { message, .. } => message,
+            ErrorCategory::Migration { message, .. } => message,
+            ErrorCategory::Io { message, .. } => message,
+            ErrorCategory::Config { message, .. } => message,
+            ErrorCategory::IconGeneration { message, .. } => message,
+            ErrorCategory::Icon { message, .. } => message,
+            ErrorCategory::Keyring { message, .. } => message,
+            ErrorCategory::KeyGeneration { message, .. } => message,
+            ErrorCategory::Project { message, .. } => message,
+            ErrorCategory::Encryption { message, .. } => message,
+            ErrorCategory::KeyManagement { message, .. } => message,
+        }
+    }
+
+    fn code(&self) -> u32 {
+        match self {
+            ErrorCategory::Database { code, .. } => *code,
+            ErrorCategory::Connection { code, .. } => *code,
+            ErrorCategory::Migration { code, .. } => *code,
+            ErrorCategory::Io { code, .. } => *code,
+            ErrorCategory::Config { code, .. } => *code,
+            ErrorCategory::IconGeneration { code, .. } => *code,
+            ErrorCategory::Icon { code, .. } => *code,
+            ErrorCategory::Keyring { code, .. } => *code,
+            ErrorCategory::KeyGeneration { code, .. } => *code,
+            ErrorCategory::Project { code, .. } => *code,
+            ErrorCategory::Encryption { code, .. } => *code,
+            ErrorCategory::KeyManagement { code, .. } => *code,
+        }
+    }
+
+    fn severity(&self) -> ErrorSeverity {
+        match self {
+            ErrorCategory::Database { severity, .. } => *severity,
+            ErrorCategory::Connection { severity, .. } => *severity,
+            ErrorCategory::Migration { severity, .. } => *severity,
+            ErrorCategory::Io { severity, .. } => *severity,
+            ErrorCategory::Config { severity, .. } => *severity,
+            ErrorCategory::IconGeneration { severity, .. } => *severity,
+            ErrorCategory::Icon { severity, .. } => *severity,
+            ErrorCategory::Keyring { severity, .. } => *severity,
+            ErrorCategory::KeyGeneration { severity, .. } => *severity,
+            ErrorCategory::Project { severity, .. } => *severity,
+            ErrorCategory::Encryption { severity, .. } => *severity,
+            ErrorCategory::KeyManagement { severity, .. } => *severity,
+        }
+    }
+
+    fn subcategory_str(&self) -> Option<String> {
+        match self {
+            ErrorCategory::Database { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Connection { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Migration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Io { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Config { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::IconGeneration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Icon { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Keyring { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::KeyGeneration { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Project { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::Encryption { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+            ErrorCategory::KeyManagement { subcategory, .. } => subcategory.as_ref().map(|s| format!("{:?}", s)),
+        }
+    }
+}
 
 impl ErrorCategory {
     pub fn category_name(&self) -> &'static str {
@@ -190,10 +260,10 @@ pub fn create_error_response(error: AppError) -> Value {
     serde_json::json!({
         "timestamp": timestamp.to_rfc3339(),
         "category": error.category_name(),
-        "message": error.to_string(),
-        "code": error.get_code(),
-        "severity": error.get_severity(),
-        "subcategory": error.get_subcategory(),
+        "message": error.message(),
+        "code": error.code(),
+        "severity": error.severity(),
+        "subcategory": error.subcategory_str(),
     })
 }
 

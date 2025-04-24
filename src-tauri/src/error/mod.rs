@@ -3,6 +3,11 @@
 //! This module provides a unified error handling system that categorizes errors by type
 //! and severity, and includes detailed error information for debugging and user feedback.
 
+mod types;
+mod categories;
+mod constructors;
+mod conversions;
+
 use serde::{Serialize, Deserialize};
 use snafu::Snafu;
 use std::io;

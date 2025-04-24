@@ -33,7 +33,6 @@ pub const APP_DIR_NOT_INITIALIZED: &str = "App directory not initialized";
 pub const INVALID_FILE_PATH: &str = "Invalid file path";
 pub const ICON_NOT_FOUND: &str = "Icon not found";
 pub const SERVER_ERROR: &str = "Server error";
-pub const PROJECT_NOT_FOUND: &str = "Project not found or does not belong to user";
 
 // Key management
 pub const KEY_SERVICE_NAME: &str = "dewey";

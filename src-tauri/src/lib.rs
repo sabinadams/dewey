@@ -30,11 +30,3 @@ pub use types::AppResult;
 pub use services::storage::LocalStorage;
 pub use state::AppState;
 pub use constants::*;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

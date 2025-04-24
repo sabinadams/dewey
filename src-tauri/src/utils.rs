@@ -6,8 +6,8 @@
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::http::Response;
-use tracing::debug;
-use tracing_subscriber::fmt;
+use tracing::{info, debug};
+use tracing_subscriber::FmtSubscriber;
 use blake3;
 use hex;
 
@@ -31,14 +31,18 @@ pub fn get_app_dir() -> AppResult<PathBuf> {
 
 /// Set up logging for the application
 ///
-/// # Errors
-/// Returns an error if the logging system cannot be initialized
+/// Set up the logging system with appropriate configuration
 pub fn setup_logging() -> AppResult<()> {
-    fmt::try_init().map_err(|e| AppError::new(
-        e.to_string(),
-        ErrorCategory::Config(ConfigSubcategory::ParseError),
-        ErrorSeverity::Error
-    ))?;
+    FmtSubscriber::builder()
+        .with_max_level(constants::DEFAULT_LOG_LEVEL)
+        .with_target(false)
+        .with_thread_ids(true)
+        .with_file(true)
+        .with_line_number(true)
+        .pretty()
+        .init();
+    
+    info!("Logging system initialized");
     Ok(())
 }
 

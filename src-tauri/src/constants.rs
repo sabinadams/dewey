@@ -80,3 +80,6 @@ pub mod keys {
     /// Name of the key file
     pub const FILE_NAME: &str = "encryption.key";
 }
+
+// Logging levels
+pub const DEFAULT_LOG_LEVEL: Level = Level::INFO;

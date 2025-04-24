@@ -131,8 +131,9 @@ const CreateProjectForm = () => {
         const appError = parseError(error);
         
         // Handle keychain errors differently
-        if (appError.category === ErrorCategory.KEYRING && 
+        if (appError.category === ErrorCategory.ENCRYPTION && 
             appError.subcategory === KeyringSubcategory.KeyNotFound) {
+              console.log("Made it to here")
           toast.dismiss(loadingToastId);
           // Navigate to onboarding to set up encryption key
           // navigate('/onboarding');
@@ -148,6 +149,7 @@ const CreateProjectForm = () => {
           });
         }
         
+        toast.dismiss(loadingToastId);
         // For all other errors, show the error toast
         showErrorToast(appError);
       }

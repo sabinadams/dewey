@@ -2,22 +2,22 @@ import { toast } from 'sonner';
 
 // Error categories from the backend
 export enum ErrorCategory {
-  DATABASE = 'DATABASE',
-  MIGRATION = 'MIGRATION',
+  DATABASE = 'Database',
+  MIGRATION = 'Migration',
   IO = 'IO',
-  CONFIG = 'CONFIG',
-  ICON_GENERATION = 'ICON_GENERATION',
-  IMAGE = 'IMAGE',
-  FILE_NOT_FOUND = 'FILE_NOT_FOUND',
-  UNKNOWN = 'UNKNOWN',
-  KEYRING = 'KEYRING',
-  KEY_GENERATION = 'KEY_GENERATION',
-  PROJECT = 'PROJECT',
-  ICON = 'ICON',
-  CONNECTION = 'CONNECTION',
-  VALIDATION = 'VALIDATION',
-  AUTH = 'AUTH',
-  ENCRYPTION = 'ENCRYPTION'
+  CONFIG = 'Config',
+  ICON_GENERATION = 'IconGeneration',
+  IMAGE = 'Image',
+  FILE_NOT_FOUND = 'FileNotFound',
+  UNKNOWN = 'Unknown',
+  KEYRING = 'Keyring',
+  KEY_GENERATION = 'KeyGeneration',
+  PROJECT = 'Project',
+  ICON = 'Icon',
+  CONNECTION = 'Connection',
+  VALIDATION = 'Validation',
+  AUTH = 'Auth',
+  ENCRYPTION = 'Encryption'
 }
 
 export enum KeyringSubcategory {
@@ -81,30 +81,36 @@ export function parseError(error: any): AppError {
 
   // Handle Tauri errors
   if (typeof error === 'object' && error !== null) {
-    // Check if it's a Tauri error with category and message
-    if ('category' in error && 'message' in error) {
+    // Handle serialized AppError
+    if ('message' in error && 'category' in error && 'severity' in error) {
       return {
         category: error.category as ErrorCategory,
         message: error.message,
-        severity: error.severity || ErrorSeverity.Error,
+        severity: error.severity as ErrorSeverity,
         subcategory: error.subcategory
       };
     }
 
-    // Handle Tauri errors with error field
-    if ('error' in error) {
-      const errorMessage = (error as { error: string }).error;
-      
-      // Try to match the error message against our patterns
-      for (const [category, pattern] of Object.entries(ERROR_PATTERNS)) {
-        if (pattern.test(errorMessage)) {
+    // Handle Tauri custom errors
+    if (error.status === 'CUSTOM_ERROR' && typeof error.error === 'string') {
+      // Try to parse the error string as JSON
+      try {
+        const parsedError = JSON.parse(error.error);
+        if ('message' in parsedError && 'category' in parsedError && 'severity' in parsedError) {
           return {
-            category: category as ErrorCategory,
-            message: errorMessage.replace(pattern, '').trim(),
-            severity: ErrorSeverity.Error,
-            subcategory: error.subcategory
+            category: parsedError.category as ErrorCategory,
+            message: parsedError.message,
+            severity: parsedError.severity as ErrorSeverity,
+            subcategory: parsedError.subcategory
           };
         }
+      } catch (e) {
+        // If parsing fails, treat it as a plain error message
+        return {
+          category: ErrorCategory.UNKNOWN,
+          message: error.error,
+          severity: ErrorSeverity.Error
+        };
       }
     }
   }

@@ -1,5 +1,5 @@
 use crate::error::{AppError, ErrorSeverity};
-use crate::error::categories::DatabaseSubcategory;
+use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
 use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
@@ -48,9 +48,9 @@ impl ProjectRepository {
         .bind(icon_path)
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -77,9 +77,9 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_all(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -105,9 +105,9 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -131,9 +131,9 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -159,9 +159,9 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_optional(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -187,9 +187,9 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_optional(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -208,9 +208,9 @@ impl ProjectRepository {
         .bind(id)
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| AppError::database(
+        .map_err(|e| AppError::new(
             e.to_string(),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?;
 

@@ -9,7 +9,8 @@ use crate::utils;
 use crate::state::AppState;
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{
-    ProjectSubcategory, DatabaseSubcategory, IconSubcategory, ConnectionSubcategory
+    ProjectSubcategory, DatabaseSubcategory, IconSubcategory, ConnectionSubcategory,
+    ErrorCategory
 };
 use blake3;
 use tauri::State;
@@ -30,9 +31,9 @@ pub async fn get_user_projects(
     let project_repo = ProjectRepository::new(state.db.clone());
 
     project_repo.get_by_user(&user_id).await
-        .context(AppError::database(
+        .context(AppError::new(
             format!("Failed to fetch projects for user {}", user_id),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))
 }
@@ -57,9 +58,9 @@ pub async fn create_project(
 
     // Create the icon generator
     let icon_generator = IconGenerator::new()
-        .context(AppError::icon(
+        .context(AppError::new(
             "Failed to initialize icon generator",
-            IconSubcategory::GenerationFailed,
+            ErrorCategory::Icon(IconSubcategory::GenerationFailed),
             ErrorSeverity::Error,
         ))?;
 
@@ -69,9 +70,9 @@ pub async fn create_project(
         // Use the helper function to save the custom icon
         icon_generator
             .save_custom_icon(&icon_data, &name, &user_id)
-            .context(AppError::icon(
+            .context(AppError::new(
                 "Failed to save custom icon",
-                IconSubcategory::SaveFailed,
+                ErrorCategory::Icon(IconSubcategory::SaveFailed),
                 ErrorSeverity::Error,
             ))?
     } else {
@@ -83,9 +84,9 @@ pub async fn create_project(
 
         icon_generator
             .generate_and_save(hash.as_bytes())
-            .context(AppError::icon(
+            .context(AppError::new(
                 "Failed to generate default icon",
-                IconSubcategory::GenerationFailed,
+                ErrorCategory::Icon(IconSubcategory::GenerationFailed),
                 ErrorSeverity::Error,
             ))?
     };
@@ -102,9 +103,9 @@ pub async fn create_project(
             Some(&final_icon_path),
         )
         .await
-        .context(AppError::project(
+        .context(AppError::new(
             "Failed to create project",
-            ProjectSubcategory::InvalidPath,
+            ErrorCategory::Project(ProjectSubcategory::InvalidPath),
             ErrorSeverity::Error,
         ))?;
 
@@ -123,9 +124,9 @@ pub async fn create_project(
         };
 
         connection_repo.create(&connection).await
-            .context(AppError::connection(
+            .context(AppError::new(
                 "Failed to create initial connection for project",
-                ConnectionSubcategory::ConnectionFailed,
+                ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
                 ErrorSeverity::Error,
             ))?;
     }
@@ -154,24 +155,24 @@ pub async fn update_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .context(AppError::database(
+        .context(AppError::new(
             format!("Failed to check project existence for project {}", id),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?
     {
-        return Err(AppError::project(
+        return Err(AppError::new(
             "Project not found",
-            ProjectSubcategory::NotFound,
+            ErrorCategory::Project(ProjectSubcategory::NotFound),
             ErrorSeverity::Error,
         ));
     }
 
     // Update the project
     project_repo.update(id, &name).await
-        .context(AppError::project(
+        .context(AppError::new(
             "Failed to update project",
-            ProjectSubcategory::InvalidName,
+            ErrorCategory::Project(ProjectSubcategory::InvalidName),
             ErrorSeverity::Error,
         ))
 }
@@ -196,24 +197,24 @@ pub async fn delete_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .context(AppError::database(
+        .context(AppError::new(
             format!("Failed to check project existence for project {}", id),
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))?
     {
-        return Err(AppError::project(
+        return Err(AppError::new(
             "Project not found",
-            ProjectSubcategory::NotFound,
+            ErrorCategory::Project(ProjectSubcategory::NotFound),
             ErrorSeverity::Error,
         ));
     }
 
     // Delete the project
     project_repo.delete(id).await
-        .context(AppError::database(
+        .context(AppError::new(
             "Failed to delete project",
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))
 }
@@ -232,9 +233,9 @@ pub async fn get_project_connections(
     let connection_repo = ConnectionRepository::new(state.db.clone());
 
     connection_repo.get_by_project(project_id).await
-        .context(AppError::database(
+        .context(AppError::new(
             "Failed to get project connections",
-            DatabaseSubcategory::QueryFailed,
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
             ErrorSeverity::Error,
         ))
 }

@@ -50,9 +50,9 @@ fn test_project_error_with_details() {
 
 #[test]
 fn test_error_serialization() {
-    let error = AppError::project(
+    let error = AppError::new(
         "Project not found",
-        ProjectSubcategory::NotFound,
+        ErrorCategory::Project(ProjectSubcategory::NotFound),
         ErrorSeverity::Error,
     );
 
@@ -71,9 +71,9 @@ fn test_error_conversion() {
 
 #[test]
 fn test_error_display() {
-    let error = AppError::project(
+    let error = AppError::new(
         "Project error",
-        ProjectSubcategory::NotFound,
+        ErrorCategory::Project(ProjectSubcategory::NotFound),
         ErrorSeverity::Error,
     );
 

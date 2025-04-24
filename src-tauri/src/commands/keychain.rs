@@ -1,6 +1,6 @@
 use crate::services::key_management;
 use crate::error::{AppError, AppResult, ErrorSeverity};
-use crate::error::categories::KeyManagementSubcategory;
+use crate::error::categories::{KeyManagementSubcategory, ErrorCategory};
 use tracing::{info, debug, error};
 
 /// Initialize the encryption key
@@ -20,9 +20,9 @@ pub async fn initialize_encryption_key() -> AppResult<bool> {
         }
         Err(e) => {
             info!("Failed to initialize encryption key: {}", e);
-            Err(AppError::key_management(
+            Err(AppError::new(
                 "Failed to initialize encryption key".to_string(),
-                KeyManagementSubcategory::KeyGenerationFailed,
+                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyGenerationFailed),
                 ErrorSeverity::Error,
             ))
         }

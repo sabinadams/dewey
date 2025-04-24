@@ -7,12 +7,10 @@
 //! - `types.rs`: Core error types and enums
 //! - `categories.rs`: Error categories and subcategories
 //! - `conversions.rs`: Error conversions and implementations
-//! - `constructors.rs`: Convenience constructors for creating errors
 
 pub mod types;
 pub mod categories;
 pub mod conversions;
-pub mod constructors;
 
 pub use types::{AppError, ErrorSeverity};
 pub use categories::ErrorCategory;

@@ -3,7 +3,7 @@ use std::fs;
 use hex;
 use identicon_rs::Identicon;
 use crate::error::{AppError, ErrorSeverity};
-use crate::error::categories::IconSubcategory;
+use crate::error::categories::{IconSubcategory, ErrorCategory};
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
@@ -45,18 +45,18 @@ impl IconGenerator {
         
         // Generate and save the identicon
         let path_str = file_path.to_str()
-            .ok_or_else(|| AppError::icon(
+            .ok_or_else(|| AppError::new(
                 constants::errors::INVALID_FILE_PATH,
-                IconSubcategory::InvalidPath,
+                ErrorCategory::Icon(IconSubcategory::InvalidPath),
                 ErrorSeverity::Error,
             ))?;
             
         Identicon::new(&hex_seed)
             .set_border(0)
             .save_image(path_str)
-            .map_err(|e| AppError::icon(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                IconSubcategory::GenerationFailed,
+                ErrorCategory::Icon(IconSubcategory::GenerationFailed),
                 ErrorSeverity::Error,
             ))?;
         
@@ -102,9 +102,9 @@ impl IconGenerator {
                 .replace("data:image/png;base64,", "")
                 .replace("data:image/jpeg;base64,", "")
                 .replace("data:image/svg+xml;base64,", "")
-        ).map_err(|e| AppError::icon(
+        ).map_err(|e| AppError::new(
             e.to_string(),
-            IconSubcategory::Base64DecodeFailed,
+            ErrorCategory::Icon(IconSubcategory::Base64DecodeFailed),
             ErrorSeverity::Error,
         ))?;
         

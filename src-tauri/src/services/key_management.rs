@@ -8,7 +8,8 @@ use directories::ProjectDirs;
 use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{
-    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory
+    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory,
+    ErrorCategory
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -24,9 +25,9 @@ pub struct KeyManager {
 impl KeyManager {
     pub fn new() -> AppResult<Self> {
         let keyring_entry = Entry::new(SERVICE_NAME, ACCOUNT_NAME)
-            .map_err(|e| AppError::keyring(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                KeyringSubcategory::KeyringUnavailable,
+                ErrorCategory::Keyring(KeyringSubcategory::KeyringUnavailable),
                 ErrorSeverity::Error,
             ))?;
 
@@ -83,16 +84,16 @@ impl KeyManager {
     fn get_key_from_keyring(&self) -> AppResult<Vec<u8>> {
         let key_str = self.keyring_entry
             .get_password()
-            .map_err(|e| AppError::keyring(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                KeyringSubcategory::KeyNotFound,
+                ErrorCategory::Keyring(KeyringSubcategory::KeyNotFound),
                 ErrorSeverity::Error,
             ))?;
         
         let key_bytes = BASE64.decode(key_str)
-            .map_err(|e| AppError::keyring(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                KeyringSubcategory::InvalidKey,
+                ErrorCategory::Keyring(KeyringSubcategory::InvalidKey),
                 ErrorSeverity::Error,
             ))?;
         
@@ -101,16 +102,16 @@ impl KeyManager {
 
     fn get_key_from_file(&self) -> AppResult<Vec<u8>> {
         let key_str = fs::read_to_string(&self.key_file_path)
-            .map_err(|e| AppError::io(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                IoSubcategory::ReadFailed,
+                ErrorCategory::Io(IoSubcategory::ReadFailed),
                 ErrorSeverity::Error,
             ))?;
         
         let key_bytes = BASE64.decode(key_str.trim())
-            .map_err(|e| AppError::key_generation(
+            .map_err(|e| AppError::new(
                 e.to_string(),
-                KeyManagementSubcategory::InvalidLength,
+                ErrorCategory::KeyGeneration(KeyManagementSubcategory::InvalidLength),
                 ErrorSeverity::Error,
             ))?;
         
@@ -137,17 +138,17 @@ impl KeyManager {
                 // Fall back to file storage
                 if let Some(parent) = self.key_file_path.parent() {
                     fs::create_dir_all(parent)
-                        .map_err(|e| AppError::io(
+                        .map_err(|e| AppError::new(
                             e.to_string(),
-                            IoSubcategory::WriteFailed,
+                            ErrorCategory::Io(IoSubcategory::WriteFailed),
                             ErrorSeverity::Error,
                         ))?;
                 }
                 
                 fs::write(&self.key_file_path, key_str)
-                    .map_err(|e| AppError::key_generation(
+                    .map_err(|e| AppError::new(
                         e.to_string(),
-                        KeyManagementSubcategory::StorageFailed,
+                        ErrorCategory::KeyGeneration(KeyManagementSubcategory::StorageFailed),
                         ErrorSeverity::Error,
                     ))?;
                 
@@ -159,9 +160,9 @@ impl KeyManager {
 
     fn get_key_file_path() -> AppResult<PathBuf> {
         let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or_else(|| AppError::config(
+            .ok_or_else(|| AppError::new(
                 "Could not determine project directories",
-                ConfigSubcategory::ParseError,
+                ErrorCategory::Config(ConfigSubcategory::ParseError),
                 ErrorSeverity::Error,
             ))?;
         
@@ -179,9 +180,9 @@ impl KeyManager {
             .lock()
             .await
             .clone()
-            .ok_or_else(|| AppError::key_management(
+            .ok_or_else(|| AppError::new(
                 "Key not initialized".to_string(),
-                KeyManagementSubcategory::KeyNotInitialized,
+                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotInitialized),
                 ErrorSeverity::Error,
             ))
     }

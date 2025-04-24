@@ -2,7 +2,7 @@ use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
 use crate::error::{AppError, ErrorSeverity};
-use crate::error::categories::{IoSubcategory, MigrationSubcategory};
+use crate::error::categories::{IoSubcategory, MigrationSubcategory, ErrorCategory};
 use crate::services::storage::repositories::projects::Project;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
@@ -68,9 +68,9 @@ impl LocalStorage {
         
         // Run migrations
         info!("Connected to database - running migrations");
-        sqlx::migrate!().run(&pool).await.map_err(|e| AppError::migration(
+        sqlx::migrate!().run(&pool).await.map_err(|e| AppError::new(
             e.to_string(),
-            MigrationSubcategory::MigrationFailed,
+            ErrorCategory::Migration(MigrationSubcategory::MigrationFailed),
             ErrorSeverity::Error,
         ))?;
         info!("Migrations completed successfully");
@@ -111,16 +111,16 @@ impl LocalStorage {
     pub fn get_projects(&self) -> AppResult<Vec<Project>> {
         let projects_path = self.get_projects_path();
         let content = fs::read_to_string(&projects_path)
-            .map_err(|e| AppError::io(
+            .map_err(|e| AppError::new(
                 format!("Failed to read projects file: {}", e),
-                IoSubcategory::ReadFailed,
+                ErrorCategory::Io(IoSubcategory::ReadFailed),
                 ErrorSeverity::Error,
             ))?;
 
         Ok(serde_json::from_str(&content)
-            .map_err(|e| AppError::io(
+            .map_err(|e| AppError::new(
                 format!("Failed to parse projects file: {}", e),
-                IoSubcategory::ReadFailed,
+                ErrorCategory::Io(IoSubcategory::ReadFailed),
                 ErrorSeverity::Error,
             ))?)
     }
@@ -128,16 +128,16 @@ impl LocalStorage {
     pub fn save_projects(&self, projects: &[Project]) -> AppResult<()> {
         let projects_path = self.get_projects_path();
         let content = serde_json::to_string_pretty(projects)
-            .map_err(|e| AppError::io(
+            .map_err(|e| AppError::new(
                 format!("Failed to serialize projects: {}", e),
-                IoSubcategory::WriteFailed,
+                ErrorCategory::Io(IoSubcategory::WriteFailed),
                 ErrorSeverity::Error,
             ))?;
 
         Ok(fs::write(&projects_path, content)
-            .map_err(|e| AppError::io(
+            .map_err(|e| AppError::new(
                 format!("Failed to write projects file: {}", e),
-                IoSubcategory::WriteFailed,
+                ErrorCategory::Io(IoSubcategory::WriteFailed),
                 ErrorSeverity::Error,
             ))?)
     }

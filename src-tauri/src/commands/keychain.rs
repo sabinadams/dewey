@@ -1,74 +1,74 @@
-use crate::services::{encryption, key_management};
+use crate::services::key_management;
+use crate::error::{AppError, AppResult, ErrorSeverity};
+use crate::error::categories::{KeyManagementSubcategory, KeyringSubcategory, ErrorCategory};
 use tracing::{info, error};
 
+/// Initialize the encryption key
+///
+/// # Errors
+/// Returns an error if there was a problem generating or storing the key
 #[tauri::command]
-pub fn initialize_encryption_key() -> Result<bool, String> {
-    info!("Initializing encryption key...");
+pub async fn initialize_encryption_key() -> AppResult<bool> {
+    info!("Initializing encryption key");
     
-    // First check if a key already exists
-    match key_management::KeyManager::new() {
-        Ok(manager) => {
-            match (manager.has_key_in_keyring(), manager.has_key_in_file()) {
-                (Ok(true), _) | (_, Ok(true)) => {
-                    info!("Encryption key already exists");
-                    Err("Encryption key already exists".to_string())
-                }
-                _ => {
-                    // No key exists, create one
-                    encryption::initialize_encryption_key().map(|_| {
-                        info!("Successfully created new encryption key");
-                        true // Return true to indicate new key was created
-                    }).map_err(|e| {
-                        error!("Failed to initialize encryption key: {}", e);
-                        e.to_string()
-                    })
-                }
-            }
+    let key_manager = key_management::KeyManager::new()?;
+    
+    match key_manager.get_or_create_key().await {
+        Ok(_) => {
+            info!("Encryption key initialized successfully");
+            Ok(true)
         }
         Err(e) => {
-            error!("Failed to initialize key manager: {}", e);
-            Err(e.to_string())
+            info!("Failed to initialize encryption key: {}", e);
+            Err(AppError::new(
+                "Failed to initialize encryption key".to_string(),
+                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyGenerationFailed),
+                ErrorSeverity::Error,
+            ))
         }
     }
 }
 
+/// Check if an encryption key exists
+///
+/// # Errors
+/// Returns an error if there was a problem checking for the key
 #[tauri::command]
-pub fn has_encryption_key() -> Result<bool, String> {
-    info!("Checking if encryption key exists...");
-    match key_management::KeyManager::new() {
-        Ok(manager) => {
-            // Check both keyring and file without creating a new key
-            match manager.has_key_in_keyring() {
+pub async fn has_encryption_key() -> AppResult<bool> {
+    let key_manager = key_management::KeyManager::new()?;
+    match key_manager.has_key_in_keyring() {
+        Ok(true) => {
+            info!("Found encryption key in keyring");
+            Ok(true)
+        }
+        Ok(false) => {
+            // Check fallback file
+            match key_manager.has_key_in_file() {
                 Ok(true) => {
-                    info!("Found encryption key in keyring");
+                    info!("Found encryption key in file");
                     Ok(true)
                 }
                 Ok(false) => {
-                    // Check fallback file
-                    match manager.has_key_in_file() {
-                        Ok(true) => {
-                            info!("Found encryption key in file");
-                            Ok(true)
-                        }
-                        Ok(false) => {
-                            info!("No encryption key found");
-                            Ok(false)
-                        }
-                        Err(e) => {
-                            error!("Failed to check for key in file: {}", e);
-                            Err(e.to_string())
-                        }
-                    }
+                    info!("No encryption key found");
+                    Ok(false)
                 }
                 Err(e) => {
-                    error!("Failed to check for key in keyring: {}", e);
-                    Err(e.to_string())
+                    error!("Failed to check for key in file: {}", e);
+                    Err(AppError::new(
+                        "Failed to check for key in file".to_string(),
+                        ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotFound),
+                        ErrorSeverity::Error,
+                    ))
                 }
             }
         }
         Err(e) => {
-            error!("Failed to initialize key manager: {}", e);
-            Err(e.to_string())
+            error!("Failed to check for key in keyring: {}", e);
+            Err(AppError::new(
+                "Failed to check for key in keyring".to_string(),
+                ErrorCategory::Keyring(KeyringSubcategory::KeyringUnavailable),
+                ErrorSeverity::Error,
+            ))
         }
     }
 }

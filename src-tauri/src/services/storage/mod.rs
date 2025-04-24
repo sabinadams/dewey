@@ -1,6 +1,8 @@
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
+use crate::error::{AppError, ErrorSeverity};
+use crate::error::categories::{MigrationSubcategory, ErrorCategory};
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::{Path, PathBuf};
@@ -51,19 +53,23 @@ impl LocalStorage {
         }
 
         // Configure and connect to the SQLite database
-        let db_path_str = format!("{}{}", constants::SQLITE_URI_PREFIX, path.as_ref().display());
+        let db_path_str = format!("{}{}", constants::sqlite::URI_PREFIX, path.as_ref().display());
         debug!("Connecting to database at: {}", db_path_str);
         
         let options = SqliteConnectOptions::from_str(&db_path_str)?
             .create_if_missing(true)
-            .journal_mode(constants::DEFAULT_JOURNAL_MODE)
+            .journal_mode(constants::sqlite::DEFAULT_JOURNAL_MODE)
             .foreign_keys(true);
 
         let pool = SqlitePool::connect_with(options).await?;
         
         // Run migrations
         info!("Connected to database - running migrations");
-        sqlx::migrate!().run(&pool).await?;
+        sqlx::migrate!().run(&pool).await.map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Migration(MigrationSubcategory::MigrationFailed),
+            ErrorSeverity::Error,
+        ))?;
         info!("Migrations completed successfully");
         
         Ok(Self {
@@ -92,6 +98,6 @@ impl LocalStorage {
     /// Panics if called before `LocalStorage` has been initialized
     #[must_use]
     pub fn get_app_dir() -> &'static PathBuf {
-        APP_DIR.get().expect(constants::APP_DIR_NOT_INITIALIZED)
+        APP_DIR.get().expect(constants::errors::APP_DIR_NOT_INITIALIZED)
     }
 } 

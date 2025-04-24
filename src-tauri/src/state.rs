@@ -1,3 +1,9 @@
+//! Application state management.
+//! 
+//! This module defines the global application state and its initialization.
+//! The application state is shared across the application and contains
+//! dependencies that need to be accessed by command handlers.
+
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
@@ -14,11 +20,21 @@ use tracing::{info, error};
 /// by command handlers. It is managed by Tauri and injected into commands.
 #[derive(Debug)]
 pub struct AppState {
-    /// Database connection pool
+    /// Database connection pool for SQLite
     pub db: Arc<SqlitePool>,
 }
 
 /// Initialize the application state by setting up the database
+///
+/// # Arguments
+/// * None
+///
+/// # Returns
+/// * `AppResult<AppState>` - The initialized application state
+///
+/// # Errors
+/// * Returns an error if the application directory could not be created
+/// * Returns an error if the database could not be initialized
 pub async fn initialize_app_state() -> AppResult<AppState> {
     // Get app directory
     let app_dir = utils::get_app_dir()?;
@@ -31,7 +47,7 @@ pub async fn initialize_app_state() -> AppResult<AppState> {
         })?;
 
     // Set up database
-    let db_path = app_dir.join(constants::DB_FILENAME);
+    let db_path = app_dir.join(constants::files::DB_FILENAME);
     info!("Using database at: {:?}", db_path);
     
     let storage = LocalStorage::new(&db_path, app_dir).await

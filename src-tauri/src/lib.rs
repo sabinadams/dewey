@@ -1,3 +1,8 @@
+//! Dewey library for the Tauri application.
+//! 
+//! This library provides the core functionality for the Dewey application,
+//! including command handlers, error handling, state management, and services.
+
 /// Command handlers for the Tauri application
 pub mod commands;
 
@@ -22,8 +27,17 @@ pub mod protocols;
 /// Utility functions
 pub mod utils;
 
+/// Re-export of the main error type
 pub use error::AppError;
+
+/// Re-export of the result type alias
 pub use types::AppResult;
+
+/// Re-export of the local storage service
 pub use services::storage::LocalStorage;
+
+/// Re-export of the application state
 pub use state::AppState;
+
+/// Re-export of all constants
 pub use constants::*;

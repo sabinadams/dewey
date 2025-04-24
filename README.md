@@ -34,182 +34,151 @@ This ensures that all users receive important updates to the onboarding experien
 
 ## Error Handling System
 
-The application uses a comprehensive error handling system that ensures consistent error handling from backend to frontend. This section documents the complete flow of errors through the application.
+The application uses a comprehensive error handling system that ensures consistent error handling from backend to frontend. The error handling code is organized in the `src-tauri/src/error` directory with the following structure:
 
-### Error Flow
+### Module Organization
 
-1. **Backend Error Creation (Rust)**
-   ```rust
-   // Create a new error
-   let error = AppError::Project("Project not found".to_string());
-   
-   // Convert to response
-   let response = create_error_response(error);
-   // Produces:
-   // {
-   //   "category": "PROJECT",
-   //   "message": "Project error: Project not found",
-   //   "details": null
-   // }
-   ```
-
-2. **Frontend Error Parsing (TypeScript)**
-   ```typescript
-   // Error is received from Tauri command
-   const error = await invoke('some_command');
-   
-   // Error is parsed into AppError format
-   const appError = parseError(error);
-   // Produces:
-   // {
-   //   category: ErrorCategory.PROJECT,
-   //   message: "Project not found",
-   //   details: { /* original error details */ }
-   // }
-   ```
-
-3. **Error Display (TypeScript)**
-   ```typescript
-   // Show error toast
-   showErrorToast(appError);
-   // Shows appropriate toast based on error category
-   ```
-
-### Error Categories
-
-The system supports the following error categories:
-
-| Category | Description | Example Use Case |
-|----------|-------------|------------------|
-| DATABASE | Database-related errors | SQL query failures |
-| MIGRATION | Database migration errors | Failed schema updates |
-| IO | File system and I/O errors | File read/write failures |
-| CONFIG | Configuration errors | Invalid settings |
-| ICON_GENERATION | Icon generation errors | Failed icon creation |
-| IMAGE | Image processing errors | Invalid image format |
-| FILE_NOT_FOUND | File not found errors | Missing resource files |
-| KEYRING | Keyring-related errors | Failed key storage |
-| KEY_GENERATION | Key generation errors | Failed key creation |
-| PROJECT | Project-related errors | Invalid project data |
-| ICON | Icon-related errors | Invalid icon data |
-| CONNECTION | Connection errors | Network failures |
-| VALIDATION | Input validation errors | Invalid user input |
-| AUTH | Authentication errors | Failed login |
-| UNKNOWN | Unknown errors | Unhandled exceptions |
-
-### Error Handling Components
-
-1. **Backend (Rust)**
-   - `AppError` enum: Defines all possible error types
-   - `ErrorCategory` trait: Provides consistent error categorization
-   - `create_error_response`: Converts errors to JSON format
-
-2. **Frontend (TypeScript)**
-   - `ErrorCategory` enum: Matches backend error categories
-   - `AppError` interface: Defines error structure
-   - `parseError`: Converts raw errors to AppError format
-   - `showErrorToast`: Displays error messages to users
-   - `ErrorBoundary`: Catches and displays React errors
-   - `useErrorHandler`: Hook for handling errors in components
-
-### Using the Error Handler Hook
-
-```typescript
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-
-function MyComponent() {
-  const { handleErrorWithToast, handleErrorSilently, handleErrorWithAction } = useErrorHandler();
-
-  const handleClick = async () => {
-    try {
-      // Some operation that might fail
-    } catch (error) {
-      // Show error with toast
-      handleErrorWithToast(error);
-      
-      // Or handle silently
-      const appError = handleErrorSilently(error);
-      
-      // Or handle with custom action
-      handleErrorWithAction(error, () => {
-        // Custom error handling logic
-      });
-    }
-  };
-
-  return <button onClick={handleClick}>Click me</button>;
-}
+```
+error/
+├── mod.rs           # Main module file that exports everything
+├── types.rs         # Core error types and enums (ErrorSeverity, AppError)
+├── categories.rs    # Error categories and subcategories
+└── conversions.rs   # Error conversions and implementations
 ```
 
-### Error Boundary Usage
+### Core Components
 
-```typescript
-import { ErrorBoundary } from '@/components/error-boundary';
+1. **Error Types (`types.rs`)**
+   - `ErrorSeverity`: Defines error severity levels (Info, Warning, Error, Critical)
+   - `AppError`: The main error type containing message, category, and severity
+   - `AppResult<T>`: Type alias for `Result<T, AppError>`
 
-function App() {
-  return (
-    <ErrorBoundary>
-      <MyApp />
-    </ErrorBoundary>
-  );
-}
-```
+2. **Error Categories (`categories.rs`)**
+   - Contains all error categories and their subcategories
+   - Each category is an enum variant of `ErrorCategory`
+   - Subcategories provide detailed error classification
 
-### Best Practices
+3. **Error Conversions (`conversions.rs`)**
+   - Implements conversions from external error types
+   - Handles error display formatting
+   - Provides trait implementations for error handling
 
-1. **Backend Error Creation**
-   - Use specific error variants when possible
-   - Include descriptive error messages
-   - Add relevant details when available
+### Creating and Using Errors
 
-2. **Frontend Error Handling**
-   - Always use the error handler hook
-   - Handle errors at the appropriate level
-   - Provide user-friendly error messages
-   - Log errors for debugging
-
-3. **Error Categories**
-   - Use the most specific category possible
-   - Add new categories when needed
-   - Document new categories in this README
-
-4. **Error Messages**
-   - Be clear and concise
-   - Include actionable information
-   - Avoid technical jargon
-   - Consider localization
-
-### Example Error Flow
-
-1. **Backend Error Occurs**
+1. **Basic Error Creation**
    ```rust
-   fn get_project(id: &str) -> Result<Project, AppError> {
-       let project = db::get_project(id)?;
-       if project.is_none() {
-           return Err(AppError::Project("Project not found".to_string()));
-       }
-       Ok(project.unwrap())
+   use crate::error::{AppError, ErrorSeverity};
+   use crate::error::categories::{ErrorCategory, DatabaseSubcategory};
+
+   // Create an error with category and subcategory
+   let error = AppError::new(
+       "Failed to connect to database".to_string(),
+       ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
+       ErrorSeverity::Error
+   );
+   ```
+
+2. **Adding New Error Types**
+   To add a new error type:
+   
+   1. Add a new subcategory in `categories.rs`:
+   ```rust
+   #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+   pub enum NewFeatureSubcategory {
+       OperationFailed,
+       InvalidInput,
+       // Add more subcategories as needed
    }
    ```
 
-2. **Frontend Receives Error**
-   ```typescript
-   const { handleErrorWithToast } = useErrorHandler();
-   
-   const loadProject = async (id: string) => {
-     try {
-       const project = await invoke('get_project', { id });
-       // Handle success
-     } catch (error) {
-       handleErrorWithToast(error);
-       // Error toast is shown to user
-     }
-   };
+   2. Add the category to `ErrorCategory`:
+   ```rust
+   #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+   pub enum ErrorCategory {
+       // ... existing categories ...
+       NewFeature(NewFeatureSubcategory),
+   }
    ```
 
-3. **User Sees Error**
-   - Toast appears with error message
-   - Error is logged to console
-   - User can take appropriate action
+   3. Use the new error type:
+   ```rust
+   AppError::new(
+       "Operation failed".to_string(),
+       ErrorCategory::NewFeature(NewFeatureSubcategory::OperationFailed),
+       ErrorSeverity::Error
+   )
+   ```
 
-This error handling system ensures consistent error handling throughout the application while providing a good user experience.
+### Error Categories and Subcategories
+
+The system supports the following error categories, each with specific subcategories:
+
+| Category | Description | Example Use Case | Common Subcategories |
+|----------|-------------|------------------|----------------------|
+| Database | Database-related errors | SQL query failures | `ConnectionFailed`, `QueryFailed`, `TransactionFailed` |
+| Migration | Database migration errors | Failed schema updates | `VersionConflict`, `SchemaError`, `DataError` |
+| Io | File system and I/O errors | File read/write failures | `ReadFailed`, `WriteFailed`, `PermissionDenied` |
+| Config | Configuration errors | Invalid settings | `ParseError`, `ValidationError`, `MissingRequired` |
+| Icon | Icon-related errors | Failed icon operations | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
+| Keyring | Keyring-related errors | Failed key storage | `AccessDenied`, `KeyNotFound`, `KeyringUnavailable` |
+| Project | Project-related errors | Invalid project data | `NotFound`, `InvalidName`, `InvalidPath` |
+| Encryption | Encryption-related errors | Failed encryption/decryption | `DecryptionFailed`, `EncryptionFailed`, `InvalidKey` |
+| Connection | Connection errors | Network failures | `ConnectionFailed`, `Timeout`, `Refused` |
+| Validation | Input validation errors | Invalid user input | `InvalidFormat`, `MissingRequired`, `InvalidRange` |
+| Auth | Authentication errors | Failed login | `InvalidCredentials`, `TokenExpired`, `AccountLocked` |
+| Unknown | Unknown or unexpected errors | Unhandled exceptions | `Unexpected`, `System`, `External` |
+
+### Error Severity Levels
+
+The system defines four severity levels for errors:
+
+| Severity | Description | Example Use Case |
+|----------|-------------|------------------|
+| Info | Informational messages | Operation completed with notes |
+| Warning | Potential issues | Non-critical problems |
+| Error | Problems needing attention | Failed operations |
+| Critical | Serious problems | Data corruption, security issues |
+
+### Best Practices
+
+1. **Error Creation**
+   - Use `AppError::new()` to create errors directly
+   - Include descriptive error messages
+   - Set appropriate severity levels
+   - Example:
+   ```rust
+   AppError::new(
+       "Failed to execute query: table does not exist".to_string(),
+       ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+       ErrorSeverity::Error
+   )
+   ```
+
+2. **Error Handling**
+   - Use `AppResult<T>` for functions that can fail
+   - Convert external errors using `From` implementations
+   - Handle errors at the appropriate level
+   - Example:
+   ```rust
+   fn process_data() -> AppResult<Data> {
+       let file = read_file("data.json")
+           .map_err(|e| AppError::from(e))?;
+       // Process file...
+   }
+   ```
+
+3. **Error Conversion**
+   - Use the provided `From` implementations for common error types
+   - Implement custom conversions when needed
+   - Example:
+   ```rust
+   impl From<sqlx::Error> for AppError {
+       fn from(error: sqlx::Error) -> Self {
+           AppError::new(
+               error.to_string(),
+               ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+               ErrorSeverity::Error
+           )
+       }
+   }
+   ```

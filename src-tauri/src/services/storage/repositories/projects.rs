@@ -1,3 +1,5 @@
+use crate::error::{AppError, ErrorSeverity};
+use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
 use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
@@ -45,7 +47,12 @@ impl ProjectRepository {
         .bind(user_id)
         .bind(icon_path)
         .fetch_one(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         let id = result.get(0);
         debug!("Project created successfully");
@@ -69,7 +76,12 @@ impl ProjectRepository {
         )
         .bind(user_id)
         .fetch_all(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Found {} projects", projects.len());
         Ok(projects)
@@ -92,7 +104,12 @@ impl ProjectRepository {
         .bind(name)
         .bind(id)
         .execute(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project updated successfully");
         Ok(())
@@ -103,17 +120,22 @@ impl ProjectRepository {
     /// # Errors
     /// Returns an error if there was a problem executing the query
     pub async fn delete(&self, id: i64) -> AppResult<()> {
-        debug!("Deleting project: {}", id);
-        
+        debug!("Deleting project {}", id);
+
         sqlx::query(
-            r"
+            r#"
             DELETE FROM projects
             WHERE id = ?
-            "
+            "#,
         )
         .bind(id)
         .execute(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project deleted successfully");
         Ok(())
@@ -136,7 +158,12 @@ impl ProjectRepository {
         .bind(id)
         .bind(user_id)
         .fetch_optional(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project lookup complete");
         Ok(project)
@@ -148,16 +175,44 @@ impl ProjectRepository {
     /// Returns an error if there was a problem executing the query
     pub async fn exists(&self, id: i64, user_id: &str) -> AppResult<bool> {
         debug!("Checking if project {} exists for user: {}", id, user_id);
-        
-        let exists: (bool,) = sqlx::query_as(
-            r"
-            SELECT EXISTS(SELECT 1 FROM projects WHERE id = ? AND user_id = ?)
-            "
+
+        let result = sqlx::query(
+            r#"
+            SELECT 1
+            FROM projects
+            WHERE id = ? AND user_id = ?
+            "#,
         )
         .bind(id)
         .bind(user_id)
+        .fetch_optional(&*self.pool)
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
+
+        debug!("Project lookup complete");
+        Ok(result.is_some())
+    }
+
+    pub async fn exists_by_id(&self, id: i64) -> AppResult<bool> {
+        debug!("Checking if project {} exists", id);
+
+        let exists: (bool,) = sqlx::query_as(
+            r#"
+            SELECT EXISTS(SELECT 1 FROM projects WHERE id = ?)
+            "#,
+        )
+        .bind(id)
         .fetch_one(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project existence check: {}", exists.0);
         Ok(exists.0)

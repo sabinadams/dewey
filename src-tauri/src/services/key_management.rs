@@ -5,31 +5,43 @@ use std::fs;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
-use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
-use crate::error::AppError;
+use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
+use crate::error::{AppError, AppResult, ErrorSeverity};
+use crate::error::categories::{
+    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory,
+    ErrorCategory
+};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary
 pub struct KeyManager {
     keyring_entry: Entry,
     key_file_path: PathBuf,
+    key: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 impl KeyManager {
-    pub fn new() -> Result<Self, AppError> {
-        let keyring_entry = Entry::new(KEY_SERVICE_NAME, KEY_ACCOUNT_NAME)
-            .map_err(|e| AppError::Keyring(e.to_string()))?;
+    pub fn new() -> AppResult<Self> {
+        let keyring_entry = Entry::new(SERVICE_NAME, ACCOUNT_NAME)
+            .map_err(|e| AppError::new(
+                e.to_string(),
+                ErrorCategory::Keyring(KeyringSubcategory::KeyringUnavailable),
+                ErrorSeverity::Error,
+            ))?;
 
         let key_file_path = Self::get_key_file_path()?;
 
         Ok(Self {
             keyring_entry,
             key_file_path,
+            key: Arc::new(Mutex::new(None)),
         })
     }
 
     /// Gets the encryption key, generating and storing a new one if it doesn't exist
-    pub fn get_or_create_key(&self) -> Result<[u8; 32], AppError> {
+    pub async fn get_or_create_key(&self) -> AppResult<Vec<u8>> {
         // Try to get the key from the system keyring first
         match self.get_key_from_keyring() {
             Ok(key) => {
@@ -57,7 +69,7 @@ impl KeyManager {
     }
 
     /// Check if a key exists in the keyring
-    pub fn has_key_in_keyring(&self) -> Result<bool, AppError> {
+    pub fn has_key_in_keyring(&self) -> AppResult<bool> {
         match self.keyring_entry.get_password() {
             Ok(_) => Ok(true),
             Err(_) => Ok(false)
@@ -65,42 +77,54 @@ impl KeyManager {
     }
 
     /// Check if a key exists in the fallback file
-    pub fn has_key_in_file(&self) -> Result<bool, AppError> {
+    pub fn has_key_in_file(&self) -> AppResult<bool> {
         Ok(self.key_file_path.exists())
     }
 
-    fn get_key_from_keyring(&self) -> Result<[u8; 32], AppError> {
+    fn get_key_from_keyring(&self) -> AppResult<Vec<u8>> {
         let key_str = self.keyring_entry
             .get_password()
-            .map_err(|e| AppError::Keyring(e.to_string()))?;
+            .map_err(|e| AppError::new(
+                e.to_string(),
+                ErrorCategory::Keyring(KeyringSubcategory::KeyNotFound),
+                ErrorSeverity::Error,
+            ))?;
         
         let key_bytes = BASE64.decode(key_str)
-            .map_err(|e| AppError::Keyring(e.to_string()))?;
+            .map_err(|e| AppError::new(
+                e.to_string(),
+                ErrorCategory::Keyring(KeyringSubcategory::InvalidKey),
+                ErrorSeverity::Error,
+            ))?;
         
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        Ok(key)
+        Ok(key_bytes)
     }
 
-    fn get_key_from_file(&self) -> Result<[u8; 32], AppError> {
+    fn get_key_from_file(&self) -> AppResult<Vec<u8>> {
         let key_str = fs::read_to_string(&self.key_file_path)
-            .map_err(AppError::Io)?;
+            .map_err(|e| AppError::new(
+                e.to_string(),
+                ErrorCategory::Io(IoSubcategory::ReadFailed),
+                ErrorSeverity::Error,
+            ))?;
         
         let key_bytes = BASE64.decode(key_str.trim())
-            .map_err(|e| AppError::KeyGeneration(e.to_string()))?;
+            .map_err(|e| AppError::new(
+                e.to_string(),
+                ErrorCategory::KeyGeneration(KeyManagementSubcategory::InvalidLength),
+                ErrorSeverity::Error,
+            ))?;
         
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        Ok(key)
+        Ok(key_bytes)
     }
 
-    fn generate_new_key(&self) -> Result<[u8; 32], AppError> {
-        let mut key = [0u8; 32];
+    fn generate_new_key(&self) -> AppResult<Vec<u8>> {
+        let mut key = Vec::new();
         OsRng.fill_bytes(&mut key);
         Ok(key)
     }
 
-    fn store_key(&self, key: &[u8; 32]) -> Result<(), AppError> {
+    fn store_key(&self, key: &[u8]) -> AppResult<()> {
         let key_str = BASE64.encode(key);
         
         // Try to store in system keyring first
@@ -114,11 +138,19 @@ impl KeyManager {
                 // Fall back to file storage
                 if let Some(parent) = self.key_file_path.parent() {
                     fs::create_dir_all(parent)
-                        .map_err(AppError::Io)?;
+                        .map_err(|e| AppError::new(
+                            e.to_string(),
+                            ErrorCategory::Io(IoSubcategory::WriteFailed),
+                            ErrorSeverity::Error,
+                        ))?;
                 }
                 
                 fs::write(&self.key_file_path, key_str)
-                    .map_err(AppError::Io)?;
+                    .map_err(|e| AppError::new(
+                        e.to_string(),
+                        ErrorCategory::KeyGeneration(KeyManagementSubcategory::StorageFailed),
+                        ErrorSeverity::Error,
+                    ))?;
                 
                 debug!("Stored encryption key in file");
                 Ok(())
@@ -126,10 +158,32 @@ impl KeyManager {
         }
     }
 
-    fn get_key_file_path() -> Result<PathBuf, AppError> {
+    fn get_key_file_path() -> AppResult<PathBuf> {
         let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or_else(|| AppError::Config("Could not determine project directories".to_string()))?;
+            .ok_or_else(|| AppError::new(
+                "Could not determine project directories",
+                ErrorCategory::Config(ConfigSubcategory::ParseError),
+                ErrorSeverity::Error,
+            ))?;
         
-        Ok(proj_dirs.config_dir().join(KEY_FILE_NAME))
+        Ok(proj_dirs.config_dir().join(FILE_NAME))
+    }
+
+    pub async fn set_key(&self, key: Vec<u8>) -> AppResult<()> {
+        let mut key_guard = self.key.lock().await;
+        *key_guard = Some(key);
+        Ok(())
+    }
+
+    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
+        self.key
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| AppError::new(
+                "Key not initialized".to_string(),
+                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotInitialized),
+                ErrorSeverity::Error,
+            ))
     }
 } 

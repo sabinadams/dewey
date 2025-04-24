@@ -30,7 +30,8 @@ tauri-plugin-os = "2"
 tokio = { version = "1.36.0", features = ["full"] }
 
 # Error handling
-thiserror = "1.0.57"
+snafu = { version = "0.7", features = ["backtraces-impl-std"] }
+anyhow = "1.0"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
@@ -65,3 +66,9 @@ keyring = "2.3.2"
 
 # New dependencies
 mongodb = { version = "2.8.1", features = ["tokio-runtime"] }
+dirs = "6.0.0"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+tempfile = "3.0"

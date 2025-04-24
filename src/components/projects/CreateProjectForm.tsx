@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
+import { handleTauriCommand, showErrorToast } from "@/lib/errors"
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -30,7 +31,7 @@ const CreateProjectForm = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { userId } = useAuth();
   const navigate = useNavigate();
   const [createProject] = useCreateProjectMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,16 +97,15 @@ const CreateProjectForm = () => {
   };
 
   const onSubmit = form.handleSubmit(async (data: CreateProjectFormData) => {
-     setIsSubmitting(true);
+    setIsSubmitting(true);
+    const loadingToastId = toast.loading('Creating project...', {
+      duration: Infinity,
+    });
     try {
-      const loadingToastId = toast.loading('Creating project...', {
-        duration: Infinity,
-      });
-
       // Create the project params object
       const projectParams: CreateProjectParams = {
         name: data.name,
-        user_id: user?.id || '',
+        user_id: userId || '',
       };
 
       // If there's a file to upload, add it to the project params
@@ -121,7 +121,7 @@ const CreateProjectForm = () => {
       }
 
       // Create the project using RTK Query mutation
-      const result = await createProject(projectParams).unwrap();
+      const result = await handleTauriCommand(() => createProject(projectParams).unwrap());
 
       toast.dismiss(loadingToastId);
       toast.success('Project created successfully!');
@@ -129,7 +129,8 @@ const CreateProjectForm = () => {
       // Navigate to the new project
       navigate(`/project/${result}`);
     } catch (error) {
-      toast.error('Failed to create project. Please try again.');
+      toast.dismiss(loadingToastId);
+      // Error is already handled by handleTauriCommand
     } finally {
       setIsSubmitting(false);
     }

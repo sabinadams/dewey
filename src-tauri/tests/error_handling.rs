@@ -1,11 +1,11 @@
-use crate::error::{ErrorCategory, AppError};
-use crate::error_subcategories::*;
+use dewey_lib::error::{ErrorCategory, AppError};
+use dewey_lib::error_subcategories::*;
 use std::io;
 
 #[test]
 fn test_database_error() {
     let error = ErrorCategory::Database {
-        source: sqlx::Error::Protocol("Connection failed".to_string()),
+        message: "Connection failed".to_string(),
         subcategory: Some(DatabaseSubcategory::ConnectionFailed),
     };
 
@@ -17,7 +17,7 @@ fn test_database_error() {
 #[test]
 fn test_io_error() {
     let error = ErrorCategory::Io {
-        source: io::Error::new(io::ErrorKind::PermissionDenied, "Permission denied"),
+        message: "Permission denied".to_string(),
         subcategory: Some(IoSubcategory::PermissionDenied),
     };
 
@@ -45,7 +45,7 @@ fn test_error_serialization() {
         subcategory: Some(ProjectSubcategory::NotFound),
     };
 
-    let response = crate::error::create_error_response(error);
+    let response = dewey_lib::error::create_error_response(error);
     assert_eq!(response["category"], "PROJECT");
     assert!(response["message"].as_str().unwrap().contains("Project error:"));
     assert_eq!(response["subcategory"], "NotFound");
@@ -67,7 +67,7 @@ fn test_error_without_subcategory() {
         subcategory: None,
     };
 
-    let response = crate::error::create_error_response(error);
+    let response = dewey_lib::error::create_error_response(error);
     assert_eq!(response["category"], "PROJECT");
     assert!(response["message"].as_str().unwrap().contains("Project error:"));
     assert!(response["subcategory"].is_null());

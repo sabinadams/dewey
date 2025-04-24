@@ -9,9 +9,6 @@ pub mod commands;
 /// Error handling definitions
 pub mod error;
 
-/// Error handling subcategories
-pub mod error_subcategories;
-
 /// Common types used throughout the application
 pub mod types;
 

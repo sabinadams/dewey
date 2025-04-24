@@ -14,7 +14,7 @@ use hex;
 
 use crate::constants;
 use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::ConfigSubcategory;
+use crate::error::ConfigSubcategory;
 use crate::types::AppResult;
 
 /// Get the application directory

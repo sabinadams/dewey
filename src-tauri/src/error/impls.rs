@@ -1,136 +1,10 @@
-//! Error handling for the application.
-//! 
-//! This module defines the error types and utilities used throughout the application.
-//! It provides a unified error handling system that categorizes errors by type
-//! and severity, and includes detailed error information for debugging and user feedback.
-
-use snafu::{Snafu, IntoError, ErrorCompat};
 use std::error::Error as StdError;
-use identicon_rs::error::IdenticonError;
-use serde::{Serialize, Deserialize};
+use snafu::{IntoError, ErrorCompat};
 use chrono::Utc;
-use crate::error_subcategories::*;
-
-/// Severity levels for errors
-/// 
-/// This enum defines the severity levels that can be assigned to errors in the application.
-/// The severity level helps determine how errors should be handled and displayed to users.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum ErrorSeverity {
-    /// Informational messages that don't indicate an error
-    Info,
-    /// Warning messages that indicate potential issues
-    Warning,
-    /// Error messages that indicate a problem that needs attention
-    Error,
-    /// Critical error messages that indicate a serious problem
-    Critical,
-}
-
-/// Error categories for the application
-#[derive(Debug, Snafu, Serialize, Deserialize)]
-pub enum ErrorCategory {
-    #[snafu(display("Database error: {}", message))]
-    Database {
-        message: String,
-        subcategory: Option<DatabaseSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Connection error: {}", message))]
-    Connection {
-        message: String,
-        subcategory: Option<ConnectionSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Migration error: {}", message))]
-    Migration {
-        message: String,
-        subcategory: Option<MigrationSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("IO error: {}", message))]
-    Io {
-        message: String,
-        subcategory: Option<IoSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Config error: {}", message))]
-    Config {
-        message: String,
-        subcategory: Option<ConfigSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Icon generation error: {}", message))]
-    IconGeneration {
-        message: String,
-        subcategory: Option<IconGenerationSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Icon error: {}", message))]
-    Icon {
-        message: String,
-        subcategory: Option<IconSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Keyring error: {}", message))]
-    Keyring {
-        message: String,
-        subcategory: Option<KeyringSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Key generation error: {}", message))]
-    KeyGeneration {
-        message: String,
-        subcategory: Option<KeyGenerationSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Project error: {}", message))]
-    Project {
-        message: String,
-        subcategory: Option<ProjectSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Encryption error: {}", message))]
-    Encryption {
-        message: String,
-        subcategory: Option<EncryptionSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-    #[snafu(display("Key management error: {}", message))]
-    KeyManagement {
-        message: String,
-        subcategory: Option<KeyManagementSubcategory>,
-        code: u32,
-        severity: ErrorSeverity,
-    },
-}
-
-/// Main error type for the application
-pub type AppError = ErrorCategory;
-
-// Helper function to create error responses
-pub fn create_error_response(error: AppError) -> serde_json::Value {
-    let timestamp = Utc::now();
-    serde_json::json!({
-        "timestamp": timestamp.to_rfc3339(),
-        "category": error.category_name(),
-        "message": error.to_string(),
-        "code": error.get_code(),
-        "severity": error.get_severity(),
-        "subcategory": error.get_subcategory(),
-    })
-}
+use serde_json::Value;
+use identicon_rs::error::IdenticonError;
+use super::types::{ErrorSeverity, AppError};
+use super::categories::*;
 
 impl ErrorCategory {
     pub fn category_name(&self) -> &'static str {
@@ -310,6 +184,20 @@ impl ErrorCategory {
     }
 }
 
+// Helper function to create error responses
+pub fn create_error_response(error: AppError) -> Value {
+    let timestamp = Utc::now();
+    serde_json::json!({
+        "timestamp": timestamp.to_rfc3339(),
+        "category": error.category_name(),
+        "message": error.to_string(),
+        "code": error.get_code(),
+        "severity": error.get_severity(),
+        "subcategory": error.get_subcategory(),
+    })
+}
+
+// Implement From traits for various error types
 impl From<sqlx::Error> for ErrorCategory {
     fn from(error: sqlx::Error) -> Self {
         ErrorCategory::new_database(error.to_string(), None)

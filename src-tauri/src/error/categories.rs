@@ -1,10 +1,6 @@
-//! Error subcategories for the application.
-//! 
-//! This module defines the subcategories for each error type in the application.
-//! These subcategories provide more detailed information about the specific nature
-//! of an error, helping with debugging and error handling.
-
 use serde::{Serialize, Deserialize};
+use snafu::Snafu;
+use super::types::ErrorSeverity;
 
 /// Subcategories for database-related errors
 #[derive(Debug, Serialize, Deserialize)]
@@ -239,4 +235,93 @@ pub enum KeyManagementSubcategory {
     KeyStorageFailed,
     /// Failed to retrieve a key
     KeyRetrievalFailed,
+}
+
+/// Error categories for the application
+#[derive(Debug, Snafu, Serialize, Deserialize)]
+pub enum ErrorCategory {
+    #[snafu(display("Database error: {}", message))]
+    Database {
+        message: String,
+        subcategory: Option<DatabaseSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Connection error: {}", message))]
+    Connection {
+        message: String,
+        subcategory: Option<ConnectionSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Migration error: {}", message))]
+    Migration {
+        message: String,
+        subcategory: Option<MigrationSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("IO error: {}", message))]
+    Io {
+        message: String,
+        subcategory: Option<IoSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Config error: {}", message))]
+    Config {
+        message: String,
+        subcategory: Option<ConfigSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Icon generation error: {}", message))]
+    IconGeneration {
+        message: String,
+        subcategory: Option<IconGenerationSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Icon error: {}", message))]
+    Icon {
+        message: String,
+        subcategory: Option<IconSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Keyring error: {}", message))]
+    Keyring {
+        message: String,
+        subcategory: Option<KeyringSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Key generation error: {}", message))]
+    KeyGeneration {
+        message: String,
+        subcategory: Option<KeyGenerationSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Project error: {}", message))]
+    Project {
+        message: String,
+        subcategory: Option<ProjectSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Encryption error: {}", message))]
+    Encryption {
+        message: String,
+        subcategory: Option<EncryptionSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
+    #[snafu(display("Key management error: {}", message))]
+    KeyManagement {
+        message: String,
+        subcategory: Option<KeyManagementSubcategory>,
+        code: u32,
+        severity: ErrorSeverity,
+    },
 } 

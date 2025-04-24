@@ -109,7 +109,11 @@ impl IconGenerator {
         ))?;
         
         // Write the image to the file
-        fs::write(&icon_path, &image_data)?;
+        fs::write(&icon_path, &image_data).map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Icon(IconSubcategory::SaveFailed),
+            ErrorSeverity::Error,
+        ))?;
         
         Ok(icon_name)
     }

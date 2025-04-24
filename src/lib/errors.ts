@@ -53,26 +53,6 @@ export interface AppError {
   subcategory?: string;
 }
 
-// Error patterns to match against backend error messages
-const ERROR_PATTERNS: Record<ErrorCategory, RegExp> = {
-  [ErrorCategory.DATABASE]: /Database error:/,
-  [ErrorCategory.MIGRATION]: /Migration error:/,
-  [ErrorCategory.IO]: /IO error:/,
-  [ErrorCategory.CONFIG]: /Configuration error:/,
-  [ErrorCategory.ICON_GENERATION]: /Icon generation error:/,
-  [ErrorCategory.IMAGE]: /Image error:/,
-  [ErrorCategory.FILE_NOT_FOUND]: /File not found:/,
-  [ErrorCategory.KEYRING]: /Keyring error:/,
-  [ErrorCategory.KEY_GENERATION]: /Key generation error:/,
-  [ErrorCategory.PROJECT]: /Project error:/,
-  [ErrorCategory.ICON]: /Icon error:/,
-  [ErrorCategory.CONNECTION]: /Connection error:/,
-  [ErrorCategory.VALIDATION]: /Validation error:/,
-  [ErrorCategory.AUTH]: /Authentication error:/,
-  [ErrorCategory.ENCRYPTION]: /Encryption error:/,
-  [ErrorCategory.UNKNOWN]: /.*/ // Catch-all for unknown errors
-};
-
 export function parseError(error: any): AppError {
   // If it's already an AppError, return it
   if (isAppError(error)) {

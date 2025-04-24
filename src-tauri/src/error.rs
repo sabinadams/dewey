@@ -1,101 +1,175 @@
-use thiserror::Error;
-use std::path::PathBuf;
-use std::fmt;
+use snafu::{Snafu, IntoError};
+use std::error::Error as StdError;
+use crate::services::encryption::EncryptionError;
+use identicon_rs::error::IdenticonError;
+use serde::Serialize;
 
-/// Trait for error categories
-pub trait ErrorCategory: fmt::Display {
-    fn category_name(&self) -> &'static str;
+/// Error categories for the application
+#[derive(Debug, Snafu, Serialize)]
+#[snafu(visibility(pub))]
+pub enum ErrorCategory {
+    #[snafu(display("Database error: {}", source))]
+    Database { 
+        #[serde(serialize_with = "serialize_error")]
+        source: sqlx::Error 
+    },
+
+    #[snafu(display("Migration error: {}", message))]
+    Migration { message: String },
+
+    #[snafu(display("IO error: {}", source))]
+    Io { 
+        #[serde(serialize_with = "serialize_error")]
+        source: std::io::Error 
+    },
+
+    #[snafu(display("Configuration error: {}", message))]
+    Config { message: String },
+
+    #[snafu(display("Icon generation error: {}", message))]
+    IconGeneration { message: String },
+
+    #[snafu(display("Image error: {}", source))]
+    Image { 
+        #[serde(serialize_with = "serialize_error")]
+        source: image::ImageError 
+    },
+
+    #[snafu(display("File not found: {}", message))]
+    FileNotFound { message: String },
+
+    #[snafu(display("Keyring error: {}", message))]
+    Keyring { message: String },
+
+    #[snafu(display("Key generation error: {}", message))]
+    KeyGeneration { message: String },
+
+    #[snafu(display("Project error: {}", message))]
+    Project { message: String },
+
+    #[snafu(display("Project not found: {}", message))]
+    ProjectNotFound { message: String },
+
+    #[snafu(display("Icon error: {}", message))]
+    Icon { message: String },
+
+    #[snafu(display("Connection error: {}", message))]
+    Connection { message: String },
+
+    #[snafu(display("Validation error: {}", message))]
+    Validation { message: String },
+
+    #[snafu(display("Authentication error: {}", message))]
+    Auth { message: String },
+
+    #[snafu(display("Unknown error: {}", message))]
+    Unknown { message: String },
+
+    #[snafu(display("Encryption error: {}", message))]
+    Encryption { message: String },
 }
 
 /// Main error type for the application
-#[derive(Error, Debug)]
-pub enum AppError {
-    #[error("Database error: {0}")]
-    Database(#[from] sqlx::Error),
-
-    #[error("Migration error: {0}")]
-    Migration(String),
-
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("Configuration error: {0}")]
-    Config(String),
-
-    #[error("Icon generation error: {0}")]
-    IconGeneration(String),
-
-    #[error("Image error: {0}")]
-    Image(String),
-
-    #[error("File not found: {0}")]
-    FileNotFound(String),
-
-    #[error("Keyring error: {0}")]
-    Keyring(String),
-
-    #[error("Key generation error: {0}")]
-    KeyGeneration(String),
-
-    #[error("Project error: {0}")]
-    Project(String),
-
-    #[error("Icon error: {0}")]
-    Icon(String),
-
-    #[error("Connection error: {0}")]
-    Connection(String),
-
-    #[error("Validation error: {0}")]
-    Validation(String),
-
-    #[error("Authentication error: {0}")]
-    Auth(String),
-
-    #[error("Unknown error: {0}")]
-    Unknown(String),
-}
-
-impl ErrorCategory for AppError {
-    fn category_name(&self) -> &'static str {
-        match self {
-            AppError::Database(_) => "DATABASE",
-            AppError::Migration(_) => "MIGRATION",
-            AppError::Io(_) => "IO",
-            AppError::Config(_) => "CONFIG",
-            AppError::IconGeneration(_) => "ICON_GENERATION",
-            AppError::Image(_) => "IMAGE",
-            AppError::FileNotFound(_) => "FILE_NOT_FOUND",
-            AppError::Keyring(_) => "KEYRING",
-            AppError::KeyGeneration(_) => "KEY_GENERATION",
-            AppError::Project(_) => "PROJECT",
-            AppError::Icon(_) => "ICON",
-            AppError::Connection(_) => "CONNECTION",
-            AppError::Validation(_) => "VALIDATION",
-            AppError::Auth(_) => "AUTH",
-            AppError::Unknown(_) => "UNKNOWN",
-        }
-    }
-}
-
-// Implement From for common error types
-impl From<String> for AppError {
-    fn from(err: String) -> Self {
-        Self::Unknown(err)
-    }
-}
-
-impl From<image::ImageError> for AppError {
-    fn from(err: image::ImageError) -> Self {
-        Self::Image(err.to_string())
-    }
-}
+pub type AppError = ErrorCategory;
 
 // Helper function to create error responses
 pub fn create_error_response(error: AppError) -> serde_json::Value {
     serde_json::json!({
         "category": error.category_name(),
-        "message": error.to_string(),
-        "details": null
+        "message": error.to_string()
     })
+}
+
+impl ErrorCategory {
+    pub fn category_name(&self) -> &'static str {
+        match self {
+            ErrorCategory::Database { .. } => "DATABASE",
+            ErrorCategory::Migration { .. } => "MIGRATION",
+            ErrorCategory::Io { .. } => "IO",
+            ErrorCategory::Config { .. } => "CONFIG",
+            ErrorCategory::IconGeneration { .. } => "ICON_GENERATION",
+            ErrorCategory::Image { .. } => "IMAGE",
+            ErrorCategory::FileNotFound { .. } => "FILE_NOT_FOUND",
+            ErrorCategory::Keyring { .. } => "KEYRING",
+            ErrorCategory::KeyGeneration { .. } => "KEY_GENERATION",
+            ErrorCategory::Project { .. } => "PROJECT",
+            ErrorCategory::ProjectNotFound { .. } => "PROJECT_NOT_FOUND",
+            ErrorCategory::Icon { .. } => "ICON",
+            ErrorCategory::Connection { .. } => "CONNECTION",
+            ErrorCategory::Validation { .. } => "VALIDATION",
+            ErrorCategory::Auth { .. } => "AUTH",
+            ErrorCategory::Unknown { .. } => "UNKNOWN",
+            ErrorCategory::Encryption { .. } => "ENCRYPTION",
+        }
+    }
+}
+
+// Helper function to serialize errors
+fn serialize_error<S, E>(error: &E, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    E: std::fmt::Display,
+{
+    serializer.serialize_str(&error.to_string())
+}
+
+// Implement From for various error types
+impl From<sqlx::Error> for ErrorCategory {
+    fn from(error: sqlx::Error) -> Self {
+        ErrorCategory::Database { source: error }
+    }
+}
+
+impl From<std::io::Error> for ErrorCategory {
+    fn from(error: std::io::Error) -> Self {
+        ErrorCategory::Io { source: error }
+    }
+}
+
+impl From<base64::DecodeError> for ErrorCategory {
+    fn from(error: base64::DecodeError) -> Self {
+        ErrorCategory::IconGeneration { message: error.to_string() }
+    }
+}
+
+impl From<mongodb::error::Error> for ErrorCategory {
+    fn from(error: mongodb::error::Error) -> Self {
+        ErrorCategory::Database { source: sqlx::Error::Protocol(error.to_string()) }
+    }
+}
+
+impl From<EncryptionError> for ErrorCategory {
+    fn from(error: EncryptionError) -> Self {
+        ErrorCategory::Encryption { message: error.to_string() }
+    }
+}
+
+impl From<IdenticonError> for ErrorCategory {
+    fn from(error: IdenticonError) -> Self {
+        ErrorCategory::IconGeneration { message: error.to_string() }
+    }
+}
+
+impl From<&str> for ErrorCategory {
+    fn from(error: &str) -> Self {
+        ErrorCategory::Unknown { message: error.to_string() }
+    }
+}
+
+impl From<String> for ErrorCategory {
+    fn from(error: String) -> Self {
+        ErrorCategory::Unknown { message: error }
+    }
+}
+
+// Implement IntoError for ErrorCategory
+impl<E> IntoError<E> for ErrorCategory
+where
+    E: Into<ErrorCategory> + StdError + snafu::ErrorCompat,
+{
+    type Source = E;
+
+    fn into_error(self, source: Self::Source) -> E {
+        source
+    }
 } 

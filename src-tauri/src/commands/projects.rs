@@ -8,10 +8,11 @@ use crate::services::storage::{
 };
 use crate::utils;
 use crate::state::AppState;
-use crate::error::AppError;
+use crate::error::ErrorCategory;
 use blake3;
 use tauri::State;
 use tracing::{error, info};
+use snafu::ResultExt;
 
 /// Command to fetch all projects for a user
 ///
@@ -21,15 +22,15 @@ use tracing::{error, info};
 pub async fn get_user_projects(
     user_id: String,
     state: State<'_, AppState>,
-) -> Result<Vec<Project>, AppError> {
+) -> Result<Vec<Project>, ErrorCategory> {
     info!("Fetching projects for user: {}", user_id);
 
     let project_repo = ProjectRepository::new(state.db.clone());
 
-    project_repo.get_by_user(&user_id).await.map_err(|e| {
-        error!("Failed to fetch projects: {}", e);
-        AppError::Project(format!("Failed to fetch projects: {}", e))
-    })
+    project_repo.get_by_user(&user_id).await
+        .context(ErrorCategory::Project {
+            message: format!("Failed to fetch projects for user {}", user_id),
+        })
 }
 
 /// Command to create a new project
@@ -47,14 +48,14 @@ pub async fn create_project(
     custom_icon_data: Option<String>,
     initial_connection: Option<NewConnection>,
     state: State<'_, AppState>,
-) -> Result<i64, AppError> {
+) -> Result<i64, ErrorCategory> {
     info!("Creating new project '{}' for user: {}", name, user_id);
 
     // Create the icon generator
-    let icon_generator = IconGenerator::new().map_err(|e| {
-        error!("Failed to create icon generator: {}", e);
-        AppError::Icon(format!("Failed to initialize icon generator: {}", e))
-    })?;
+    let icon_generator = IconGenerator::new()
+        .context(ErrorCategory::Icon {
+            message: "Failed to initialize icon generator".to_string(),
+        })?;
 
     let final_icon_path = if let Some(icon_data) = custom_icon_data {
         info!("Using custom icon for project");
@@ -62,9 +63,8 @@ pub async fn create_project(
         // Use the helper function to save the custom icon
         icon_generator
             .save_custom_icon(&icon_data, &name, &user_id)
-            .map_err(|e| {
-                error!("Failed to save custom icon: {}", e);
-                AppError::Icon(format!("Failed to save custom icon: {}", e))
+            .context(ErrorCategory::Icon {
+                message: "Failed to save custom icon".to_string(),
             })?
     } else {
         // Generate a default icon
@@ -75,9 +75,8 @@ pub async fn create_project(
 
         icon_generator
             .generate_and_save(hash.as_bytes())
-            .map_err(|e| {
-                error!("Failed to generate default icon: {}", e);
-                AppError::Icon(format!("Failed to generate default icon: {}", e))
+            .context(ErrorCategory::Icon {
+                message: "Failed to generate default icon".to_string(),
             })?
     };
 
@@ -93,9 +92,8 @@ pub async fn create_project(
             Some(&final_icon_path),
         )
         .await
-        .map_err(|e| {
-            error!("Failed to create project: {}", e);
-            AppError::Project(format!("Failed to create project: {}", e))
+        .context(ErrorCategory::Project {
+            message: format!("Failed to create project {}", name),
         })?;
 
     // If an initial connection was provided, create it
@@ -112,10 +110,10 @@ pub async fn create_project(
             database: initial_connection.database
         };
 
-        connection_repo.create(&connection).await.map_err(|e| {
-            error!("Failed to create initial connection: {}", e);
-            AppError::Connection(format!("Failed to create initial connection: {}", e))
-        })?;
+        connection_repo.create(&connection).await
+            .context(ErrorCategory::Connection {
+                message: format!("Failed to create initial connection for project {}", project_id),
+            })?;
     }
 
     Ok(project_id)
@@ -133,7 +131,7 @@ pub async fn update_project(
     name: String,
     user_id: String,
     state: State<'_, AppState>,
-) -> Result<(), AppError> {
+) -> Result<(), ErrorCategory> {
     info!("Updating project {} for user: {}", id, user_id);
 
     let project_repo = ProjectRepository::new(state.db.clone());
@@ -142,16 +140,20 @@ pub async fn update_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .map_err(|e| AppError::Project(format!("Failed to check project existence: {}", e)))?
+        .context(ErrorCategory::Project {
+            message: format!("Failed to check project existence for project {}", id),
+        })?
     {
-        return Err(AppError::ProjectNotFound(constants::PROJECT_NOT_FOUND.to_string()));
+        return Err(ErrorCategory::ProjectNotFound {
+            message: constants::PROJECT_NOT_FOUND.to_string(),
+        });
     }
 
     // Update the project
-    project_repo.update(id, &name).await.map_err(|e| {
-        error!("Failed to update project: {}", e);
-        AppError::Project(format!("Failed to update project: {}", e))
-    })
+    project_repo.update(id, &name).await
+        .context(ErrorCategory::Project {
+            message: format!("Failed to update project {}", id),
+        })
 }
 
 /// Command to delete a project
@@ -165,7 +167,7 @@ pub async fn delete_project(
     id: i64,
     user_id: String,
     state: State<'_, AppState>,
-) -> Result<(), AppError> {
+) -> Result<(), ErrorCategory> {
     info!("Deleting project {} for user: {}", id, user_id);
 
     let project_repo = ProjectRepository::new(state.db.clone());
@@ -174,16 +176,20 @@ pub async fn delete_project(
     if !project_repo
         .exists(id, &user_id)
         .await
-        .map_err(|e| AppError::Project(format!("Failed to check project existence: {}", e)))?
+        .context(ErrorCategory::Project {
+            message: format!("Failed to check project existence for project {}", id),
+        })?
     {
-        return Err(AppError::ProjectNotFound(constants::PROJECT_NOT_FOUND.to_string()));
+        return Err(ErrorCategory::ProjectNotFound {
+            message: constants::PROJECT_NOT_FOUND.to_string(),
+        });
     }
 
     // Delete the project
-    project_repo.delete(id).await.map_err(|e| {
-        error!("Failed to delete project: {}", e);
-        AppError::Project(format!("Failed to delete project: {}", e))
-    })
+    project_repo.delete(id).await
+        .context(ErrorCategory::Project {
+            message: format!("Failed to delete project {}", id),
+        })
 }
 
 /// Command to get all connections for a project
@@ -194,13 +200,13 @@ pub async fn delete_project(
 pub async fn get_project_connections(
     project_id: i64,
     state: State<'_, AppState>,
-) -> Result<Vec<Connection>, AppError> {
+) -> Result<Vec<Connection>, ErrorCategory> {
     info!("Fetching connections for project: {}", project_id);
 
     let connection_repo = ConnectionRepository::new(state.db.clone());
 
-    connection_repo.get_by_project(project_id).await.map_err(|e| {
-        error!("Failed to fetch project connections: {}", e);
-        AppError::Connection(format!("Failed to fetch project connections: {}", e))
-    })
+    connection_repo.get_by_project(project_id).await
+        .context(ErrorCategory::Connection {
+            message: format!("Failed to fetch connections for project {}", project_id),
+        })
 }

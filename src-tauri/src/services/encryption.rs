@@ -7,27 +7,32 @@ use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::sync::{Arc, OnceLock};
-use thiserror::Error;
+use snafu::Snafu;
 use tracing::{debug, error};
-use crate::error::AppError;
+use crate::error::ErrorCategory;
 
 use super::key_management::KeyManager;
 
 static ENCRYPTION_KEY: OnceLock<Arc<[u8; 32]>> = OnceLock::new();
 
-#[derive(Error, Debug)]
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
 pub enum EncryptionError {
-    #[error("Encryption failed: {0}")]
-    EncryptionFailed(String),
-    #[error("Decryption failed: {0}")]
-    DecryptionFailed(String),
-    #[error("Key initialization failed: {0}")]
-    KeyInitializationFailed(String),
+    #[snafu(display("Encryption failed: {}", message))]
+    EncryptionFailed { message: String },
+
+    #[snafu(display("Decryption failed: {}", message))]
+    DecryptionFailed { message: String },
+
+    #[snafu(display("Key initialization failed: {}", message))]
+    KeyInitializationFailed { message: String },
 }
 
-impl From<AppError> for EncryptionError {
-    fn from(error: AppError) -> Self {
-        EncryptionError::KeyInitializationFailed(error.to_string())
+impl From<ErrorCategory> for EncryptionError {
+    fn from(error: ErrorCategory) -> Self {
+        EncryptionError::KeyInitializationFailed {
+            message: error.to_string(),
+        }
     }
 }
 
@@ -58,7 +63,9 @@ pub fn initialize_encryption_key() -> Result<(), EncryptionError> {
 fn get_encryption_key() -> Result<Arc<[u8; 32]>, EncryptionError> {
     ENCRYPTION_KEY.get()
         .map(Arc::clone)
-        .ok_or_else(|| EncryptionError::KeyInitializationFailed("Encryption key not initialized".to_string()))
+        .ok_or_else(|| EncryptionError::KeyInitializationFailed {
+            message: "Encryption key not initialized".to_string(),
+        })
 }
 
 /// Encrypt a string value
@@ -72,7 +79,9 @@ pub fn encrypt_string(value: &str) -> Result<String, EncryptionError> {
     
     let ciphertext = cipher
         .encrypt(Nonce::from_slice(&nonce), value.as_bytes())
-        .map_err(|e| EncryptionError::EncryptionFailed(e.to_string()))?;
+        .map_err(|e| EncryptionError::EncryptionFailed {
+            message: e.to_string(),
+        })?;
 
     let encrypted_data = EncryptedData {
         nonce: BASE64.encode(nonce),
@@ -80,7 +89,9 @@ pub fn encrypt_string(value: &str) -> Result<String, EncryptionError> {
     };
 
     serde_json::to_string(&encrypted_data)
-        .map_err(|e| EncryptionError::EncryptionFailed(e.to_string()))
+        .map_err(|e| EncryptionError::EncryptionFailed {
+            message: e.to_string(),
+        })
 }
 
 /// Decrypt a string value
@@ -89,21 +100,31 @@ pub fn decrypt_string(encrypted_value: &str) -> Result<String, EncryptionError> 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
 
     let encrypted_data: EncryptedData = serde_json::from_str(encrypted_value)
-        .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))?;
+        .map_err(|e| EncryptionError::DecryptionFailed {
+            message: e.to_string(),
+        })?;
 
     let nonce = BASE64
         .decode(encrypted_data.nonce)
-        .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))?;
+        .map_err(|e| EncryptionError::DecryptionFailed {
+            message: e.to_string(),
+        })?;
     let ciphertext = BASE64
         .decode(encrypted_data.ciphertext)
-        .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))?;
+        .map_err(|e| EncryptionError::DecryptionFailed {
+            message: e.to_string(),
+        })?;
 
     let plaintext = cipher
         .decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())
-        .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))?;
+        .map_err(|e| EncryptionError::DecryptionFailed {
+            message: e.to_string(),
+        })?;
 
     String::from_utf8(plaintext)
-        .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))
+        .map_err(|e| EncryptionError::DecryptionFailed {
+            message: e.to_string(),
+        })
 }
 
 #[cfg(test)]

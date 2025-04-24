@@ -1,4 +1,7 @@
 use std::result::Result;
+use crate::error::ErrorCategory;
 
-/// Application-wide Result type
-pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>; 
+/// Type alias for Result<T, ErrorCategory>
+pub type AppResult<T> = Result<T, ErrorCategory>;
+
+// Other types can be added here as needed 

@@ -1,8 +1,9 @@
-use crate::types::AppResult;
+use crate::error::{ErrorCategory, DatabaseSnafu};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
 use tracing::debug;
+use snafu::ResultExt;
 
 /// Represents a user project in the application
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -31,7 +32,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
+    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> Result<i64, ErrorCategory> {
         debug!("Creating new project '{}' for user: {}", name, user_id);
         
         let result = sqlx::query(
@@ -45,7 +46,8 @@ impl ProjectRepository {
         .bind(user_id)
         .bind(icon_path)
         .fetch_one(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         let id = result.get(0);
         debug!("Project created successfully");
@@ -56,7 +58,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn get_by_user(&self, user_id: &str) -> AppResult<Vec<Project>> {
+    pub async fn get_by_user(&self, user_id: &str) -> Result<Vec<Project>, ErrorCategory> {
         debug!("Fetching projects for user: {}", user_id);
         
         let projects = sqlx::query_as::<_, Project>(
@@ -69,7 +71,8 @@ impl ProjectRepository {
         )
         .bind(user_id)
         .fetch_all(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         debug!("Found {} projects", projects.len());
         Ok(projects)
@@ -79,7 +82,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn update(&self, id: i64, name: &str) -> AppResult<()> {
+    pub async fn update(&self, id: i64, name: &str) -> Result<(), ErrorCategory> {
         debug!("Updating project {} with name: {}", id, name);
         
         sqlx::query(
@@ -92,7 +95,8 @@ impl ProjectRepository {
         .bind(name)
         .bind(id)
         .execute(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         debug!("Project updated successfully");
         Ok(())
@@ -102,7 +106,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn delete(&self, id: i64) -> AppResult<()> {
+    pub async fn delete(&self, id: i64) -> Result<(), ErrorCategory> {
         debug!("Deleting project: {}", id);
         
         sqlx::query(
@@ -113,7 +117,8 @@ impl ProjectRepository {
         )
         .bind(id)
         .execute(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         debug!("Project deleted successfully");
         Ok(())
@@ -123,7 +128,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn get_by_id(&self, id: i64, user_id: &str) -> AppResult<Option<Project>> {
+    pub async fn get_by_id(&self, id: i64, user_id: &str) -> Result<Option<Project>, ErrorCategory> {
         debug!("Fetching project {} for user: {}", id, user_id);
         
         let project = sqlx::query_as::<_, Project>(
@@ -136,7 +141,8 @@ impl ProjectRepository {
         .bind(id)
         .bind(user_id)
         .fetch_optional(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         debug!("Project lookup complete");
         Ok(project)
@@ -146,7 +152,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn exists(&self, id: i64, user_id: &str) -> AppResult<bool> {
+    pub async fn exists(&self, id: i64, user_id: &str) -> Result<bool, ErrorCategory> {
         debug!("Checking if project {} exists for user: {}", id, user_id);
         
         let exists: (bool,) = sqlx::query_as(
@@ -157,7 +163,8 @@ impl ProjectRepository {
         .bind(id)
         .bind(user_id)
         .fetch_one(&*self.pool)
-        .await?;
+        .await
+        .context(DatabaseSnafu)?;
 
         debug!("Project existence check: {}", exists.0);
         Ok(exists.0)

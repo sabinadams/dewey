@@ -1,7 +1,7 @@
 use crate::services::storage::repositories::onboarding::OnboardingRepository;
 use crate::state::AppState;
+use crate::error::ErrorCategory;
 use tauri::State;
-use tracing::error;
 
 /// Command to store the onboarding process in the database
 /// 
@@ -11,17 +11,11 @@ use tracing::error;
 pub async fn store_onboarding(
     has_completed: bool,
     state: State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<(), ErrorCategory> {
     let onboarding_repo = OnboardingRepository::new(state.db.clone());
-    let onboarding = onboarding_repo.store(has_completed).await;
-
-    match onboarding {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to store onboarding: {}", e);
-            Err(e.to_string())
-        }
-    }
+    onboarding_repo.store(has_completed).await
+        .map(|_| ())
+        .map_err(ErrorCategory::from)
 }
 
 /// Command to check if the onboarding process should run
@@ -31,15 +25,8 @@ pub async fn store_onboarding(
 #[tauri::command]
 pub async fn should_run_onboarding(
     state: State<'_, AppState>,
-) -> Result<bool, String> {
+) -> Result<bool, ErrorCategory> {
     let onboarding_repo = OnboardingRepository::new(state.db.clone());
-    let onboarding = onboarding_repo.should_run().await;
-
-    match onboarding {
-        Ok(should_run) => Ok(should_run),
-        Err(e) => {
-            error!("Failed to check if onboarding should run: {}", e);
-            Err(e.to_string())
-        }
-    }
+    onboarding_repo.should_run().await
+        .map_err(ErrorCategory::from)
 }

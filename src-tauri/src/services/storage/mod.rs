@@ -1,6 +1,7 @@
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
+use crate::error::ErrorCategory;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::{Path, PathBuf};
@@ -63,7 +64,9 @@ impl LocalStorage {
         
         // Run migrations
         info!("Connected to database - running migrations");
-        sqlx::migrate!().run(&pool).await?;
+        sqlx::migrate!().run(&pool).await.map_err(|e| ErrorCategory::Migration {
+            message: e.to_string(),
+        })?;
         info!("Migrations completed successfully");
         
         Ok(Self {

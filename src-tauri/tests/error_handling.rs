@@ -1,62 +1,59 @@
 use dewey_lib::error::{ErrorCategory, AppError, ErrorSeverity};
-use dewey_lib::error::categories::*;
+use dewey_lib::error::{
+    DatabaseSubcategory, IoSubcategory, ProjectSubcategory,
+};
 use std::io;
 
 #[test]
 fn test_database_error() {
-    let error = ErrorCategory::Database {
-        message: "Connection failed".to_string(),
-        subcategory: Some(DatabaseSubcategory::ConnectionFailed),
-        code: 1001,
-        severity: ErrorSeverity::Error,
-    };
+    let error = AppError::database(
+        "Connection failed",
+        DatabaseSubcategory::ConnectionFailed,
+        ErrorSeverity::Error,
+    );
 
-    assert_eq!(error.category_name(), "DATABASE");
-    assert!(error.to_string().contains("Database error:"));
-    assert!(matches!(error, ErrorCategory::Database { .. }));
+    assert_eq!(error.severity, ErrorSeverity::Error);
+    assert!(matches!(error.category, ErrorCategory::Database(_)));
+    assert!(error.message.contains("Connection failed"));
 }
 
 #[test]
 fn test_io_error() {
-    let error = ErrorCategory::Io {
-        message: "Permission denied".to_string(),
-        subcategory: Some(IoSubcategory::PermissionDenied),
-        code: 2001,
-        severity: ErrorSeverity::Error,
-    };
+    let error = AppError::io(
+        "Permission denied",
+        IoSubcategory::PermissionDenied,
+        ErrorSeverity::Error,
+    );
 
-    assert_eq!(error.category_name(), "IO");
-    assert!(error.to_string().contains("IO error:"));
-    assert!(matches!(error, ErrorCategory::Io { .. }));
+    assert_eq!(error.severity, ErrorSeverity::Error);
+    assert!(matches!(error.category, ErrorCategory::Io(_)));
+    assert!(error.message.contains("Permission denied"));
 }
 
 #[test]
 fn test_project_error() {
-    let error = ErrorCategory::Project {
-        message: "Project not found".to_string(),
-        subcategory: Some(ProjectSubcategory::NotFound),
-        code: 3001,
-        severity: ErrorSeverity::Error,
-    };
+    let error = AppError::project(
+        "Project not found",
+        ProjectSubcategory::NotFound,
+        ErrorSeverity::Error,
+    );
 
-    assert_eq!(error.category_name(), "PROJECT");
-    assert!(error.to_string().contains("Project error:"));
-    assert!(matches!(error, ErrorCategory::Project { .. }));
+    assert_eq!(error.severity, ErrorSeverity::Error);
+    assert!(matches!(error.category, ErrorCategory::Project(_)));
+    assert!(error.message.contains("Project not found"));
 }
 
 #[test]
 fn test_error_serialization() {
-    let error = ErrorCategory::Project {
-        message: "Project not found".to_string(),
-        subcategory: Some(ProjectSubcategory::NotFound),
-        code: 3001,
-        severity: ErrorSeverity::Error,
-    };
+    let error = AppError::project(
+        "Project not found",
+        ProjectSubcategory::NotFound,
+        ErrorSeverity::Error,
+    );
 
-    let response = dewey_lib::error::create_error_response(error);
-    assert_eq!(response["category"], "PROJECT");
-    assert!(response["message"].as_str().unwrap().contains("Project error:"));
-    assert_eq!(response["subcategory"], "NotFound");
+    let serialized = serde_json::to_value(&error).unwrap();
+    assert!(serialized["message"].as_str().unwrap().contains("Project not found"));
+    assert_eq!(serialized["severity"], "Error");
 }
 
 #[test]
@@ -64,21 +61,19 @@ fn test_error_conversion() {
     let io_error = io::Error::new(io::ErrorKind::NotFound, "File not found");
     let error: AppError = io_error.into();
     
-    assert!(matches!(error, ErrorCategory::Io { .. }));
-    assert!(error.to_string().contains("IO error:"));
+    assert!(matches!(error.category, ErrorCategory::Io(IoSubcategory::PathNotFound)));
+    assert!(error.message.contains("File not found"));
 }
 
 #[test]
-fn test_error_without_subcategory() {
-    let error = ErrorCategory::Project {
-        message: "Project error".to_string(),
-        subcategory: None,
-        code: 3001,
-        severity: ErrorSeverity::Error,
-    };
+fn test_error_display() {
+    let error = AppError::project(
+        "Project error",
+        ProjectSubcategory::NotFound,
+        ErrorSeverity::Error,
+    );
 
-    let response = dewey_lib::error::create_error_response(error);
-    assert_eq!(response["category"], "PROJECT");
-    assert!(response["message"].as_str().unwrap().contains("Project error:"));
-    assert!(response["subcategory"].is_null());
+    let error_str = error.category.to_string();
+    assert!(error_str.contains("Project error"));
+    assert!(error_str.contains("NotFound"));
 } 

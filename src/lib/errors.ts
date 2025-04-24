@@ -39,11 +39,18 @@ export enum ProjectSubcategory {
   InvalidPath = 'InvalidPath',
 }
 
+export enum ErrorSeverity {
+  Info = 'Info',
+  Warning = 'Warning',
+  Error = 'Error',
+  Critical = 'Critical'
+}
+
 export interface AppError {
   category: ErrorCategory;
   message: string;
-  details?: Record<string, any>;
-  subcategory?: string | KeyringSubcategory | KeyGenerationSubcategory | ProjectSubcategory;
+  severity: ErrorSeverity;
+  subcategory?: string;
 }
 
 // Error patterns to match against backend error messages
@@ -79,7 +86,8 @@ export function parseError(error: any): AppError {
       return {
         category: error.category as ErrorCategory,
         message: error.message,
-        details: error.details
+        severity: error.severity || ErrorSeverity.Error,
+        subcategory: error.subcategory
       };
     }
 
@@ -93,7 +101,8 @@ export function parseError(error: any): AppError {
           return {
             category: category as ErrorCategory,
             message: errorMessage.replace(pattern, '').trim(),
-            details: error
+            severity: ErrorSeverity.Error,
+            subcategory: error.subcategory
           };
         }
       }
@@ -104,7 +113,7 @@ export function parseError(error: any): AppError {
   return {
     category: ErrorCategory.UNKNOWN,
     message: typeof error === 'string' ? error : 'An unknown error occurred',
-    details: error
+    severity: ErrorSeverity.Error
   };
 }
 
@@ -114,95 +123,70 @@ function isAppError(error: any): error is AppError {
     error !== null &&
     'category' in error &&
     'message' in error &&
-    Object.values(ErrorCategory).includes(error.category)
+    'severity' in error &&
+    Object.values(ErrorCategory).includes(error.category) &&
+    Object.values(ErrorSeverity).includes(error.severity)
   );
 }
 
 export function showErrorToast(error: AppError) {
-  const { category, message, subcategory } = error;
+  const { category, message, severity, subcategory } = error;
   
+  const toastConfig = {
+    description: message,
+    duration: severity === ErrorSeverity.Critical ? 10000 : 5000,
+    action: category === ErrorCategory.KEYRING || category === ErrorCategory.KEY_GENERATION ? {
+      label: 'Set Up',
+      onClick: () => {
+        window.location.href = '/onboarding';
+      }
+    } : undefined
+  };
+
+  switch (severity) {
+    case ErrorSeverity.Info:
+      toast.info(getToastTitle(category, subcategory), toastConfig);
+      break;
+    case ErrorSeverity.Warning:
+      toast.warning(getToastTitle(category, subcategory), toastConfig);
+      break;
+    case ErrorSeverity.Error:
+    case ErrorSeverity.Critical:
+      toast.error(getToastTitle(category, subcategory), toastConfig);
+      break;
+  }
+}
+
+function getToastTitle(category: ErrorCategory, subcategory?: string): string {
   switch (category) {
     case ErrorCategory.KEYRING:
     case ErrorCategory.KEY_GENERATION:
-      toast.error('Encryption Key Error', {
-        description: message,
-        action: {
-          label: 'Set Up',
-          onClick: () => {
-            window.location.href = '/onboarding';
-          }
-        }
-      });
-      break;
-      
+      return 'Encryption Key Error';
     case ErrorCategory.FILE_NOT_FOUND:
-      toast.error('File Not Found', {
-        description: message
-      });
-      break;
-      
+      return 'File Not Found';
     case ErrorCategory.DATABASE:
     case ErrorCategory.MIGRATION:
-      toast.error('Database Error', {
-        description: message
-      });
-      break;
-      
+      return 'Database Error';
     case ErrorCategory.IO:
-      toast.error('File System Error', {
-        description: message
-      });
-      break;
-      
+      return 'File System Error';
     case ErrorCategory.CONFIG:
-      toast.error('Configuration Error', {
-        description: message
-      });
-      break;
-      
+      return 'Configuration Error';
     case ErrorCategory.ICON_GENERATION:
     case ErrorCategory.IMAGE:
     case ErrorCategory.ICON:
-      toast.error('Image Processing Error', {
-        description: message
-      });
-      break;
-
+      return 'Image Processing Error';
     case ErrorCategory.PROJECT:
-      const title = subcategory === 'NotFound' ? 'Project Not Found' : 'Project Error';
-      toast.error(title, {
-        description: message
-      });
-      break;
-
+      return subcategory === 'NotFound' ? 'Project Not Found' : 'Project Error';
     case ErrorCategory.CONNECTION:
-      toast.error('Connection Error', {
-        description: message
-      });
-      break;
-
+      return 'Connection Error';
     case ErrorCategory.VALIDATION:
-      toast.error('Validation Error', {
-        description: message
-      });
-      break;
-
+      return 'Validation Error';
     case ErrorCategory.AUTH:
-      toast.error('Authentication Error', {
-        description: message
-      });
-      break;
-
+      return 'Authentication Error';
     case ErrorCategory.ENCRYPTION:
-      toast.error('Encryption Error', {
-        description: message
-      });
-      break;
-      
+      return 'Encryption Error';
     default:
-      toast.error('Error', {
-        description: message
-      });
+      return 'Error';
   }
 }
 

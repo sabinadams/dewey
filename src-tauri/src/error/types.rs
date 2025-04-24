@@ -26,27 +26,28 @@ impl Serialize for AppError {
     {
         use serde::ser::SerializeStruct;
         
-        let category_str = match &self.category {
-            ErrorCategory::Database(_) => "Database",
-            ErrorCategory::Migration(_) => "Migration",
-            ErrorCategory::Io(_) => "Io",
-            ErrorCategory::Config(_) => "Config",
-            ErrorCategory::IconGeneration(_) => "IconGeneration",
-            ErrorCategory::Icon(_) => "Icon",
-            ErrorCategory::Keyring(_) => "Keyring",
-            ErrorCategory::KeyGeneration(_) => "KeyGeneration",
-            ErrorCategory::Project(_) => "Project",
-            ErrorCategory::Encryption(_) => "Encryption",
-            ErrorCategory::KeyManagement(_) => "KeyManagement",
-            ErrorCategory::Connection(_) => "Connection",
-            ErrorCategory::Validation(_) => "Validation",
-            ErrorCategory::Auth(_) => "Auth",
-            ErrorCategory::Unknown(_) => "Unknown",
+        let (category_str, subcategory_str) = match &self.category {
+            ErrorCategory::Database(sub) => ("Database", format!("{:?}", sub)),
+            ErrorCategory::Migration(sub) => ("Migration", format!("{:?}", sub)),
+            ErrorCategory::Io(sub) => ("Io", format!("{:?}", sub)),
+            ErrorCategory::Config(sub) => ("Config", format!("{:?}", sub)),
+            ErrorCategory::IconGeneration(sub) => ("IconGeneration", format!("{:?}", sub)),
+            ErrorCategory::Icon(sub) => ("Icon", format!("{:?}", sub)),
+            ErrorCategory::Keyring(sub) => ("Keyring", format!("{:?}", sub)),
+            ErrorCategory::KeyGeneration(sub) => ("KeyGeneration", format!("{:?}", sub)),
+            ErrorCategory::Project(sub) => ("Project", format!("{:?}", sub)),
+            ErrorCategory::Encryption(sub) => ("Encryption", format!("{:?}", sub)),
+            ErrorCategory::KeyManagement(sub) => ("KeyManagement", format!("{:?}", sub)),
+            ErrorCategory::Connection(sub) => ("Connection", format!("{:?}", sub)),
+            ErrorCategory::Validation(sub) => ("Validation", format!("{:?}", sub)),
+            ErrorCategory::Auth(sub) => ("Auth", format!("{:?}", sub)),
+            ErrorCategory::Unknown(sub) => ("Unknown", format!("{:?}", sub)),
         };
 
-        let mut state = serializer.serialize_struct("AppError", 3)?;
+        let mut state = serializer.serialize_struct("AppError", 4)?;
         state.serialize_field("message", &self.message)?;
         state.serialize_field("category", category_str)?;
+        state.serialize_field("subcategory", &subcategory_str)?;
         state.serialize_field("severity", &self.severity)?;
         state.end()
     }

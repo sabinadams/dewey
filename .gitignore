@@ -25,3 +25,11 @@ dist-ssr
 .env
 
 *storybook.log
+
+# Rust build artifacts
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Tauri build artifacts
+/src-tauri/target/

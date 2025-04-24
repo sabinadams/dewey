@@ -1,7 +1,7 @@
 use crate::services::key_management;
 use crate::error::{AppError, AppResult, ErrorSeverity};
-use crate::error::categories::{KeyManagementSubcategory, ErrorCategory};
-use tracing::{info, debug, error};
+use crate::error::categories::{KeyManagementSubcategory, KeyringSubcategory, ErrorCategory};
+use tracing::{info, error};
 
 /// Initialize the encryption key
 ///
@@ -36,14 +36,39 @@ pub async fn initialize_encryption_key() -> AppResult<bool> {
 #[tauri::command]
 pub async fn has_encryption_key() -> AppResult<bool> {
     let key_manager = key_management::KeyManager::new()?;
-    match key_manager.get_or_create_key().await {
-        Ok(_) => {
-            debug!("Key exists");
+    match key_manager.has_key_in_keyring() {
+        Ok(true) => {
+            info!("Found encryption key in keyring");
             Ok(true)
         }
+        Ok(false) => {
+            // Check fallback file
+            match key_manager.has_key_in_file() {
+                Ok(true) => {
+                    info!("Found encryption key in file");
+                    Ok(true)
+                }
+                Ok(false) => {
+                    info!("No encryption key found");
+                    Ok(false)
+                }
+                Err(e) => {
+                    error!("Failed to check for key in file: {}", e);
+                    Err(AppError::new(
+                        "Failed to check for key in file".to_string(),
+                        ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotFound),
+                        ErrorSeverity::Error,
+                    ))
+                }
+            }
+        }
         Err(e) => {
-            error!("Error checking key: {}", e);
-            Ok(false)
+            error!("Failed to check for key in keyring: {}", e);
+            Err(AppError::new(
+                "Failed to check for key in keyring".to_string(),
+                ErrorCategory::Keyring(KeyringSubcategory::KeyringUnavailable),
+                ErrorSeverity::Error,
+            ))
         }
     }
 }

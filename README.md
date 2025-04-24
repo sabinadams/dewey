@@ -43,97 +43,83 @@ error/
 ├── mod.rs           # Main module file that exports everything
 ├── types.rs         # Core error types and enums (ErrorSeverity, AppError)
 ├── categories.rs    # Error categories and subcategories
-├── messages.rs      # Error message templates
-└── impls.rs         # Error implementations and conversions
+├── constructors.rs  # Convenience constructors for creating errors
+└── conversions.rs   # Error conversions and implementations
 ```
+
+### Core Components
+
+1. **Error Types (`types.rs`)**
+   - `ErrorSeverity`: Defines error severity levels (Info, Warning, Error, Critical)
+   - `AppError`: The main error type containing message, category, and severity
+   - `AppResult<T>`: Type alias for `Result<T, AppError>`
+
+2. **Error Categories (`categories.rs`)**
+   - Contains all error categories and their subcategories
+   - Each category is an enum variant of `ErrorCategory`
+   - Subcategories provide detailed error classification
+
+3. **Error Constructors (`constructors.rs`)**
+   - Provides convenience methods for creating errors
+   - Each category has its own constructor method
+   - Example: `AppError::database()`, `AppError::io()`, etc.
+
+4. **Error Conversions (`conversions.rs`)**
+   - Implements conversions from external error types
+   - Handles error display formatting
+   - Provides trait implementations for error handling
 
 ### Error Flow
 
-1. **Backend Error Creation (Rust)**
+1. **Creating Errors (Rust)**
    ```rust
-   // Create a new error with subcategory
-   let error = ErrorCategory::Project {
-       message: "Project not found".to_string(),
-       subcategory: Some(ProjectSubcategory::NotFound),
-       code: 9000,
-       severity: ErrorSeverity::Error,
-   };
-   
-   // Convert to response
-   let response = create_error_response(error);
-   // Produces:
-   // {
-   //   "timestamp": "2024-04-24T12:00:00Z",
-   //   "category": "PROJECT",
-   //   "message": "Project error: Project not found",
-   //   "code": 9000,
-   //   "severity": "Error",
-   //   "subcategory": "NotFound"
-   // }
+   use crate::error::{AppError, ErrorSeverity};
+   use crate::error::categories::{DatabaseSubcategory, IoSubcategory};
+
+   // Using constructors
+   let db_error = AppError::database(
+       "Failed to connect to database",
+       DatabaseSubcategory::ConnectionFailed,
+       ErrorSeverity::Error
+   );
+
+   // Using direct construction
+   let io_error = AppError::new(
+       "File not found",
+       ErrorCategory::Io(IoSubcategory::PathNotFound),
+       ErrorSeverity::Error
+   );
    ```
 
-2. **Frontend Error Parsing (TypeScript)**
-   ```typescript
-   // Error is received from Tauri command
-   const error = await invoke('some_command');
-   
-   // Error is parsed into AppError format
-   const appError = parseError(error);
-   // Produces:
-   // {
-   //   category: ErrorCategory.PROJECT,
-   //   message: "Project not found",
-   //   code: 9000,
-   //   severity: ErrorSeverity.ERROR,
-   //   subcategory: ErrorSubcategory.NOT_FOUND
-   // }
-   ```
+2. **Error Handling (Rust)**
+   ```rust
+   use crate::error::AppResult;
 
-3. **Error Display (TypeScript)**
-   ```typescript
-   // Show error toast
-   showErrorToast(appError);
-   // Shows appropriate toast based on error category and severity
+   fn process_file(path: &str) -> AppResult<String> {
+       let content = std::fs::read_to_string(path)
+           .map_err(|e| AppError::from(e))?;
+       Ok(content)
+   }
    ```
 
 ### Error Categories and Subcategories
 
-The system supports the following error categories, each with specific subcategories. All error categories implement the `ErrorCategoryTrait` interface which provides consistent access to error properties:
-
-```rust
-pub trait ErrorCategoryTrait {
-    /// Get the error message
-    fn message(&self) -> &str;
-    
-    /// Get the error code
-    fn code(&self) -> u32;
-    
-    /// Get the error severity
-    fn severity(&self) -> ErrorSeverity;
-    
-    /// Get the error subcategory as a string
-    fn subcategory_str(&self) -> Option<String>;
-}
-```
+The system supports the following error categories, each with specific subcategories:
 
 | Category | Description | Example Use Case | Common Subcategories |
 |----------|-------------|------------------|----------------------|
-| DATABASE | Database-related errors | SQL query failures | `ConnectionFailed`, `QueryFailed`, `TransactionFailed` |
-| MIGRATION | Database migration errors | Failed schema updates | `VersionConflict`, `SchemaError`, `DataError` |
-| IO | File system and I/O errors | File read/write failures | `ReadFailed`, `WriteFailed`, `PermissionDenied` |
-| CONFIG | Configuration errors | Invalid settings | `ParseError`, `ValidationError`, `MissingRequired` |
-| ICON_GENERATION | Icon generation errors | Failed icon creation | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
-| IMAGE | Image processing errors | Invalid image format | `ProcessingFailed`, `InvalidFormat`, `InvalidSize` |
-| FILE_NOT_FOUND | File not found errors | Missing resource files | `ResourceNotFound`, `ConfigNotFound`, `AssetNotFound` |
-| KEYRING | Keyring-related errors | Failed key storage | `AccessDenied`, `KeyNotFound`, `KeyringUnavailable` |
-| KEY_GENERATION | Key generation errors | Failed key creation | `GenerationFailed`, `StorageFailed`, `InvalidLength` |
-| PROJECT | Project-related errors | Invalid project data | `NotFound`, `InvalidName`, `InvalidPath` |
-| ICON | Icon-related errors | Invalid icon data | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
-| CONNECTION | Connection errors | Network failures | `ConnectionFailed`, `Timeout`, `Refused` |
-| VALIDATION | Input validation errors | Invalid user input | `InvalidFormat`, `MissingRequired`, `InvalidRange` |
-| AUTH | Authentication errors | Failed login | `InvalidCredentials`, `TokenExpired`, `AccountLocked` |
-| ENCRYPTION | Encryption-related errors | Failed encryption/decryption | `DecryptionFailed`, `EncryptionFailed`, `InvalidKey` |
-| KEY_MANAGEMENT | Key management errors | Failed key operations | `KeyNotInitialized`, `KeyNotFound`, `KeyGenerationFailed` |
+| Database | Database-related errors | SQL query failures | `ConnectionFailed`, `QueryFailed`, `TransactionFailed` |
+| Migration | Database migration errors | Failed schema updates | `VersionConflict`, `SchemaError`, `DataError` |
+| Io | File system and I/O errors | File read/write failures | `ReadFailed`, `WriteFailed`, `PermissionDenied` |
+| Config | Configuration errors | Invalid settings | `ParseError`, `ValidationError`, `MissingRequired` |
+| Icon | Icon-related errors | Failed icon operations | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
+| Keyring | Keyring-related errors | Failed key storage | `AccessDenied`, `KeyNotFound`, `KeyringUnavailable` |
+| Project | Project-related errors | Invalid project data | `NotFound`, `InvalidName`, `InvalidPath` |
+| Encryption | Encryption-related errors | Failed encryption/decryption | `DecryptionFailed`, `EncryptionFailed`, `InvalidKey` |
+| Connection | Connection errors | Network failures | `ConnectionFailed`, `Timeout`, `Refused` |
+| Validation | Input validation errors | Invalid user input | `InvalidFormat`, `MissingRequired`, `InvalidRange` |
+| Auth | Authentication errors | Failed login | `InvalidCredentials`, `TokenExpired`, `AccountLocked` |
+| Unknown | Unknown or unexpected errors | Unhandled exceptions | `Unexpected`, `System`, `External` |
 
 ### Error Severity Levels
 
@@ -146,115 +132,46 @@ The system defines four severity levels for errors:
 | Error | Problems needing attention | Failed operations |
 | Critical | Serious problems | Data corruption, security issues |
 
-### Using Error Categories in Rust
-
-```rust
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error::categories::{ProjectSubcategory, DatabaseSubcategory};
-
-// Create a project error
-let error = ErrorCategory::Project {
-    message: "Project not found".to_string(),
-    subcategory: Some(ProjectSubcategory::NotFound),
-    code: 9000,
-    severity: ErrorSeverity::Error,
-};
-
-// Create a database error
-let error = ErrorCategory::Database {
-    message: "Query failed".to_string(),
-    subcategory: Some(DatabaseSubcategory::QueryFailed),
-    code: 1000,
-    severity: ErrorSeverity::Error,
-};
-```
-
-### Error Message Templates
-
-The system includes predefined error message templates in `messages.rs`:
-
-```rust
-pub struct ErrorMessages;
-
-impl ErrorMessages {
-    // Database errors
-    pub const DB_CONNECTION_FAILED: &'static str = "Failed to connect to database: {reason}";
-    pub const DB_QUERY_FAILED: &'static str = "Database query failed: {query}";
-    // ... more templates
-}
-```
-
 ### Best Practices
 
 1. **Error Creation**
-   - Use specific error categories and subcategories
+   - Use the appropriate constructor method for each error type
    - Include descriptive error messages
    - Set appropriate severity levels
-   - Use error codes consistently
    - Example:
    ```rust
-   ErrorCategory::Project {
-       message: "Invalid project name".to_string(),
-       subcategory: Some(ProjectSubcategory::InvalidName),
-       code: 9000,
-       severity: ErrorSeverity::Error,
-   }
+   AppError::database(
+       "Failed to execute query: table does not exist",
+       DatabaseSubcategory::QueryFailed,
+       ErrorSeverity::Error
+   )
    ```
 
 2. **Error Handling**
+   - Use `AppResult<T>` for functions that can fail
+   - Convert external errors using `From` implementations
    - Handle errors at the appropriate level
-   - Use error subcategories for specific handling
-   - Log errors with full context
-   - Convert external errors to internal error types
    - Example:
    ```rust
-   match result {
-       Ok(value) => Ok(value),
-       Err(e) => match e {
-           sqlx::Error::Database(_) => Err(ErrorCategory::Database {
-               message: "Database error".to_string(),
-               subcategory: Some(DatabaseSubcategory::QueryFailed),
-               code: 1000,
-               severity: ErrorSeverity::Error,
-           }),
-           _ => Err(ErrorCategory::Unknown {
-               message: e.to_string(),
-               subcategory: None,
-               code: 9999,
-               severity: ErrorSeverity::Error,
-           }),
-       },
+   fn process_data() -> AppResult<Data> {
+       let file = read_file("data.json")
+           .map_err(|e| AppError::from(e))?;
+       // Process file...
    }
    ```
 
-3. **Error Messages**
-   - Use message templates when possible
-   - Include relevant parameters
-   - Be clear and actionable
-   - Consider localization
+3. **Error Conversion**
+   - Use the provided `From` implementations for common error types
+   - Implement custom conversions when needed
    - Example:
    ```rust
-   let message = ErrorMessages::format_message(
-       ErrorMessages::DB_CONNECTION_FAILED,
-       &serde_json::json!({ "reason": "Connection timeout" })
-   );
-   ```
-
-4. **Error Codes**
-   - Use consistent code ranges for each category
-   - Document code ranges in comments
-   - Reserve codes for future use
-   - Example ranges:
-   ```rust
-   // Database errors: 1000-1999
-   // Migration errors: 2000-2999
-   // IO errors: 3000-3999
-   // Icon generation errors: 4000-4999
-   // Config errors: 5000-5999
-   // Keyring errors: 7000-7999
-   // Key generation errors: 8000-8999
-   // Project errors: 9000-9999
-   // Connection errors: 10000-10999
-   // Encryption errors: 14000-14999
-   // Key management errors: 15000-15999
+   impl From<sqlx::Error> for AppError {
+       fn from(error: sqlx::Error) -> Self {
+           AppError::database(
+               error.to_string(),
+               DatabaseSubcategory::QueryFailed,
+               ErrorSeverity::Error
+           )
+       }
+   }
    ```

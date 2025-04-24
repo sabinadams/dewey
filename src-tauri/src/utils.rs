@@ -10,7 +10,7 @@ use tracing::{info, debug};
 use tracing_subscriber::FmtSubscriber;
 use blake3;
 use hex;
-
+use directories::ProjectDirs;
 use crate::constants;
 use crate::error::{AppError, AppResult, ErrorSeverity, ErrorCategory};
 use crate::error::categories::{ConfigSubcategory, IoSubcategory};
@@ -20,13 +20,13 @@ use crate::error::categories::{ConfigSubcategory, IoSubcategory};
 /// # Errors
 /// Returns an error if the application directory could not be determined
 pub fn get_app_dir() -> AppResult<PathBuf> {
-    let app_dir = dirs::config_dir()
+    ProjectDirs::from(constants::app::COMPANY, constants::app::NAME, constants::app::QUALIFIER)
         .ok_or_else(|| AppError::new(
-            "Failed to get config directory",
+            "Failed to get application directory",
             ErrorCategory::Config(ConfigSubcategory::NotFound),
             ErrorSeverity::Error
-        ))?;
-    Ok(app_dir.to_path_buf())
+        ))
+        .map(|dirs| dirs.config_dir().to_path_buf())
 }
 
 /// Set up logging for the application

@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
-import { handleTauriCommand, showErrorToast } from "@/lib/errors"
+import { handleTauriCommand, showErrorToast, parseError, ErrorCategory } from "@/lib/errors"
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -120,17 +120,42 @@ const CreateProjectForm = () => {
         projectParams.initial_connection = connection;
       }
 
-      // Create the project using RTK Query mutation
-      const result = await handleTauriCommand(() => createProject(projectParams).unwrap());
-
-      toast.dismiss(loadingToastId);
-      toast.success('Project created successfully!');
-
-      // Navigate to the new project
-      navigate(`/project/${result}`);
+      try {
+        // Create the project using RTK Query mutation
+        const result = await createProject(projectParams).unwrap();
+        toast.dismiss(loadingToastId);
+        toast.success('Project created successfully!');
+        // Navigate to the new project
+        navigate(`/project/${result}`);
+      } catch (error) {
+        const appError = parseError(error);
+        
+        // Handle keychain errors differently
+        if (appError.category === ErrorCategory.KEYRING || 
+            appError.category === ErrorCategory.KEY_GENERATION) {
+          toast.dismiss(loadingToastId);
+          // Navigate to onboarding to set up encryption key
+          // navigate('/onboarding');
+          // a toast with an action to navigate to onboarding
+          toast.error('Encryption Key Error', {
+            description: 'Please set up an encryption key to continue.',
+            action: {
+              label: 'Set Up',
+              onClick: () => {
+                // Set up encryption key
+              },
+            },
+          });
+        }
+        
+        // For all other errors, show the error toast
+        showErrorToast(appError);
+      }
     } catch (error) {
       toast.dismiss(loadingToastId);
-      // Error is already handled by handleTauriCommand
+      // Handle any other errors that might occur
+      const appError = parseError(error);
+      showErrorToast(appError);
     } finally {
       setIsSubmitting(false);
     }

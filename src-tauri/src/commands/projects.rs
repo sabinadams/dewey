@@ -11,7 +11,7 @@ use crate::state::AppState;
 use crate::error::ErrorCategory;
 use blake3;
 use tauri::State;
-use tracing::{error, info};
+use tracing::info;
 use snafu::ResultExt;
 
 /// Command to fetch all projects for a user

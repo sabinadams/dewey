@@ -1,15 +1,11 @@
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::http::Response;
-use tracing::{debug, info};
+use tracing::debug;
 use tracing_subscriber::fmt;
 use directories::ProjectDirs;
 use blake3;
 use hex;
-use snafu::ResultExt;
-use snafu::{Snafu, Backtrace, GenerateImplicitData};
-use std::path::Path;
-use std::fs;
 
 use crate::constants;
 use crate::error::ErrorCategory;

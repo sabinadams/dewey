@@ -7,7 +7,6 @@ use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
 use crate::error::ErrorCategory;
-use snafu::{Snafu, Backtrace, GenerateImplicitData};
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary

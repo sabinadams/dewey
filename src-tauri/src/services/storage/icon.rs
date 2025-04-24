@@ -8,10 +8,6 @@ use crate::constants;
 use crate::utils;
 use super::LocalStorage;
 use base64::{Engine, engine::general_purpose::STANDARD};
-use snafu::ResultExt;
-use snafu::Snafu;
-use std::path::Path;
-use crate::services::encryption::EncryptionError;
 
 /// Generates and manages project icons using identicons
 pub struct IconGenerator {

@@ -1,5 +1,5 @@
 use crate::services::key_management;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, KeyGenerationSubcategory};
 use tracing::info;
 
 /// Initialize the encryption key
@@ -21,6 +21,7 @@ pub fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
             info!("Failed to initialize encryption key: {}", e);
             Err(ErrorCategory::KeyGeneration {
                 message: "Failed to initialize encryption key".to_string(),
+                subcategory: Some(KeyGenerationSubcategory::GenerationFailed),
             })
         }
     }

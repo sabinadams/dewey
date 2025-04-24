@@ -47,7 +47,7 @@ impl ProjectRepository {
         .bind(icon_path)
         .fetch_one(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         let id = result.get(0);
         debug!("Project created successfully");
@@ -72,7 +72,7 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_all(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         debug!("Found {} projects", projects.len());
         Ok(projects)
@@ -96,7 +96,7 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         debug!("Project updated successfully");
         Ok(())
@@ -118,7 +118,7 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         debug!("Project deleted successfully");
         Ok(())
@@ -142,7 +142,7 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_optional(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         debug!("Project lookup complete");
         Ok(project)
@@ -164,7 +164,7 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_one(&*self.pool)
         .await
-        .context(DatabaseSnafu)?;
+        .context(DatabaseSnafu { subcategory: None })?;
 
         debug!("Project existence check: {}", exists.0);
         Ok(exists.0)

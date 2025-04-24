@@ -47,6 +47,7 @@ impl IconGenerator {
         let path_str = file_path.to_str()
             .ok_or_else(|| ErrorCategory::IconGeneration {
                 message: constants::INVALID_FILE_PATH.to_string(),
+                subcategory: None,
             })?;
             
         Identicon::new(&hex_seed)
@@ -54,6 +55,7 @@ impl IconGenerator {
             .save_image(path_str)
             .map_err(|e| ErrorCategory::IconGeneration {
                 message: e.to_string(),
+                subcategory: None,
             })?;
         
         Ok(filename)
@@ -100,6 +102,7 @@ impl IconGenerator {
                 .replace("data:image/svg+xml;base64,", "")
         ).map_err(|e| ErrorCategory::IconGeneration {
             message: e.to_string(),
+            subcategory: None,
         })?;
         
         // Write the image to the file

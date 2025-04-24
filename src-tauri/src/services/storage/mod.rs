@@ -66,6 +66,7 @@ impl LocalStorage {
         info!("Connected to database - running migrations");
         sqlx::migrate!().run(&pool).await.map_err(|e| ErrorCategory::Migration {
             message: e.to_string(),
+            subcategory: None,
         })?;
         info!("Migrations completed successfully");
         

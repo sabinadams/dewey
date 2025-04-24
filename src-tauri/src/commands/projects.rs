@@ -1,4 +1,4 @@
-use crate::constants;
+// use crate::constants;
 use crate::services::storage::{
     icon::IconGenerator,
     repositories::{
@@ -30,6 +30,7 @@ pub async fn get_user_projects(
     project_repo.get_by_user(&user_id).await
         .context(ErrorCategory::Project {
             message: format!("Failed to fetch projects for user {}", user_id),
+            subcategory: None,
         })
 }
 
@@ -55,6 +56,7 @@ pub async fn create_project(
     let icon_generator = IconGenerator::new()
         .context(ErrorCategory::Icon {
             message: "Failed to initialize icon generator".to_string(),
+            subcategory: None,
         })?;
 
     let final_icon_path = if let Some(icon_data) = custom_icon_data {
@@ -65,6 +67,7 @@ pub async fn create_project(
             .save_custom_icon(&icon_data, &name, &user_id)
             .context(ErrorCategory::Icon {
                 message: "Failed to save custom icon".to_string(),
+                subcategory: None,
             })?
     } else {
         // Generate a default icon
@@ -77,6 +80,7 @@ pub async fn create_project(
             .generate_and_save(hash.as_bytes())
             .context(ErrorCategory::Icon {
                 message: "Failed to generate default icon".to_string(),
+                subcategory: None,
             })?
     };
 
@@ -93,7 +97,8 @@ pub async fn create_project(
         )
         .await
         .context(ErrorCategory::Project {
-            message: format!("Failed to create project {}", name),
+            message: "Failed to create project".to_string(),
+            subcategory: None,
         })?;
 
     // If an initial connection was provided, create it
@@ -112,7 +117,8 @@ pub async fn create_project(
 
         connection_repo.create(&connection).await
             .context(ErrorCategory::Connection {
-                message: format!("Failed to create initial connection for project {}", project_id),
+                message: "Failed to create initial connection for project".to_string(),
+                subcategory: None,
             })?;
     }
 
@@ -142,17 +148,20 @@ pub async fn update_project(
         .await
         .context(ErrorCategory::Project {
             message: format!("Failed to check project existence for project {}", id),
+            subcategory: None,
         })?
     {
         return Err(ErrorCategory::ProjectNotFound {
-            message: constants::PROJECT_NOT_FOUND.to_string(),
+            message: "Project not found".to_string(),
+            subcategory: None,
         });
     }
 
     // Update the project
     project_repo.update(id, &name).await
         .context(ErrorCategory::Project {
-            message: format!("Failed to update project {}", id),
+            message: "Failed to update project".to_string(),
+            subcategory: None,
         })
 }
 
@@ -178,10 +187,12 @@ pub async fn delete_project(
         .await
         .context(ErrorCategory::Project {
             message: format!("Failed to check project existence for project {}", id),
+            subcategory: None,
         })?
     {
         return Err(ErrorCategory::ProjectNotFound {
-            message: constants::PROJECT_NOT_FOUND.to_string(),
+            message: "Project not found".to_string(),
+            subcategory: None,
         });
     }
 
@@ -189,6 +200,7 @@ pub async fn delete_project(
     project_repo.delete(id).await
         .context(ErrorCategory::Project {
             message: format!("Failed to delete project {}", id),
+            subcategory: None,
         })
 }
 
@@ -207,6 +219,7 @@ pub async fn get_project_connections(
 
     connection_repo.get_by_project(project_id).await
         .context(ErrorCategory::Connection {
-            message: format!("Failed to fetch connections for project {}", project_id),
+            message: "Failed to get project connections".to_string(),
+            subcategory: None,
         })
 }

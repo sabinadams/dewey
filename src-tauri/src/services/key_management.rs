@@ -6,7 +6,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, KeyringSubcategory, KeyGenerationSubcategory};
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary
@@ -20,6 +20,7 @@ impl KeyManager {
         let keyring_entry = Entry::new(KEY_SERVICE_NAME, KEY_ACCOUNT_NAME)
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
+                subcategory: Some(KeyringSubcategory::KeyringUnavailable),
             })?;
 
         let key_file_path = Self::get_key_file_path()?;
@@ -76,11 +77,13 @@ impl KeyManager {
             .get_password()
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
+                subcategory: Some(KeyringSubcategory::KeyNotFound),
             })?;
         
         let key_bytes = BASE64.decode(key_str)
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
+                subcategory: Some(KeyringSubcategory::InvalidKey),
             })?;
         
         let mut key = [0u8; 32];
@@ -92,11 +95,13 @@ impl KeyManager {
         let key_str = fs::read_to_string(&self.key_file_path)
             .map_err(|e| ErrorCategory::Io {
                 source: e,
+                subcategory: None,
             })?;
         
         let key_bytes = BASE64.decode(key_str.trim())
             .map_err(|e| ErrorCategory::KeyGeneration {
                 message: e.to_string(),
+                subcategory: Some(KeyGenerationSubcategory::InvalidKeyLength),
             })?;
         
         let mut key = [0u8; 32];
@@ -126,12 +131,14 @@ impl KeyManager {
                     fs::create_dir_all(parent)
                         .map_err(|e| ErrorCategory::Io {
                             source: e,
+                            subcategory: None,
                         })?;
                 }
                 
                 fs::write(&self.key_file_path, key_str)
-                    .map_err(|e| ErrorCategory::Io {
-                        source: e,
+                    .map_err(|e| ErrorCategory::KeyGeneration {
+                        message: e.to_string(),
+                        subcategory: Some(KeyGenerationSubcategory::StorageFailed),
                     })?;
                 
                 debug!("Stored encryption key in file");
@@ -144,6 +151,7 @@ impl KeyManager {
         let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
             .ok_or_else(|| ErrorCategory::Config {
                 message: "Could not determine project directories".to_string(),
+                subcategory: None,
             })?;
         
         Ok(proj_dirs.config_dir().join(KEY_FILE_NAME))

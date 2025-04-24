@@ -19,6 +19,7 @@ pub fn get_app_dir() -> Result<PathBuf, ErrorCategory> {
     ProjectDirs::from(constants::APP_COMPANY, constants::APP_NAME, constants::APP_QUALIFIER)
         .ok_or_else(|| ErrorCategory::Config {
             message: constants::APP_DIR_NOT_INITIALIZED.to_string(),
+            subcategory: None,
         })
         .map(|dirs| dirs.data_dir().to_path_buf())
 }

@@ -43,7 +43,6 @@ error/
 ├── mod.rs           # Main module file that exports everything
 ├── types.rs         # Core error types and enums (ErrorSeverity, AppError)
 ├── categories.rs    # Error categories and subcategories
-├── constructors.rs  # Convenience constructors for creating errors
 └── conversions.rs   # Error conversions and implementations
 ```
 
@@ -59,12 +58,7 @@ error/
    - Each category is an enum variant of `ErrorCategory`
    - Subcategories provide detailed error classification
 
-3. **Error Constructors (`constructors.rs`)**
-   - Provides convenience methods for creating errors
-   - Each category has its own constructor method
-   - Example: `AppError::database()`, `AppError::io()`, etc.
-
-4. **Error Conversions (`conversions.rs`)**
+3. **Error Conversions (`conversions.rs`)**
    - Implements conversions from external error types
    - Handles error display formatting
    - Provides trait implementations for error handling
@@ -76,14 +70,14 @@ error/
    use crate::error::{AppError, ErrorSeverity};
    use crate::error::categories::{DatabaseSubcategory, IoSubcategory};
 
-   // Using constructors
-   let db_error = AppError::database(
+   // Create a database error
+   let db_error = AppError::new(
        "Failed to connect to database",
-       DatabaseSubcategory::ConnectionFailed,
+       ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
        ErrorSeverity::Error
    );
 
-   // Using direct construction
+   // Create an IO error
    let io_error = AppError::new(
        "File not found",
        ErrorCategory::Io(IoSubcategory::PathNotFound),
@@ -135,14 +129,14 @@ The system defines four severity levels for errors:
 ### Best Practices
 
 1. **Error Creation**
-   - Use the appropriate constructor method for each error type
+   - Use `AppError::new()` to create errors directly
    - Include descriptive error messages
    - Set appropriate severity levels
    - Example:
    ```rust
-   AppError::database(
+   AppError::new(
        "Failed to execute query: table does not exist",
-       DatabaseSubcategory::QueryFailed,
+       ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
        ErrorSeverity::Error
    )
    ```
@@ -167,9 +161,9 @@ The system defines four severity levels for errors:
    ```rust
    impl From<sqlx::Error> for AppError {
        fn from(error: sqlx::Error) -> Self {
-           AppError::database(
+           AppError::new(
                error.to_string(),
-               DatabaseSubcategory::QueryFailed,
+               ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
                ErrorSeverity::Error
            )
        }

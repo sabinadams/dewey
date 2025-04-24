@@ -8,25 +8,25 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::http::Response;
 use tracing::debug;
 use tracing_subscriber::fmt;
-use directories::ProjectDirs;
 use blake3;
 use hex;
 
 use crate::constants;
-use crate::error::{AppError, AppResult, ErrorSeverity, ConfigSubcategory, IoSubcategory};
+use crate::error::{AppError, AppResult, ErrorSeverity, ErrorCategory};
+use crate::error::categories::{ConfigSubcategory, IoSubcategory};
 
 /// Get the application directory
 ///
 /// # Errors
 /// Returns an error if the application directory could not be determined
 pub fn get_app_dir() -> AppResult<PathBuf> {
-    ProjectDirs::from(constants::app::COMPANY, constants::app::NAME, constants::app::QUALIFIER)
-        .ok_or_else(|| AppError::config(
-            constants::errors::APP_DIR_NOT_INITIALIZED.to_string(),
-            ConfigSubcategory::ParseError,
-            ErrorSeverity::Error,
-        ))
-        .map(|dirs| dirs.data_dir().to_path_buf())
+    let app_dir = dirs::config_dir()
+        .ok_or_else(|| AppError::new(
+            "Failed to get config directory",
+            ErrorCategory::Config(ConfigSubcategory::NotFound),
+            ErrorSeverity::Error
+        ))?;
+    Ok(app_dir.to_path_buf())
 }
 
 /// Set up logging for the application
@@ -34,11 +34,12 @@ pub fn get_app_dir() -> AppResult<PathBuf> {
 /// # Errors
 /// Returns an error if the logging system cannot be initialized
 pub fn setup_logging() -> AppResult<()> {
-    fmt::try_init().map_err(|e| AppError::config(
-        format!("Failed to initialize logging: {}", e),
-        ConfigSubcategory::ParseError,
-        ErrorSeverity::Error,
-    ))
+    fmt::try_init().map_err(|e| AppError::new(
+        e.to_string(),
+        ErrorCategory::Config(ConfigSubcategory::ParseError),
+        ErrorSeverity::Error
+    ))?;
+    Ok(())
 }
 
 /// Generate a unique hash from various inputs
@@ -132,10 +133,10 @@ pub fn response_server_error() -> Response<Vec<u8>> {
 pub fn ensure_dir_exists(path: &PathBuf) -> AppResult<()> {
     if !path.exists() {
         debug!("Creating directory: {:?}", path);
-        std::fs::create_dir_all(path).map_err(|e| AppError::io(
+        std::fs::create_dir_all(path).map_err(|e| AppError::new(
             e.to_string(),
-            IoSubcategory::WriteFailed,
-            ErrorSeverity::Error,
+            ErrorCategory::Io(IoSubcategory::CreateFailed),
+            ErrorSeverity::Error
         ))?;
     }
     Ok(())

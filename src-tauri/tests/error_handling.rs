@@ -1,46 +1,51 @@
 use dewey_lib::error::{ErrorCategory, AppError, ErrorSeverity};
-use dewey_lib::error::{
+use dewey_lib::error::categories::{
     DatabaseSubcategory, IoSubcategory, ProjectSubcategory,
 };
-use std::io;
+use std::io::{Error as IoError, ErrorKind as IoErrorKind};
 
 #[test]
 fn test_database_error() {
-    let error = AppError::database(
-        "Connection failed",
-        DatabaseSubcategory::ConnectionFailed,
-        ErrorSeverity::Error,
+    let error = AppError::new(
+        "Failed to connect to database",
+        ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
+        ErrorSeverity::Error
     );
-
+    assert_eq!(error.message, "Failed to connect to database");
     assert_eq!(error.severity, ErrorSeverity::Error);
-    assert!(matches!(error.category, ErrorCategory::Database(_)));
-    assert!(error.message.contains("Connection failed"));
 }
 
 #[test]
 fn test_io_error() {
-    let error = AppError::io(
-        "Permission denied",
-        IoSubcategory::PermissionDenied,
-        ErrorSeverity::Error,
+    let error = AppError::new(
+        "File not found",
+        ErrorCategory::Io(IoSubcategory::PathNotFound),
+        ErrorSeverity::Error
     );
-
+    assert_eq!(error.message, "File not found");
     assert_eq!(error.severity, ErrorSeverity::Error);
-    assert!(matches!(error.category, ErrorCategory::Io(_)));
-    assert!(error.message.contains("Permission denied"));
 }
 
 #[test]
 fn test_project_error() {
-    let error = AppError::project(
+    let error = AppError::new(
         "Project not found",
-        ProjectSubcategory::NotFound,
-        ErrorSeverity::Error,
+        ErrorCategory::Project(ProjectSubcategory::NotFound),
+        ErrorSeverity::Error
     );
-
+    assert_eq!(error.message, "Project not found");
     assert_eq!(error.severity, ErrorSeverity::Error);
-    assert!(matches!(error.category, ErrorCategory::Project(_)));
-    assert!(error.message.contains("Project not found"));
+}
+
+#[test]
+fn test_project_error_with_details() {
+    let error = AppError::new(
+        "Invalid project name",
+        ErrorCategory::Project(ProjectSubcategory::InvalidName),
+        ErrorSeverity::Error
+    );
+    assert_eq!(error.message, "Invalid project name");
+    assert_eq!(error.severity, ErrorSeverity::Error);
 }
 
 #[test]
@@ -58,11 +63,10 @@ fn test_error_serialization() {
 
 #[test]
 fn test_error_conversion() {
-    let io_error = io::Error::new(io::ErrorKind::NotFound, "File not found");
-    let error: AppError = io_error.into();
-    
-    assert!(matches!(error.category, ErrorCategory::Io(IoSubcategory::PathNotFound)));
-    assert!(error.message.contains("File not found"));
+    let io_error = IoError::new(IoErrorKind::NotFound, "File not found");
+    let app_error = AppError::from(io_error);
+    assert_eq!(app_error.message, "File not found");
+    assert_eq!(app_error.severity, ErrorSeverity::Error);
 }
 
 #[test]

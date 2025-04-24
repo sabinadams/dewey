@@ -1,7 +1,8 @@
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
-use crate::error::{AppError, ErrorSeverity, IoSubcategory, MigrationSubcategory};
+use crate::error::{AppError, ErrorSeverity};
+use crate::error::categories::{IoSubcategory, MigrationSubcategory};
 use crate::services::storage::repositories::projects::Project;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};

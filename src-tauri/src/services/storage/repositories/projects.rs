@@ -1,4 +1,5 @@
-use crate::error::{AppError, ErrorSeverity, DatabaseSubcategory};
+use crate::error::{AppError, ErrorSeverity};
+use crate::error::categories::DatabaseSubcategory;
 use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};

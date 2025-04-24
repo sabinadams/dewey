@@ -1176,6 +1176,7 @@ dependencies = [
  "blake3",
  "chrono",
  "directories",
+ "dirs",
  "hex",
  "identicon-rs",
  "image 0.24.9",

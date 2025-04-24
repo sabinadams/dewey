@@ -25,6 +25,7 @@ pub enum MigrationSubcategory {
 pub enum IoSubcategory {
     ReadFailed,
     WriteFailed,
+    CreateFailed,
     PermissionDenied,
     PathNotFound,
     AlreadyExists,
@@ -37,6 +38,7 @@ pub enum ConfigSubcategory {
     ValidationError,
     MissingRequired,
     InvalidFormat,
+    NotFound,
 }
 
 /// Icon-related subcategories
@@ -102,6 +104,7 @@ pub enum EncryptionSubcategory {
     EncryptionFailed,
     InvalidKey,
     KeyNotInitialized,
+    KeyNotFound,
     SerializationFailed,
     DeserializationFailed,
     Base64DecodeFailed,

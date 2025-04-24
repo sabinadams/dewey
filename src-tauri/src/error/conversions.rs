@@ -61,6 +61,7 @@ impl From<io::Error> for ErrorCategory {
             io::ErrorKind::NotFound => IoSubcategory::PathNotFound,
             io::ErrorKind::PermissionDenied => IoSubcategory::PermissionDenied,
             io::ErrorKind::AlreadyExists => IoSubcategory::AlreadyExists,
+            io::ErrorKind::WriteZero => IoSubcategory::WriteFailed,
             _ => IoSubcategory::ReadFailed,
         };
         ErrorCategory::Io(subcategory)
@@ -107,6 +108,14 @@ impl snafu::IntoError<AppError> for AppError {
 
     fn into_error(self, source: Self::Source) -> AppError {
         AppError::new(self.message, source, self.severity)
+    }
+}
+
+impl From<io::Error> for AppError {
+    fn from(error: io::Error) -> Self {
+        let message = error.to_string();
+        let category = ErrorCategory::from(error);
+        Self::new(message, category, ErrorSeverity::Error)
     }
 }
 

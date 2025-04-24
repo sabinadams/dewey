@@ -6,7 +6,10 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
-use crate::error::{AppError, AppResult, ErrorSeverity, KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory};
+use crate::error::{AppError, AppResult, ErrorSeverity};
+use crate::error::categories::{
+    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory
+};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

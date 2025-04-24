@@ -8,7 +8,7 @@ use crate::services::storage::{
 };
 use crate::utils;
 use crate::state::AppState;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ProjectSubcategory};
 use blake3;
 use tauri::State;
 use tracing::info;
@@ -151,9 +151,9 @@ pub async fn update_project(
             subcategory: None,
         })?
     {
-        return Err(ErrorCategory::ProjectNotFound {
+        return Err(ErrorCategory::Project {
             message: "Project not found".to_string(),
-            subcategory: None,
+            subcategory: Some(ProjectSubcategory::NotFound),
         });
     }
 
@@ -161,7 +161,7 @@ pub async fn update_project(
     project_repo.update(id, &name).await
         .context(ErrorCategory::Project {
             message: "Failed to update project".to_string(),
-            subcategory: None,
+            subcategory: Some(ProjectSubcategory::NotFound),
         })
 }
 
@@ -190,17 +190,17 @@ pub async fn delete_project(
             subcategory: None,
         })?
     {
-        return Err(ErrorCategory::ProjectNotFound {
+        return Err(ErrorCategory::Project {
             message: "Project not found".to_string(),
-            subcategory: None,
+            subcategory: Some(ProjectSubcategory::NotFound),
         });
     }
 
     // Delete the project
     project_repo.delete(id).await
         .context(ErrorCategory::Project {
-            message: format!("Failed to delete project {}", id),
-            subcategory: None,
+            message: "Failed to delete project".to_string(),
+            subcategory: Some(ProjectSubcategory::NotFound),
         })
 }
 

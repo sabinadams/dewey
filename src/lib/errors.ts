@@ -16,13 +16,15 @@ export enum ErrorCategory {
   ICON = 'ICON',
   CONNECTION = 'CONNECTION',
   VALIDATION = 'VALIDATION',
-  AUTH = 'AUTH'
+  AUTH = 'AUTH',
+  ENCRYPTION = 'ENCRYPTION'
 }
 
 export interface AppError {
   category: ErrorCategory;
   message: string;
   details?: Record<string, any>;
+  subcategory?: string;
 }
 
 // Error patterns to match against backend error messages
@@ -41,6 +43,7 @@ const ERROR_PATTERNS: Record<ErrorCategory, RegExp> = {
   [ErrorCategory.CONNECTION]: /Connection error:/,
   [ErrorCategory.VALIDATION]: /Validation error:/,
   [ErrorCategory.AUTH]: /Authentication error:/,
+  [ErrorCategory.ENCRYPTION]: /Encryption error:/,
   [ErrorCategory.UNKNOWN]: /.*/ // Catch-all for unknown errors
 };
 
@@ -97,7 +100,7 @@ function isAppError(error: any): error is AppError {
 }
 
 export function showErrorToast(error: AppError) {
-  const { category, message } = error;
+  const { category, message, subcategory } = error;
   
   switch (category) {
     case ErrorCategory.KEYRING:
@@ -147,7 +150,8 @@ export function showErrorToast(error: AppError) {
       break;
 
     case ErrorCategory.PROJECT:
-      toast.error('Project Error', {
+      const title = subcategory === 'NotFound' ? 'Project Not Found' : 'Project Error';
+      toast.error(title, {
         description: message
       });
       break;
@@ -166,6 +170,12 @@ export function showErrorToast(error: AppError) {
 
     case ErrorCategory.AUTH:
       toast.error('Authentication Error', {
+        description: message
+      });
+      break;
+
+    case ErrorCategory.ENCRYPTION:
+      toast.error('Encryption Error', {
         description: message
       });
       break;

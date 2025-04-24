@@ -7,34 +7,12 @@ use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::sync::{Arc, OnceLock};
-use snafu::Snafu;
 use tracing::{debug, error};
 use crate::error::ErrorCategory;
 
 use super::key_management::KeyManager;
 
 static ENCRYPTION_KEY: OnceLock<Arc<[u8; 32]>> = OnceLock::new();
-
-#[derive(Debug, Snafu)]
-#[snafu(visibility(pub))]
-pub enum EncryptionError {
-    #[snafu(display("Encryption failed: {}", message))]
-    EncryptionFailed { message: String },
-
-    #[snafu(display("Decryption failed: {}", message))]
-    DecryptionFailed { message: String },
-
-    #[snafu(display("Key initialization failed: {}", message))]
-    KeyInitializationFailed { message: String },
-}
-
-impl From<ErrorCategory> for EncryptionError {
-    fn from(error: ErrorCategory) -> Self {
-        EncryptionError::KeyInitializationFailed {
-            message: error.to_string(),
-        }
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 struct EncryptedData {
@@ -43,7 +21,7 @@ struct EncryptedData {
 }
 
 /// Initialize the encryption key. This should be called once at application startup.
-pub fn initialize_encryption_key() -> Result<(), EncryptionError> {
+pub fn initialize_encryption_key() -> Result<(), ErrorCategory> {
     match KeyManager::new().and_then(|km| km.get_or_create_key()) {
         Ok(key) => {
             debug!("Successfully initialized encryption key");
@@ -54,22 +32,23 @@ pub fn initialize_encryption_key() -> Result<(), EncryptionError> {
         }
         Err(e) => {
             error!("Failed to initialize encryption key: {}", e);
-            Err(e.into())
+            Err(e)
         }
     }
 }
 
 /// Get the encryption key
-fn get_encryption_key() -> Result<Arc<[u8; 32]>, EncryptionError> {
+fn get_encryption_key() -> Result<Arc<[u8; 32]>, ErrorCategory> {
     ENCRYPTION_KEY.get()
         .map(Arc::clone)
-        .ok_or_else(|| EncryptionError::KeyInitializationFailed {
+        .ok_or_else(|| ErrorCategory::Encryption {
             message: "Encryption key not initialized".to_string(),
+            subcategory: Some("KeyNotInitialized".to_string()),
         })
 }
 
 /// Encrypt a string value
-pub fn encrypt_string(value: &str) -> Result<String, EncryptionError> {
+pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
     let key = get_encryption_key()?;
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
     
@@ -79,8 +58,9 @@ pub fn encrypt_string(value: &str) -> Result<String, EncryptionError> {
     
     let ciphertext = cipher
         .encrypt(Nonce::from_slice(&nonce), value.as_bytes())
-        .map_err(|e| EncryptionError::EncryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("EncryptionFailed".to_string()),
         })?;
 
     let encrypted_data = EncryptedData {
@@ -89,41 +69,47 @@ pub fn encrypt_string(value: &str) -> Result<String, EncryptionError> {
     };
 
     serde_json::to_string(&encrypted_data)
-        .map_err(|e| EncryptionError::EncryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("SerializationFailed".to_string()),
         })
 }
 
 /// Decrypt a string value
-pub fn decrypt_string(encrypted_value: &str) -> Result<String, EncryptionError> {
+pub fn decrypt_string(encrypted_value: &str) -> Result<String, ErrorCategory> {
     let key = get_encryption_key()?;
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
 
     let encrypted_data: EncryptedData = serde_json::from_str(encrypted_value)
-        .map_err(|e| EncryptionError::DecryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("DeserializationFailed".to_string()),
         })?;
 
     let nonce = BASE64
         .decode(encrypted_data.nonce)
-        .map_err(|e| EncryptionError::DecryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("Base64DecodeFailed".to_string()),
         })?;
     let ciphertext = BASE64
         .decode(encrypted_data.ciphertext)
-        .map_err(|e| EncryptionError::DecryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("Base64DecodeFailed".to_string()),
         })?;
 
     let plaintext = cipher
         .decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())
-        .map_err(|e| EncryptionError::DecryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("DecryptionFailed".to_string()),
         })?;
 
     String::from_utf8(plaintext)
-        .map_err(|e| EncryptionError::DecryptionFailed {
+        .map_err(|e| ErrorCategory::Encryption {
             message: e.to_string(),
+            subcategory: Some("Utf8DecodeFailed".to_string()),
         })
 }
 

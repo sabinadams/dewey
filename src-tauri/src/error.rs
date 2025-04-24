@@ -1,6 +1,5 @@
 use snafu::{Snafu, IntoError};
 use std::error::Error as StdError;
-use crate::services::encryption::EncryptionError;
 use identicon_rs::error::IdenticonError;
 use serde::Serialize;
 
@@ -78,14 +77,7 @@ pub enum ErrorCategory {
     Project { 
         message: String,
         #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
-    },
-
-    #[snafu(display("Project not found: {}", message))]
-    ProjectNotFound { 
-        message: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        subcategory: Option<String>
+        subcategory: Option<ProjectSubcategory>
     },
 
     #[snafu(display("Icon error: {}", message))]
@@ -160,7 +152,6 @@ impl ErrorCategory {
             ErrorCategory::Keyring { .. } => "KEYRING",
             ErrorCategory::KeyGeneration { .. } => "KEY_GENERATION",
             ErrorCategory::Project { .. } => "PROJECT",
-            ErrorCategory::ProjectNotFound { .. } => "PROJECT_NOT_FOUND",
             ErrorCategory::Icon { .. } => "ICON",
             ErrorCategory::Connection { .. } => "CONNECTION",
             ErrorCategory::Validation { .. } => "VALIDATION",
@@ -195,19 +186,16 @@ impl From<std::io::Error> for ErrorCategory {
 
 impl From<base64::DecodeError> for ErrorCategory {
     fn from(error: base64::DecodeError) -> Self {
-        ErrorCategory::IconGeneration { message: error.to_string(), subcategory: None }
+        ErrorCategory::Encryption { 
+            message: error.to_string(), 
+            subcategory: Some("Base64DecodeFailed".to_string()) 
+        }
     }
 }
 
 impl From<mongodb::error::Error> for ErrorCategory {
     fn from(error: mongodb::error::Error) -> Self {
         ErrorCategory::Database { source: sqlx::Error::Protocol(error.to_string()), subcategory: None }
-    }
-}
-
-impl From<EncryptionError> for ErrorCategory {
-    fn from(error: EncryptionError) -> Self {
-        ErrorCategory::Encryption { message: error.to_string(), subcategory: None }
     }
 }
 
@@ -254,4 +242,11 @@ pub enum KeyGenerationSubcategory {
     GenerationFailed,
     StorageFailed,
     InvalidKeyLength,
+}
+
+#[derive(Debug, Serialize)]
+pub enum ProjectSubcategory {
+    NotFound,
+    InvalidName,
+    InvalidPath,
 } 

@@ -8,8 +8,10 @@ use blake3;
 use hex;
 
 use crate::constants;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
+use crate::error_subcategories::ConfigSubcategory;
 use crate::types::AppResult;
+use crate::create_error;
 
 /// Get the application directory
 ///
@@ -19,7 +21,9 @@ pub fn get_app_dir() -> Result<PathBuf, ErrorCategory> {
     ProjectDirs::from(constants::APP_COMPANY, constants::APP_NAME, constants::APP_QUALIFIER)
         .ok_or_else(|| ErrorCategory::Config {
             message: constants::APP_DIR_NOT_INITIALIZED.to_string(),
-            subcategory: None,
+            subcategory: Some(ConfigSubcategory::ParseError),
+            code: 5000,
+            severity: ErrorSeverity::Error,
         })
         .map(|dirs| dirs.data_dir().to_path_buf())
 }

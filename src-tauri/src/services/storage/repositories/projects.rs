@@ -1,4 +1,4 @@
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::DatabaseSubcategory;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
@@ -50,6 +50,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         let id = result.get(0);
@@ -78,6 +80,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Found {} projects", projects.len());
@@ -105,6 +109,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Project updated successfully");
@@ -130,6 +136,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Project deleted successfully");
@@ -157,6 +165,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Project lookup complete");
@@ -184,6 +194,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Project lookup complete");
@@ -204,6 +216,8 @@ impl ProjectRepository {
         .map_err(|e| ErrorCategory::Database {
             message: e.to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?;
 
         debug!("Project existence check: {}", exists.0);

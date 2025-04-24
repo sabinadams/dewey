@@ -1,3 +1,5 @@
+#[macro_use]
+use crate as dewey;
 use keyring::Entry;
 use rand::{rngs::OsRng, RngCore};
 use std::path::PathBuf;
@@ -6,7 +8,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::{KEY_SERVICE_NAME, KEY_ACCOUNT_NAME, KEY_FILE_NAME};
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -25,6 +27,8 @@ impl KeyManager {
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
                 subcategory: Some(KeyringSubcategory::KeyringUnavailable),
+                code: 7000,
+                severity: ErrorSeverity::Error,
             })?;
 
         let key_file_path = Self::get_key_file_path()?;
@@ -83,12 +87,16 @@ impl KeyManager {
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
                 subcategory: Some(KeyringSubcategory::KeyNotFound),
+                code: 7001,
+                severity: ErrorSeverity::Error,
             })?;
         
         let key_bytes = BASE64.decode(key_str)
             .map_err(|e| ErrorCategory::Keyring {
                 message: e.to_string(),
                 subcategory: Some(KeyringSubcategory::InvalidKey),
+                code: 7002,
+                severity: ErrorSeverity::Error,
             })?;
         
         Ok(key_bytes)
@@ -99,12 +107,16 @@ impl KeyManager {
             .map_err(|e| ErrorCategory::Io {
                 message: e.to_string(),
                 subcategory: Some(IoSubcategory::ReadFailed),
+                code: 3000,
+                severity: ErrorSeverity::Error,
             })?;
         
         let key_bytes = BASE64.decode(key_str.trim())
             .map_err(|e| ErrorCategory::KeyGeneration {
                 message: e.to_string(),
                 subcategory: Some(KeyGenerationSubcategory::InvalidLength),
+                code: 8000,
+                severity: ErrorSeverity::Error,
             })?;
         
         Ok(key_bytes)
@@ -132,7 +144,9 @@ impl KeyManager {
                     fs::create_dir_all(parent)
                         .map_err(|e| ErrorCategory::Io {
                             message: e.to_string(),
-                            subcategory: None,
+                            subcategory: Some(IoSubcategory::WriteFailed),
+                            code: 3000,
+                            severity: ErrorSeverity::Error,
                         })?;
                 }
                 
@@ -140,6 +154,8 @@ impl KeyManager {
                     .map_err(|e| ErrorCategory::KeyGeneration {
                         message: e.to_string(),
                         subcategory: Some(KeyGenerationSubcategory::StorageFailed),
+                        code: 8000,
+                        severity: ErrorSeverity::Error,
                     })?;
                 
                 debug!("Stored encryption key in file");
@@ -153,6 +169,8 @@ impl KeyManager {
             .ok_or_else(|| ErrorCategory::Config {
                 message: "Could not determine project directories".to_string(),
                 subcategory: None,
+                code: 5000,
+                severity: ErrorSeverity::Error,
             })?;
         
         Ok(proj_dirs.config_dir().join(KEY_FILE_NAME))
@@ -171,6 +189,8 @@ impl KeyManager {
             .ok_or_else(|| ErrorCategory::KeyManagement {
                 message: "Key not initialized".to_string(),
                 subcategory: Some(KeyManagementSubcategory::KeyNotInitialized),
+                code: 9000,
+                severity: ErrorSeverity::Error,
             })
     }
 } 

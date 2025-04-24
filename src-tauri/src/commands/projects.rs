@@ -7,7 +7,7 @@ use crate::services::storage::{
 };
 use crate::utils;
 use crate::state::AppState;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::{ProjectSubcategory, DatabaseSubcategory, IconSubcategory, ConnectionSubcategory};
 use blake3;
 use tauri::State;
@@ -31,6 +31,8 @@ pub async fn get_user_projects(
         .context(ErrorCategory::Database {
             message: format!("Failed to fetch projects for user {}", user_id),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })
 }
 
@@ -57,6 +59,8 @@ pub async fn create_project(
         .context(ErrorCategory::Icon {
             message: "Failed to initialize icon generator".to_string(),
             subcategory: Some(IconSubcategory::GenerationFailed),
+            code: 9500,
+            severity: ErrorSeverity::Error,
         })?;
 
     let final_icon_path = if let Some(icon_data) = custom_icon_data {
@@ -68,6 +72,8 @@ pub async fn create_project(
             .context(ErrorCategory::Icon {
                 message: "Failed to save custom icon".to_string(),
                 subcategory: Some(IconSubcategory::SaveFailed),
+                code: 9500,
+                severity: ErrorSeverity::Error,
             })?
     } else {
         // Generate a default icon
@@ -81,6 +87,8 @@ pub async fn create_project(
             .context(ErrorCategory::Icon {
                 message: "Failed to generate default icon".to_string(),
                 subcategory: Some(IconSubcategory::GenerationFailed),
+                code: 9500,
+                severity: ErrorSeverity::Error,
             })?
     };
 
@@ -99,6 +107,8 @@ pub async fn create_project(
         .context(ErrorCategory::Project {
             message: "Failed to create project".to_string(),
             subcategory: Some(ProjectSubcategory::InvalidPath),
+            code: 9000,
+            severity: ErrorSeverity::Error,
         })?;
 
     // If an initial connection was provided, create it
@@ -119,6 +129,8 @@ pub async fn create_project(
             .context(ErrorCategory::Connection {
                 message: "Failed to create initial connection for project".to_string(),
                 subcategory: Some(ConnectionSubcategory::ConnectionFailed),
+                code: 10000,
+                severity: ErrorSeverity::Error,
             })?;
     }
 
@@ -149,11 +161,15 @@ pub async fn update_project(
         .context(ErrorCategory::Database {
             message: format!("Failed to check project existence for project {}", id),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?
     {
         return Err(ErrorCategory::Project {
             message: "Project not found".to_string(),
             subcategory: Some(ProjectSubcategory::NotFound),
+            code: 9000,
+            severity: ErrorSeverity::Error,
         });
     }
 
@@ -162,6 +178,8 @@ pub async fn update_project(
         .context(ErrorCategory::Project {
             message: "Failed to update project".to_string(),
             subcategory: Some(ProjectSubcategory::InvalidName),
+            code: 9000,
+            severity: ErrorSeverity::Error,
         })
 }
 
@@ -188,11 +206,15 @@ pub async fn delete_project(
         .context(ErrorCategory::Database {
             message: format!("Failed to check project existence for project {}", id),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })?
     {
         return Err(ErrorCategory::Project {
             message: "Project not found".to_string(),
             subcategory: Some(ProjectSubcategory::NotFound),
+            code: 9000,
+            severity: ErrorSeverity::Error,
         });
     }
 
@@ -201,6 +223,8 @@ pub async fn delete_project(
         .context(ErrorCategory::Database {
             message: "Failed to delete project".to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })
 }
 
@@ -221,5 +245,7 @@ pub async fn get_project_connections(
         .context(ErrorCategory::Database {
             message: "Failed to get project connections".to_string(),
             subcategory: Some(DatabaseSubcategory::QueryFailed),
+            code: 1000,
+            severity: ErrorSeverity::Error,
         })
 }

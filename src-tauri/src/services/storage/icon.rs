@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::fs;
 use hex;
 use identicon_rs::Identicon;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
@@ -48,6 +48,8 @@ impl IconGenerator {
             .ok_or_else(|| ErrorCategory::IconGeneration {
                 message: constants::INVALID_FILE_PATH.to_string(),
                 subcategory: None,
+                code: 4000,
+                severity: ErrorSeverity::Error,
             })?;
             
         Identicon::new(&hex_seed)
@@ -56,6 +58,8 @@ impl IconGenerator {
             .map_err(|e| ErrorCategory::IconGeneration {
                 message: e.to_string(),
                 subcategory: None,
+                code: 4000,
+                severity: ErrorSeverity::Error,
             })?;
         
         Ok(filename)
@@ -103,6 +107,8 @@ impl IconGenerator {
         ).map_err(|e| ErrorCategory::IconGeneration {
             message: e.to_string(),
             subcategory: None,
+            code: 4000,
+            severity: ErrorSeverity::Error,
         })?;
         
         // Write the image to the file

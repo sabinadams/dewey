@@ -1,5 +1,5 @@
 use crate::services::key_management;
-use crate::error::ErrorCategory;
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::error_subcategories::KeyGenerationSubcategory;
 use tracing::{info, debug, error};
 
@@ -23,6 +23,8 @@ pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
             Err(ErrorCategory::KeyGeneration {
                 message: "Failed to initialize encryption key".to_string(),
                 subcategory: Some(KeyGenerationSubcategory::GenerationFailed),
+                code: 4000,
+                severity: ErrorSeverity::Error,
             })
         }
     }

@@ -7,7 +7,7 @@ use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
 use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
+use crate::error::categories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

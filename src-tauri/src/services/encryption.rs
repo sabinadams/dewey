@@ -9,7 +9,7 @@ use serde_json;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, error};
 use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::EncryptionSubcategory;
+use crate::error::categories::EncryptionSubcategory;
 use tokio::sync::Mutex;
 
 use super::key_management::KeyManager;

@@ -1,6 +1,5 @@
 use crate::services::key_management;
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::KeyGenerationSubcategory;
+use crate::error::{ErrorCategory, ErrorSeverity, categories::KeyGenerationSubcategory};
 use tracing::{info, debug, error};
 
 /// Initialize the encryption key

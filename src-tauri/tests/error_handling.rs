@@ -1,5 +1,5 @@
 use dewey_lib::error::{ErrorCategory, AppError, ErrorSeverity};
-use dewey_lib::error_subcategories::*;
+use dewey_lib::error::categories::*;
 use std::io;
 
 #[test]

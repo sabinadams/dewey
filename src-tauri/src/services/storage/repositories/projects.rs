@@ -1,5 +1,5 @@
 use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::DatabaseSubcategory;
+use crate::error::categories::DatabaseSubcategory;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;

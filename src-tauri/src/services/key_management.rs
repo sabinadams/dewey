@@ -1,5 +1,3 @@
-#[macro_use]
-use crate as dewey;
 use keyring::Entry;
 use rand::{rngs::OsRng, RngCore};
 use std::path::PathBuf;

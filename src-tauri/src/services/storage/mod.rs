@@ -2,9 +2,8 @@ use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
 use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error_subcategories::{IoSubcategory, MigrationSubcategory};
+use crate::error_subcategories::IoSubcategory;
 use crate::services::storage::repositories::projects::Project;
-use crate::create_error;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::{Path, PathBuf};

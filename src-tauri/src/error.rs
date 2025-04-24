@@ -2,8 +2,7 @@ use snafu::{Snafu, IntoError};
 use std::error::Error as StdError;
 use identicon_rs::error::IdenticonError;
 use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc};
-use serde_json::Value;
+use chrono::Utc;
 use crate::error_subcategories::*;
 
 /// Severity levels for errors

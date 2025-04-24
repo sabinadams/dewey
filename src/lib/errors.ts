@@ -20,11 +20,30 @@ export enum ErrorCategory {
   ENCRYPTION = 'ENCRYPTION'
 }
 
+export enum KeyringSubcategory {
+  AccessDenied = 'AccessDenied',
+  KeyNotFound = 'KeyNotFound',
+  KeyringUnavailable = 'KeyringUnavailable',
+  InvalidKey = 'InvalidKey',
+}
+
+export enum KeyGenerationSubcategory {
+  GenerationFailed = 'GenerationFailed',
+  StorageFailed = 'StorageFailed',
+  InvalidKeyLength = 'InvalidKeyLength',
+}
+
+export enum ProjectSubcategory {
+  NotFound = 'NotFound',
+  InvalidName = 'InvalidName',
+  InvalidPath = 'InvalidPath',
+}
+
 export interface AppError {
   category: ErrorCategory;
   message: string;
   details?: Record<string, any>;
-  subcategory?: string;
+  subcategory?: string | KeyringSubcategory | KeyGenerationSubcategory | ProjectSubcategory;
 }
 
 // Error patterns to match against backend error messages

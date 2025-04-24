@@ -1,15 +1,25 @@
-use crate::error::ErrorCategory;
+use crate::error::categories::{DatabaseSubcategory, ConnectionSubcategory, ErrorCategory};
+use crate::services::database;
 
 #[tauri::command]
 pub async fn test_connection(
-    _db_type: String,
-    _host: String,
-    _port: u16,
-    _username: String,
-    _password: String,
-    _database: String,
+    db_type: String,
+    host: String,
+    port: String,
+    username: String,
+    password: String,
+    database: String,
 ) -> Result<(), ErrorCategory> {
-    // TODO: Implement actual database connection test
-    // For now, just simulate a successful connection
-    Ok(())
+    database::test_connection(
+        &db_type,
+        &host,
+        &port,
+        &username,
+        &password,
+        &database,
+    ).await.map_err(|e| match e {
+        ErrorCategory::Database(_) => ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
+        ErrorCategory::Connection(_) => ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
+        _ => ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
+    })
 } 

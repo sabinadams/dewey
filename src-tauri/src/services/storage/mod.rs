@@ -2,8 +2,7 @@ use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
 use crate::error::{AppError, ErrorSeverity};
-use crate::error::categories::{IoSubcategory, MigrationSubcategory, ErrorCategory};
-use crate::services::storage::repositories::projects::Project;
+use crate::error::categories::{MigrationSubcategory, ErrorCategory};
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 use std::path::{Path, PathBuf};
@@ -11,8 +10,6 @@ use std::sync::Arc;
 use std::str::FromStr;
 use tracing::{info, debug};
 use std::sync::OnceLock;
-use std::fs;
-use serde_json;
 
 pub mod repositories;
 pub mod icon;
@@ -102,43 +99,5 @@ impl LocalStorage {
     #[must_use]
     pub fn get_app_dir() -> &'static PathBuf {
         APP_DIR.get().expect(constants::errors::APP_DIR_NOT_INITIALIZED)
-    }
-
-    fn get_projects_path(&self) -> PathBuf {
-        self.app_dir.join("projects.json")
-    }
-
-    pub fn get_projects(&self) -> AppResult<Vec<Project>> {
-        let projects_path = self.get_projects_path();
-        let content = fs::read_to_string(&projects_path)
-            .map_err(|e| AppError::new(
-                format!("Failed to read projects file: {}", e),
-                ErrorCategory::Io(IoSubcategory::ReadFailed),
-                ErrorSeverity::Error,
-            ))?;
-
-        Ok(serde_json::from_str(&content)
-            .map_err(|e| AppError::new(
-                format!("Failed to parse projects file: {}", e),
-                ErrorCategory::Io(IoSubcategory::ReadFailed),
-                ErrorSeverity::Error,
-            ))?)
-    }
-
-    pub fn save_projects(&self, projects: &[Project]) -> AppResult<()> {
-        let projects_path = self.get_projects_path();
-        let content = serde_json::to_string_pretty(projects)
-            .map_err(|e| AppError::new(
-                format!("Failed to serialize projects: {}", e),
-                ErrorCategory::Io(IoSubcategory::WriteFailed),
-                ErrorSeverity::Error,
-            ))?;
-
-        Ok(fs::write(&projects_path, content)
-            .map_err(|e| AppError::new(
-                format!("Failed to write projects file: {}", e),
-                ErrorCategory::Io(IoSubcategory::WriteFailed),
-                ErrorSeverity::Error,
-            ))?)
     }
 } 

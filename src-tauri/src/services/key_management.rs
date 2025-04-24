@@ -6,8 +6,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
 use directories::ProjectDirs;
 use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error::categories::{KeyringSubcategory, KeyGenerationSubcategory, IoSubcategory, KeyManagementSubcategory};
+use crate::error::{AppError, AppResult, ErrorSeverity, KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -20,14 +19,13 @@ pub struct KeyManager {
 }
 
 impl KeyManager {
-    pub fn new() -> Result<Self, ErrorCategory> {
+    pub fn new() -> AppResult<Self> {
         let keyring_entry = Entry::new(SERVICE_NAME, ACCOUNT_NAME)
-            .map_err(|e| ErrorCategory::Keyring {
-                message: e.to_string(),
-                subcategory: Some(KeyringSubcategory::KeyringUnavailable),
-                code: 7000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::keyring(
+                e.to_string(),
+                KeyringSubcategory::KeyringUnavailable,
+                ErrorSeverity::Error,
+            ))?;
 
         let key_file_path = Self::get_key_file_path()?;
 
@@ -39,7 +37,7 @@ impl KeyManager {
     }
 
     /// Gets the encryption key, generating and storing a new one if it doesn't exist
-    pub async fn get_or_create_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+    pub async fn get_or_create_key(&self) -> AppResult<Vec<u8>> {
         // Try to get the key from the system keyring first
         match self.get_key_from_keyring() {
             Ok(key) => {
@@ -67,7 +65,7 @@ impl KeyManager {
     }
 
     /// Check if a key exists in the keyring
-    pub fn has_key_in_keyring(&self) -> Result<bool, ErrorCategory> {
+    pub fn has_key_in_keyring(&self) -> AppResult<bool> {
         match self.keyring_entry.get_password() {
             Ok(_) => Ok(true),
             Err(_) => Ok(false)
@@ -75,58 +73,54 @@ impl KeyManager {
     }
 
     /// Check if a key exists in the fallback file
-    pub fn has_key_in_file(&self) -> Result<bool, ErrorCategory> {
+    pub fn has_key_in_file(&self) -> AppResult<bool> {
         Ok(self.key_file_path.exists())
     }
 
-    fn get_key_from_keyring(&self) -> Result<Vec<u8>, ErrorCategory> {
+    fn get_key_from_keyring(&self) -> AppResult<Vec<u8>> {
         let key_str = self.keyring_entry
             .get_password()
-            .map_err(|e| ErrorCategory::Keyring {
-                message: e.to_string(),
-                subcategory: Some(KeyringSubcategory::KeyNotFound),
-                code: 7001,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::keyring(
+                e.to_string(),
+                KeyringSubcategory::KeyNotFound,
+                ErrorSeverity::Error,
+            ))?;
         
         let key_bytes = BASE64.decode(key_str)
-            .map_err(|e| ErrorCategory::Keyring {
-                message: e.to_string(),
-                subcategory: Some(KeyringSubcategory::InvalidKey),
-                code: 7002,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::keyring(
+                e.to_string(),
+                KeyringSubcategory::InvalidKey,
+                ErrorSeverity::Error,
+            ))?;
         
         Ok(key_bytes)
     }
 
-    fn get_key_from_file(&self) -> Result<Vec<u8>, ErrorCategory> {
+    fn get_key_from_file(&self) -> AppResult<Vec<u8>> {
         let key_str = fs::read_to_string(&self.key_file_path)
-            .map_err(|e| ErrorCategory::Io {
-                message: e.to_string(),
-                subcategory: Some(IoSubcategory::ReadFailed),
-                code: 3000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::io(
+                e.to_string(),
+                IoSubcategory::ReadFailed,
+                ErrorSeverity::Error,
+            ))?;
         
         let key_bytes = BASE64.decode(key_str.trim())
-            .map_err(|e| ErrorCategory::KeyGeneration {
-                message: e.to_string(),
-                subcategory: Some(KeyGenerationSubcategory::InvalidLength),
-                code: 8000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::key_generation(
+                e.to_string(),
+                KeyManagementSubcategory::InvalidLength,
+                ErrorSeverity::Error,
+            ))?;
         
         Ok(key_bytes)
     }
 
-    fn generate_new_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+    fn generate_new_key(&self) -> AppResult<Vec<u8>> {
         let mut key = Vec::new();
         OsRng.fill_bytes(&mut key);
         Ok(key)
     }
 
-    fn store_key(&self, key: &[u8]) -> Result<(), ErrorCategory> {
+    fn store_key(&self, key: &[u8]) -> AppResult<()> {
         let key_str = BASE64.encode(key);
         
         // Try to store in system keyring first
@@ -140,21 +134,19 @@ impl KeyManager {
                 // Fall back to file storage
                 if let Some(parent) = self.key_file_path.parent() {
                     fs::create_dir_all(parent)
-                        .map_err(|e| ErrorCategory::Io {
-                            message: e.to_string(),
-                            subcategory: Some(IoSubcategory::WriteFailed),
-                            code: 3000,
-                            severity: ErrorSeverity::Error,
-                        })?;
+                        .map_err(|e| AppError::io(
+                            e.to_string(),
+                            IoSubcategory::WriteFailed,
+                            ErrorSeverity::Error,
+                        ))?;
                 }
                 
                 fs::write(&self.key_file_path, key_str)
-                    .map_err(|e| ErrorCategory::KeyGeneration {
-                        message: e.to_string(),
-                        subcategory: Some(KeyGenerationSubcategory::StorageFailed),
-                        code: 8000,
-                        severity: ErrorSeverity::Error,
-                    })?;
+                    .map_err(|e| AppError::key_generation(
+                        e.to_string(),
+                        KeyManagementSubcategory::StorageFailed,
+                        ErrorSeverity::Error,
+                    ))?;
                 
                 debug!("Stored encryption key in file");
                 Ok(())
@@ -162,33 +154,32 @@ impl KeyManager {
         }
     }
 
-    fn get_key_file_path() -> Result<PathBuf, ErrorCategory> {
+    fn get_key_file_path() -> AppResult<PathBuf> {
         let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or_else(|| ErrorCategory::Config {
-                message: "Could not determine project directories".to_string(),
-                subcategory: None,
-                code: 5000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .ok_or_else(|| AppError::config(
+                "Could not determine project directories",
+                ConfigSubcategory::ParseError,
+                ErrorSeverity::Error,
+            ))?;
         
         Ok(proj_dirs.config_dir().join(FILE_NAME))
     }
 
-    pub async fn set_key(&self, key: Vec<u8>) {
+    pub async fn set_key(&self, key: Vec<u8>) -> AppResult<()> {
         let mut key_guard = self.key.lock().await;
         *key_guard = Some(key);
+        Ok(())
     }
 
-    pub async fn get_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
         self.key
             .lock()
             .await
             .clone()
-            .ok_or_else(|| ErrorCategory::KeyManagement {
-                message: "Key not initialized".to_string(),
-                subcategory: Some(KeyManagementSubcategory::KeyNotInitialized),
-                code: 9000,
-                severity: ErrorSeverity::Error,
-            })
+            .ok_or_else(|| AppError::key_management(
+                "Key not initialized".to_string(),
+                KeyManagementSubcategory::KeyNotInitialized,
+                ErrorSeverity::Error,
+            ))
     }
 } 

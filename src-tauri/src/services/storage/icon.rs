@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::fs;
 use hex;
 use identicon_rs::Identicon;
-use crate::error::{ErrorCategory, ErrorSeverity};
+use crate::error::{AppError, ErrorSeverity, IconSubcategory};
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
@@ -21,8 +21,7 @@ impl IconGenerator {
     /// Returns an error if the icons directory cannot be created
     pub fn new() -> AppResult<Self> {
         let icons_dir = LocalStorage::get_app_dir().join(constants::files::ICONS_DIR);
-        utils::ensure_dir_exists(&icons_dir)
-            .map_err(ErrorCategory::from)?;
+        utils::ensure_dir_exists(&icons_dir)?;
         
         Ok(Self { icons_dir })
     }
@@ -45,22 +44,20 @@ impl IconGenerator {
         
         // Generate and save the identicon
         let path_str = file_path.to_str()
-            .ok_or_else(|| ErrorCategory::IconGeneration {
-                message: constants::errors::INVALID_FILE_PATH.to_string(),
-                subcategory: None,
-                code: 4000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .ok_or_else(|| AppError::icon(
+                constants::errors::INVALID_FILE_PATH,
+                IconSubcategory::InvalidPath,
+                ErrorSeverity::Error,
+            ))?;
             
         Identicon::new(&hex_seed)
             .set_border(0)
             .save_image(path_str)
-            .map_err(|e| ErrorCategory::IconGeneration {
-                message: e.to_string(),
-                subcategory: None,
-                code: 4000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::icon(
+                e.to_string(),
+                IconSubcategory::GenerationFailed,
+                ErrorSeverity::Error,
+            ))?;
         
         Ok(filename)
     }
@@ -104,16 +101,14 @@ impl IconGenerator {
                 .replace("data:image/png;base64,", "")
                 .replace("data:image/jpeg;base64,", "")
                 .replace("data:image/svg+xml;base64,", "")
-        ).map_err(|e| ErrorCategory::IconGeneration {
-            message: e.to_string(),
-            subcategory: None,
-            code: 4000,
-            severity: ErrorSeverity::Error,
-        })?;
+        ).map_err(|e| AppError::icon(
+            e.to_string(),
+            IconSubcategory::Base64DecodeFailed,
+            ErrorSeverity::Error,
+        ))?;
         
         // Write the image to the file
-        fs::write(&icon_path, &image_data)
-            .map_err(ErrorCategory::from)?;
+        fs::write(&icon_path, &image_data)?;
         
         Ok(icon_name)
     }

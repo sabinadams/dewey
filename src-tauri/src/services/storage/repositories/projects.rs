@@ -1,5 +1,5 @@
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error::categories::DatabaseSubcategory;
+use crate::error::{AppError, ErrorSeverity, DatabaseSubcategory};
+use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
@@ -32,7 +32,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> Result<i64, ErrorCategory> {
+    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
         debug!("Creating new project '{}' for user: {}", name, user_id);
         
         let result = sqlx::query(
@@ -47,12 +47,11 @@ impl ProjectRepository {
         .bind(icon_path)
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         let id = result.get(0);
         debug!("Project created successfully");
@@ -63,7 +62,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn get_by_user(&self, user_id: &str) -> Result<Vec<Project>, ErrorCategory> {
+    pub async fn get_by_user(&self, user_id: &str) -> AppResult<Vec<Project>> {
         debug!("Fetching projects for user: {}", user_id);
         
         let projects = sqlx::query_as::<_, Project>(
@@ -77,12 +76,11 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_all(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Found {} projects", projects.len());
         Ok(projects)
@@ -92,7 +90,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn update(&self, id: i64, name: &str) -> Result<(), ErrorCategory> {
+    pub async fn update(&self, id: i64, name: &str) -> AppResult<()> {
         debug!("Updating project {} with name: {}", id, name);
         
         sqlx::query(
@@ -106,12 +104,11 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project updated successfully");
         Ok(())
@@ -121,7 +118,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn delete(&self, id: i64) -> Result<(), ErrorCategory> {
+    pub async fn delete(&self, id: i64) -> AppResult<()> {
         debug!("Deleting project {}", id);
 
         sqlx::query(
@@ -133,12 +130,11 @@ impl ProjectRepository {
         .bind(id)
         .execute(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project deleted successfully");
         Ok(())
@@ -148,7 +144,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn get_by_id(&self, id: i64, user_id: &str) -> Result<Option<Project>, ErrorCategory> {
+    pub async fn get_by_id(&self, id: i64, user_id: &str) -> AppResult<Option<Project>> {
         debug!("Fetching project {} for user: {}", id, user_id);
         
         let project = sqlx::query_as::<_, Project>(
@@ -162,12 +158,11 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_optional(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project lookup complete");
         Ok(project)
@@ -177,7 +172,7 @@ impl ProjectRepository {
     ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn exists(&self, id: i64, user_id: &str) -> Result<bool, ErrorCategory> {
+    pub async fn exists(&self, id: i64, user_id: &str) -> AppResult<bool> {
         debug!("Checking if project {} exists for user: {}", id, user_id);
 
         let result = sqlx::query(
@@ -191,18 +186,17 @@ impl ProjectRepository {
         .bind(user_id)
         .fetch_optional(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project lookup complete");
         Ok(result.is_some())
     }
 
-    pub async fn exists_by_id(&self, id: i64) -> Result<bool, ErrorCategory> {
+    pub async fn exists_by_id(&self, id: i64) -> AppResult<bool> {
         debug!("Checking if project {} exists", id);
 
         let exists: (bool,) = sqlx::query_as(
@@ -213,12 +207,11 @@ impl ProjectRepository {
         .bind(id)
         .fetch_one(&*self.pool)
         .await
-        .map_err(|e| ErrorCategory::Database {
-            message: e.to_string(),
-            subcategory: Some(DatabaseSubcategory::QueryFailed),
-            code: 1000,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::database(
+            e.to_string(),
+            DatabaseSubcategory::QueryFailed,
+            ErrorSeverity::Error,
+        ))?;
 
         debug!("Project existence check: {}", exists.0);
         Ok(exists.0)

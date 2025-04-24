@@ -31,6 +31,7 @@ tokio = { version = "1.36.0", features = ["full"] }
 
 # Error handling
 snafu = { version = "0.7", features = ["backtraces-impl-std"] }
+anyhow = "1.0"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

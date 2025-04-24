@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, error};
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error::categories::EncryptionSubcategory;
+use crate::error::{AppError, AppResult, ErrorSeverity, EncryptionSubcategory};
 use tokio::sync::Mutex;
 
 use super::key_management::KeyManager;
@@ -23,7 +22,7 @@ struct EncryptedData {
 }
 
 /// Initialize the encryption key. This should be called once at application startup.
-pub async fn initialize_encryption_key() -> Result<(), ErrorCategory> {
+pub async fn initialize_encryption_key() -> AppResult<()> {
     let key_manager = KeyManager::new()?;
     match key_manager.get_or_create_key().await {
         Ok(key) => {
@@ -41,19 +40,18 @@ pub async fn initialize_encryption_key() -> Result<(), ErrorCategory> {
 }
 
 /// Get the encryption key
-fn get_encryption_key() -> Result<Arc<[u8; 32]>, ErrorCategory> {
+fn get_encryption_key() -> AppResult<Arc<[u8; 32]>> {
     ENCRYPTION_KEY.get()
         .map(Arc::clone)
-        .ok_or_else(|| ErrorCategory::Encryption {
-            message: "Encryption key not initialized".to_string(),
-            subcategory: Some(EncryptionSubcategory::KeyNotInitialized),
-            code: 14000,
-            severity: ErrorSeverity::Error,
-        })
+        .ok_or_else(|| AppError::encryption(
+            "Encryption key not initialized",
+            EncryptionSubcategory::KeyNotInitialized,
+            ErrorSeverity::Error,
+        ))
 }
 
 /// Encrypt a string value
-pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
+pub fn encrypt_string(value: &str) -> AppResult<String> {
     let key = get_encryption_key()?;
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
     
@@ -63,12 +61,11 @@ pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
     
     let ciphertext = cipher
         .encrypt(Nonce::from_slice(&nonce), value.as_bytes())
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::EncryptionFailed),
-            code: 14001,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::EncryptionFailed,
+            ErrorSeverity::Error,
+        ))?;
 
     let encrypted_data = EncryptedData {
         nonce: BASE64.encode(nonce),
@@ -76,60 +73,54 @@ pub fn encrypt_string(value: &str) -> Result<String, ErrorCategory> {
     };
 
     serde_json::to_string(&encrypted_data)
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::SerializationFailed),
-            code: 14002,
-            severity: ErrorSeverity::Error,
-        })
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::SerializationFailed,
+            ErrorSeverity::Error,
+        ))
 }
 
 /// Decrypt a string value
-pub fn decrypt_string(encrypted_value: &str) -> Result<String, ErrorCategory> {
+pub fn decrypt_string(encrypted_value: &str) -> AppResult<String> {
     let key = get_encryption_key()?;
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
 
     let encrypted_data: EncryptedData = serde_json::from_str(encrypted_value)
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::DeserializationFailed),
-            code: 14003,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::DeserializationFailed,
+            ErrorSeverity::Error,
+        ))?;
 
     let nonce = BASE64
         .decode(encrypted_data.nonce)
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::Base64DecodeFailed),
-            code: 14004,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::Base64DecodeFailed,
+            ErrorSeverity::Error,
+        ))?;
     let ciphertext = BASE64
         .decode(encrypted_data.ciphertext)
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::Base64DecodeFailed),
-            code: 14004,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::Base64DecodeFailed,
+            ErrorSeverity::Error,
+        ))?;
 
     let plaintext = cipher
         .decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::DecryptionFailed),
-            code: 14005,
-            severity: ErrorSeverity::Error,
-        })?;
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::DecryptionFailed,
+            ErrorSeverity::Error,
+        ))?;
 
     String::from_utf8(plaintext)
-        .map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::Utf8DecodeFailed),
-            code: 14006,
-            severity: ErrorSeverity::Error,
-        })
+        .map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::Utf8DecodeFailed,
+            ErrorSeverity::Error,
+        ))
 }
 
 pub struct EncryptionService {
@@ -148,28 +139,26 @@ impl EncryptionService {
         *key_guard = Some(key);
     }
 
-    pub async fn get_key(&self) -> Result<Vec<u8>, ErrorCategory> {
+    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
         let key = self.key
             .lock()
             .await
             .clone()
-            .ok_or_else(|| ErrorCategory::Encryption {
-                message: "Encryption key not initialized".to_string(),
-                subcategory: Some(EncryptionSubcategory::KeyNotInitialized),
-                code: 14000,
-                severity: ErrorSeverity::Error,
-            })?;
+            .ok_or_else(|| AppError::encryption(
+                "Encryption key not initialized",
+                EncryptionSubcategory::KeyNotInitialized,
+                ErrorSeverity::Error,
+            ))?;
         Ok(key)
     }
 
-    pub async fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, ErrorCategory> {
+    pub async fn encrypt(&self, data: &[u8]) -> AppResult<Vec<u8>> {
         let key = self.get_key().await?;
-        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::InvalidKey),
-            code: 14001,
-            severity: ErrorSeverity::Error,
-        })?;
+        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::InvalidKey,
+            ErrorSeverity::Error,
+        ))?;
 
         let mut nonce = [0u8; 12];
         rand::thread_rng().fill_bytes(&mut nonce);
@@ -177,12 +166,11 @@ impl EncryptionService {
 
         let encrypted_data = cipher
             .encrypt(nonce, data)
-            .map_err(|e| ErrorCategory::Encryption {
-                message: e.to_string(),
-                subcategory: Some(EncryptionSubcategory::EncryptionFailed),
-                code: 14002,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::encryption(
+                e.to_string(),
+                EncryptionSubcategory::EncryptionFailed,
+                ErrorSeverity::Error,
+            ))?;
 
         // Prepend the nonce to the encrypted data
         let mut result = nonce.to_vec();
@@ -190,24 +178,22 @@ impl EncryptionService {
         Ok(result)
     }
 
-    pub async fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, ErrorCategory> {
+    pub async fn decrypt(&self, data: &[u8]) -> AppResult<Vec<u8>> {
         let key = self.get_key().await?;
-        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| ErrorCategory::Encryption {
-            message: e.to_string(),
-            subcategory: Some(EncryptionSubcategory::InvalidKey),
-            code: 14001,
-            severity: ErrorSeverity::Error,
-        })?;
+        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| AppError::encryption(
+            e.to_string(),
+            EncryptionSubcategory::InvalidKey,
+            ErrorSeverity::Error,
+        ))?;
 
         let nonce = Nonce::from_slice(&data[..12]);
         cipher
             .decrypt(nonce, &data[12..])
-            .map_err(|e| ErrorCategory::Encryption {
-                message: e.to_string(),
-                subcategory: Some(EncryptionSubcategory::DecryptionFailed),
-                code: 14005,
-                severity: ErrorSeverity::Error,
-            })
+            .map_err(|e| AppError::encryption(
+                e.to_string(),
+                EncryptionSubcategory::DecryptionFailed,
+                ErrorSeverity::Error,
+            ))
     }
 }
 

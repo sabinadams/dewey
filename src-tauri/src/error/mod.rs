@@ -5,6 +5,8 @@
 
 use serde::{Serialize, Deserialize};
 use snafu::Snafu;
+use std::io;
+use std::fmt;
 
 /// Severity levels for errors
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -32,6 +34,7 @@ pub enum MigrationSubcategory {
     SchemaError,
     DataError,
     RollbackFailed,
+    MigrationFailed,
 }
 
 /// IO-related subcategories
@@ -60,6 +63,8 @@ pub enum IconSubcategory {
     SaveFailed,
     InvalidFormat,
     InvalidSize,
+    InvalidPath,
+    Base64DecodeFailed,
 }
 
 /// Keyring-related subcategories
@@ -129,6 +134,8 @@ pub enum KeyManagementSubcategory {
     KeyGenerationFailed,
     KeyStorageFailed,
     KeyRetrievalFailed,
+    InvalidLength,
+    StorageFailed,
 }
 
 /// Unknown error subcategories
@@ -160,7 +167,7 @@ pub enum ErrorCategory {
 }
 
 /// The main error type for the application
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Serialize)]
 pub struct AppError {
     pub message: String,
     pub category: ErrorCategory,
@@ -219,6 +226,19 @@ impl AppError {
         };
 
         category_code + subcategory_code
+    }
+}
+
+// Implement From for common error types
+impl From<io::Error> for AppError {
+    fn from(error: io::Error) -> Self {
+        let subcategory = match error.kind() {
+            io::ErrorKind::NotFound => IoSubcategory::PathNotFound,
+            io::ErrorKind::PermissionDenied => IoSubcategory::PermissionDenied,
+            io::ErrorKind::AlreadyExists => IoSubcategory::AlreadyExists,
+            _ => IoSubcategory::ReadFailed,
+        };
+        Self::io(error.to_string(), subcategory, ErrorSeverity::Error)
     }
 }
 
@@ -282,5 +302,110 @@ impl AppError {
 
     pub fn unknown(message: impl Into<String>, subcategory: UnknownSubcategory, severity: ErrorSeverity) -> Self {
         Self::new(message, ErrorCategory::Unknown(subcategory), severity)
+    }
+}
+
+// Type alias for Result using AppError
+pub type AppResult<T> = Result<T, AppError>;
+
+impl fmt::Display for ErrorCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ErrorCategory::Database(sub) => write!(f, "Database error: {:?}", sub),
+            ErrorCategory::Migration(sub) => write!(f, "Migration error: {:?}", sub),
+            ErrorCategory::Io(sub) => write!(f, "IO error: {:?}", sub),
+            ErrorCategory::Config(sub) => write!(f, "Config error: {:?}", sub),
+            ErrorCategory::IconGeneration(sub) => write!(f, "Icon generation error: {:?}", sub),
+            ErrorCategory::Icon(sub) => write!(f, "Icon error: {:?}", sub),
+            ErrorCategory::Keyring(sub) => write!(f, "Keyring error: {:?}", sub),
+            ErrorCategory::KeyGeneration(sub) => write!(f, "Key generation error: {:?}", sub),
+            ErrorCategory::Project(sub) => write!(f, "Project error: {:?}", sub),
+            ErrorCategory::Encryption(sub) => write!(f, "Encryption error: {:?}", sub),
+            ErrorCategory::KeyManagement(sub) => write!(f, "Key management error: {:?}", sub),
+            ErrorCategory::Connection(sub) => write!(f, "Connection error: {:?}", sub),
+            ErrorCategory::Validation(sub) => write!(f, "Validation error: {:?}", sub),
+            ErrorCategory::Auth(sub) => write!(f, "Auth error: {:?}", sub),
+            ErrorCategory::Unknown(sub) => write!(f, "Unknown error: {:?}", sub),
+        }
+    }
+}
+
+impl From<AppError> for ErrorCategory {
+    fn from(error: AppError) -> Self {
+        error.category
+    }
+}
+
+impl From<&str> for ErrorCategory {
+    fn from(_s: &str) -> Self {
+        ErrorCategory::Unknown(UnknownSubcategory::Unexpected)
+    }
+}
+
+impl From<String> for ErrorCategory {
+    fn from(_s: String) -> Self {
+        ErrorCategory::Unknown(UnknownSubcategory::Unexpected)
+    }
+}
+
+impl From<sqlx::Error> for ErrorCategory {
+    fn from(_error: sqlx::Error) -> Self {
+        ErrorCategory::Database(DatabaseSubcategory::QueryFailed)
+    }
+}
+
+impl From<mongodb::error::Error> for ErrorCategory {
+    fn from(_error: mongodb::error::Error) -> Self {
+        ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed)
+    }
+}
+
+impl From<std::io::Error> for ErrorCategory {
+    fn from(error: std::io::Error) -> Self {
+        match error.kind() {
+            std::io::ErrorKind::NotFound => ErrorCategory::Io(IoSubcategory::PathNotFound),
+            std::io::ErrorKind::PermissionDenied => ErrorCategory::Io(IoSubcategory::PermissionDenied),
+            std::io::ErrorKind::AlreadyExists => ErrorCategory::Io(IoSubcategory::AlreadyExists),
+            _ => ErrorCategory::Io(IoSubcategory::ReadFailed),
+        }
+    }
+}
+
+impl From<base64::DecodeError> for ErrorCategory {
+    fn from(_error: base64::DecodeError) -> Self {
+        ErrorCategory::Icon(IconSubcategory::Base64DecodeFailed)
+    }
+}
+
+impl From<serde_json::Error> for ErrorCategory {
+    fn from(_error: serde_json::Error) -> Self {
+        ErrorCategory::Io(IoSubcategory::ReadFailed)
+    }
+}
+
+impl From<ErrorCategory> for AppError {
+    fn from(category: ErrorCategory) -> Self {
+        Self {
+            message: category.to_string(),
+            category,
+            severity: ErrorSeverity::Error,
+        }
+    }
+}
+
+impl snafu::IntoError<AppError> for AppError {
+    type Source = ErrorCategory;
+    fn into_error(self, source: Self::Source) -> AppError {
+        AppError {
+            message: source.to_string(),
+            category: source,
+            severity: self.severity,
+        }
+    }
+}
+
+impl From<AppError> for tauri::Error {
+    fn from(error: AppError) -> Self {
+        tauri::Error::Anyhow(anyhow::anyhow!(error.message))
     }
 } 

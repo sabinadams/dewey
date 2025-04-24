@@ -1,8 +1,7 @@
 use crate::types::AppResult;
 use crate::constants;
 use crate::utils;
-use crate::error::{ErrorCategory, ErrorSeverity};
-use crate::error::categories::IoSubcategory;
+use crate::error::{AppError, ErrorSeverity, IoSubcategory, MigrationSubcategory};
 use crate::services::storage::repositories::projects::Project;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
@@ -68,12 +67,11 @@ impl LocalStorage {
         
         // Run migrations
         info!("Connected to database - running migrations");
-        sqlx::migrate!().run(&pool).await.map_err(|e| ErrorCategory::Migration {
-            message: e.to_string(),
-            subcategory: None,
-            code: 3004,
-            severity: ErrorSeverity::Error,
-        })?;
+        sqlx::migrate!().run(&pool).await.map_err(|e| AppError::migration(
+            e.to_string(),
+            MigrationSubcategory::MigrationFailed,
+            ErrorSeverity::Error,
+        ))?;
         info!("Migrations completed successfully");
         
         Ok(Self {
@@ -105,41 +103,41 @@ impl LocalStorage {
         APP_DIR.get().expect(constants::errors::APP_DIR_NOT_INITIALIZED)
     }
 
-    pub fn get_projects(&self) -> AppResult<Vec<Project>> {
-        let projects_path = self.app_dir.join("projects.json");
-        let content = fs::read_to_string(&projects_path)
-            .map_err(|e| ErrorCategory::Io {
-                message: format!("Failed to read projects file: {}", e),
-                subcategory: Some(IoSubcategory::ReadFailed),
-                code: 3000,
-                severity: ErrorSeverity::Error,
-            })?;
+    fn get_projects_path(&self) -> PathBuf {
+        self.app_dir.join("projects.json")
+    }
 
-        serde_json::from_str(&content)
-            .map_err(|e| ErrorCategory::Io {
-                message: format!("Failed to parse projects file: {}", e),
-                subcategory: Some(IoSubcategory::ReadFailed),
-                code: 3001,
-                severity: ErrorSeverity::Error,
-            })
+    pub fn get_projects(&self) -> AppResult<Vec<Project>> {
+        let projects_path = self.get_projects_path();
+        let content = fs::read_to_string(&projects_path)
+            .map_err(|e| AppError::io(
+                format!("Failed to read projects file: {}", e),
+                IoSubcategory::ReadFailed,
+                ErrorSeverity::Error,
+            ))?;
+
+        Ok(serde_json::from_str(&content)
+            .map_err(|e| AppError::io(
+                format!("Failed to parse projects file: {}", e),
+                IoSubcategory::ReadFailed,
+                ErrorSeverity::Error,
+            ))?)
     }
 
     pub fn save_projects(&self, projects: &[Project]) -> AppResult<()> {
-        let projects_path = self.app_dir.join("projects.json");
+        let projects_path = self.get_projects_path();
         let content = serde_json::to_string_pretty(projects)
-            .map_err(|e| ErrorCategory::Io {
-                message: format!("Failed to serialize projects: {}", e),
-                subcategory: Some(IoSubcategory::WriteFailed),
-                code: 3002,
-                severity: ErrorSeverity::Error,
-            })?;
+            .map_err(|e| AppError::io(
+                format!("Failed to serialize projects: {}", e),
+                IoSubcategory::WriteFailed,
+                ErrorSeverity::Error,
+            ))?;
 
-        fs::write(&projects_path, content)
-            .map_err(|e| ErrorCategory::Io {
-                message: format!("Failed to write projects file: {}", e),
-                subcategory: Some(IoSubcategory::WriteFailed),
-                code: 3003,
-                severity: ErrorSeverity::Error,
-            })
+        Ok(fs::write(&projects_path, content)
+            .map_err(|e| AppError::io(
+                format!("Failed to write projects file: {}", e),
+                IoSubcategory::WriteFailed,
+                ErrorSeverity::Error,
+            ))?)
     }
 } 

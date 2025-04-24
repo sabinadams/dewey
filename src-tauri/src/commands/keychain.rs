@@ -1,5 +1,5 @@
 use crate::services::key_management;
-use crate::error::{ErrorCategory, ErrorSeverity, categories::KeyGenerationSubcategory};
+use crate::error::{AppError, AppResult, ErrorSeverity, KeyManagementSubcategory};
 use tracing::{info, debug, error};
 
 /// Initialize the encryption key
@@ -7,7 +7,7 @@ use tracing::{info, debug, error};
 /// # Errors
 /// Returns an error if there was a problem generating or storing the key
 #[tauri::command]
-pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
+pub async fn initialize_encryption_key() -> AppResult<bool> {
     info!("Initializing encryption key");
     
     let key_manager = key_management::KeyManager::new()?;
@@ -19,12 +19,11 @@ pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
         }
         Err(e) => {
             info!("Failed to initialize encryption key: {}", e);
-            Err(ErrorCategory::KeyGeneration {
-                message: "Failed to initialize encryption key".to_string(),
-                subcategory: Some(KeyGenerationSubcategory::GenerationFailed),
-                code: 4000,
-                severity: ErrorSeverity::Error,
-            })
+            Err(AppError::key_management(
+                "Failed to initialize encryption key".to_string(),
+                KeyManagementSubcategory::KeyGenerationFailed,
+                ErrorSeverity::Error,
+            ))
         }
     }
 }
@@ -34,7 +33,7 @@ pub async fn initialize_encryption_key() -> Result<bool, ErrorCategory> {
 /// # Errors
 /// Returns an error if there was a problem checking for the key
 #[tauri::command]
-pub async fn has_encryption_key() -> Result<bool, ErrorCategory> {
+pub async fn has_encryption_key() -> AppResult<bool> {
     let key_manager = key_management::KeyManager::new()?;
     match key_manager.get_or_create_key().await {
         Ok(_) => {

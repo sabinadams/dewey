@@ -28,7 +28,10 @@ use tracing::{info, error};
 #[tokio::main]
 async fn main() {
     // Initialize logging first
-    utils::setup_logging();
+    if let Err(e) = utils::setup_logging() {
+        eprintln!("Failed to initialize logging: {}", e);
+        std::process::exit(1);
+    }
     info!("Starting Dewey application...");
 
     // Initialize app state

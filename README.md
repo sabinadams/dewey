@@ -63,37 +63,50 @@ error/
    - Handles error display formatting
    - Provides trait implementations for error handling
 
-### Error Flow
+### Creating and Using Errors
 
-1. **Creating Errors (Rust)**
+1. **Basic Error Creation**
    ```rust
    use crate::error::{AppError, ErrorSeverity};
-   use crate::error::categories::{DatabaseSubcategory, IoSubcategory};
+   use crate::error::categories::{ErrorCategory, DatabaseSubcategory};
 
-   // Create a database error
-   let db_error = AppError::new(
-       "Failed to connect to database",
+   // Create an error with category and subcategory
+   let error = AppError::new(
+       "Failed to connect to database".to_string(),
        ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
-       ErrorSeverity::Error
-   );
-
-   // Create an IO error
-   let io_error = AppError::new(
-       "File not found",
-       ErrorCategory::Io(IoSubcategory::PathNotFound),
        ErrorSeverity::Error
    );
    ```
 
-2. **Error Handling (Rust)**
+2. **Adding New Error Types**
+   To add a new error type:
+   
+   1. Add a new subcategory in `categories.rs`:
    ```rust
-   use crate::error::AppResult;
-
-   fn process_file(path: &str) -> AppResult<String> {
-       let content = std::fs::read_to_string(path)
-           .map_err(|e| AppError::from(e))?;
-       Ok(content)
+   #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+   pub enum NewFeatureSubcategory {
+       OperationFailed,
+       InvalidInput,
+       // Add more subcategories as needed
    }
+   ```
+
+   2. Add the category to `ErrorCategory`:
+   ```rust
+   #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+   pub enum ErrorCategory {
+       // ... existing categories ...
+       NewFeature(NewFeatureSubcategory),
+   }
+   ```
+
+   3. Use the new error type:
+   ```rust
+   AppError::new(
+       "Operation failed".to_string(),
+       ErrorCategory::NewFeature(NewFeatureSubcategory::OperationFailed),
+       ErrorSeverity::Error
+   )
    ```
 
 ### Error Categories and Subcategories
@@ -135,7 +148,7 @@ The system defines four severity levels for errors:
    - Example:
    ```rust
    AppError::new(
-       "Failed to execute query: table does not exist",
+       "Failed to execute query: table does not exist".to_string(),
        ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
        ErrorSeverity::Error
    )

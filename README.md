@@ -34,22 +34,41 @@ This ensures that all users receive important updates to the onboarding experien
 
 ## Error Handling System
 
-The application uses a comprehensive error handling system that ensures consistent error handling from backend to frontend. This section documents the complete flow of errors through the application.
+The application uses a comprehensive error handling system that ensures consistent error handling from backend to frontend. The error handling code is organized in the `src-tauri/src/error` directory with the following structure:
+
+### Module Organization
+
+```
+error/
+├── mod.rs           # Main module file that exports everything
+├── types.rs         # Core error types and enums (ErrorSeverity, AppError)
+├── categories.rs    # Error categories and subcategories
+├── messages.rs      # Error message templates
+└── impls.rs         # Error implementations and conversions
+```
 
 ### Error Flow
 
 1. **Backend Error Creation (Rust)**
    ```rust
-   // Create a new error
-   let error = AppError::Project("Project not found".to_string());
+   // Create a new error with subcategory
+   let error = ErrorCategory::Project {
+       message: "Project not found".to_string(),
+       subcategory: Some(ProjectSubcategory::NotFound),
+       code: 9000,
+       severity: ErrorSeverity::Error,
+   };
    
    // Convert to response
    let response = create_error_response(error);
    // Produces:
    // {
+   //   "timestamp": "2024-04-24T12:00:00Z",
    //   "category": "PROJECT",
    //   "message": "Project error: Project not found",
-   //   "details": null
+   //   "code": 9000,
+   //   "severity": "Error",
+   //   "subcategory": "NotFound"
    // }
    ```
 
@@ -64,7 +83,9 @@ The application uses a comprehensive error handling system that ensures consiste
    // {
    //   category: ErrorCategory.PROJECT,
    //   message: "Project not found",
-   //   details: { /* original error details */ }
+   //   code: 9000,
+   //   severity: ErrorSeverity.ERROR,
+   //   subcategory: ErrorSubcategory.NOT_FOUND
    // }
    ```
 
@@ -72,181 +93,152 @@ The application uses a comprehensive error handling system that ensures consiste
    ```typescript
    // Show error toast
    showErrorToast(appError);
-   // Shows appropriate toast based on error category
+   // Shows appropriate toast based on error category and severity
    ```
 
-### Error Categories
+### Error Categories and Subcategories
 
-The system supports the following error categories, each of which may have optional subcategories for more granular error handling:
+The system supports the following error categories, each with specific subcategories:
 
 | Category | Description | Example Use Case | Common Subcategories |
 |----------|-------------|------------------|----------------------|
-| DATABASE | Database-related errors | SQL query failures | `CONNECTION`, `QUERY`, `TRANSACTION` |
-| MIGRATION | Database migration errors | Failed schema updates | `VERSION`, `SCHEMA`, `DATA` |
-| IO | File system and I/O errors | File read/write failures | `READ`, `WRITE`, `PERMISSION` |
-| CONFIG | Configuration errors | Invalid settings | `PARSE`, `VALIDATION`, `MISSING` |
-| ICON_GENERATION | Icon generation errors | Failed icon creation | `FORMAT`, `SIZE`, `PROCESSING` |
-| IMAGE | Image processing errors | Invalid image format | `FORMAT`, `SIZE`, `PROCESSING` |
-| FILE_NOT_FOUND | File not found errors | Missing resource files | `RESOURCE`, `CONFIG`, `ASSET` |
-| KEYRING | Keyring-related errors | Failed key storage | `ACCESS`, `STORAGE`, `LOCKED` |
-| KEY_GENERATION | Key generation errors | Failed key creation | `ALGORITHM`, `LENGTH`, `ENTROPY` |
-| PROJECT | Project-related errors | Invalid project data | `NOT_FOUND`, `INVALID`, `CONFLICT` |
-| ICON | Icon-related errors | Invalid icon data | `FORMAT`, `SIZE`, `METADATA` |
-| CONNECTION | Connection errors | Network failures | `TIMEOUT`, `REFUSED`, `RESET` |
-| VALIDATION | Input validation errors | Invalid user input | `FORMAT`, `REQUIRED`, `RANGE` |
-| AUTH | Authentication errors | Failed login | `CREDENTIALS`, `EXPIRED`, `LOCKED` |
-| UNKNOWN | Unknown errors | Unhandled exceptions | `UNEXPECTED`, `SYSTEM`, `EXTERNAL` |
+| DATABASE | Database-related errors | SQL query failures | `ConnectionFailed`, `QueryFailed`, `TransactionFailed` |
+| MIGRATION | Database migration errors | Failed schema updates | `VersionConflict`, `SchemaError`, `DataError` |
+| IO | File system and I/O errors | File read/write failures | `ReadFailed`, `WriteFailed`, `PermissionDenied` |
+| CONFIG | Configuration errors | Invalid settings | `ParseError`, `ValidationError`, `MissingRequired` |
+| ICON_GENERATION | Icon generation errors | Failed icon creation | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
+| IMAGE | Image processing errors | Invalid image format | `ProcessingFailed`, `InvalidFormat`, `InvalidSize` |
+| FILE_NOT_FOUND | File not found errors | Missing resource files | `ResourceNotFound`, `ConfigNotFound`, `AssetNotFound` |
+| KEYRING | Keyring-related errors | Failed key storage | `AccessDenied`, `KeyNotFound`, `KeyringUnavailable` |
+| KEY_GENERATION | Key generation errors | Failed key creation | `GenerationFailed`, `StorageFailed`, `InvalidLength` |
+| PROJECT | Project-related errors | Invalid project data | `NotFound`, `InvalidName`, `InvalidPath` |
+| ICON | Icon-related errors | Invalid icon data | `GenerationFailed`, `SaveFailed`, `InvalidFormat` |
+| CONNECTION | Connection errors | Network failures | `ConnectionFailed`, `Timeout`, `Refused` |
+| VALIDATION | Input validation errors | Invalid user input | `InvalidFormat`, `MissingRequired`, `InvalidRange` |
+| AUTH | Authentication errors | Failed login | `InvalidCredentials`, `TokenExpired`, `AccountLocked` |
+| ENCRYPTION | Encryption-related errors | Failed encryption/decryption | `DecryptionFailed`, `EncryptionFailed`, `InvalidKey` |
+| KEY_MANAGEMENT | Key management errors | Failed key operations | `KeyNotInitialized`, `KeyNotFound`, `KeyGenerationFailed` |
 
-### Error Handling Components
+### Error Severity Levels
 
-1. **Backend (Rust)**
-   - `AppError` enum: Defines all possible error types with optional subcategories
-   - `ErrorCategory` trait: Provides consistent error categorization
-   - `create_error_response`: Converts errors to JSON format with subcategory support
-   - `ErrorSubcategory` enum: Defines available subcategories for each error type
+The system defines four severity levels for errors:
 
-2. **Frontend (TypeScript)**
-   - `ErrorCategory` enum: Matches backend error categories
-   - `ErrorSubcategory` enum: Matches backend error subcategories
-   - `AppError` interface: Defines error structure with optional subcategory
-   - `parseError`: Converts raw errors to AppError format
-   - `showErrorToast`: Displays error messages to users
-   - `ErrorBoundary`: Catches and displays React errors
-   - `useErrorHandler`: Hook for handling errors in components
+| Severity | Description | Example Use Case |
+|----------|-------------|------------------|
+| Info | Informational messages | Operation completed with notes |
+| Warning | Potential issues | Non-critical problems |
+| Error | Problems needing attention | Failed operations |
+| Critical | Serious problems | Data corruption, security issues |
 
-### Using the Error Handler Hook with Subcategories
+### Using Error Categories in Rust
 
-```typescript
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { ErrorCategory, ErrorSubcategory } from '@/types/errors';
+```rust
+use crate::error::{ErrorCategory, ErrorSeverity};
+use crate::error::categories::{ProjectSubcategory, DatabaseSubcategory};
 
-function MyComponent() {
-  const { handleErrorWithToast, handleErrorSilently, handleErrorWithAction } = useErrorHandler();
+// Create a project error
+let error = ErrorCategory::Project {
+    message: "Project not found".to_string(),
+    subcategory: Some(ProjectSubcategory::NotFound),
+    code: 9000,
+    severity: ErrorSeverity::Error,
+};
 
-  const handleClick = async () => {
-    try {
-      // Some operation that might fail
-    } catch (error) {
-      // Show error with toast
-      handleErrorWithToast(error);
-      
-      // Or handle silently
-      const appError = handleErrorSilently(error);
-      
-      // Or handle with custom action based on subcategory
-      handleErrorWithAction(error, (error) => {
-        if (error.category === ErrorCategory.KEYRING && 
-            error.subcategory === ErrorSubcategory.ACCESS) {
-          // Prompt user for keychain access
-          promptForKeychainAccess();
-        } else {
-          // Default error handling
-          showErrorToast(error);
-        }
-      });
-    }
-  };
-
-  return <button onClick={handleClick}>Click me</button>;
-}
+// Create a database error
+let error = ErrorCategory::Database {
+    message: "Query failed".to_string(),
+    subcategory: Some(DatabaseSubcategory::QueryFailed),
+    code: 1000,
+    severity: ErrorSeverity::Error,
+};
 ```
 
-### Error Boundary Usage
+### Error Message Templates
 
-```typescript
-import { ErrorBoundary } from '@/components/error-boundary';
+The system includes predefined error message templates in `messages.rs`:
 
-function App() {
-  return (
-    <ErrorBoundary>
-      <MyApp />
-    </ErrorBoundary>
-  );
+```rust
+pub struct ErrorMessages;
+
+impl ErrorMessages {
+    // Database errors
+    pub const DB_CONNECTION_FAILED: &'static str = "Failed to connect to database: {reason}";
+    pub const DB_QUERY_FAILED: &'static str = "Database query failed: {query}";
+    // ... more templates
 }
 ```
 
 ### Best Practices
 
-1. **Backend Error Creation**
-   - Use specific error variants when possible
+1. **Error Creation**
+   - Use specific error categories and subcategories
    - Include descriptive error messages
-   - Add relevant details when available
-   - Use subcategories to provide more context about the error
+   - Set appropriate severity levels
+   - Use error codes consistently
    - Example:
    ```rust
-   AppError::Keyring {
-       message: "Failed to access keychain".to_string(),
-       subcategory: Some(ErrorSubcategory::ACCESS),
-       details: None
+   ErrorCategory::Project {
+       message: "Invalid project name".to_string(),
+       subcategory: Some(ProjectSubcategory::InvalidName),
+       code: 9000,
+       severity: ErrorSeverity::Error,
    }
    ```
 
-2. **Frontend Error Handling**
-   - Always use the error handler hook
+2. **Error Handling**
    - Handle errors at the appropriate level
-   - Provide user-friendly error messages
-   - Log errors for debugging
-   - Use subcategories to implement specific error handling logic
+   - Use error subcategories for specific handling
+   - Log errors with full context
+   - Convert external errors to internal error types
    - Example:
-   ```typescript
-   if (error.category === ErrorCategory.KEYRING) {
-     switch (error.subcategory) {
-       case ErrorSubcategory.ACCESS:
-         // Handle keychain access error
-         break;
-       case ErrorSubcategory.STORAGE:
-         // Handle storage error
-         break;
-       default:
-         // Handle other keyring errors
-     }
-   }
-   ```
-
-3. **Error Categories and Subcategories**
-   - Use the most specific category and subcategory possible
-   - Add new categories and subcategories when needed
-   - Document new categories and subcategories in this README
-   - Keep subcategories consistent within each category
-
-4. **Error Messages**
-   - Be clear and concise
-   - Include actionable information
-   - Avoid technical jargon
-   - Consider localization
-   - Include subcategory-specific guidance when relevant
-
-### Example Error Flow
-
-1. **Backend Error Occurs**
    ```rust
-   fn get_project(id: &str) -> Result<Project, AppError> {
-       let project = db::get_project(id)?;
-       if project.is_none() {
-           return Err(AppError::Project("Project not found".to_string()));
-       }
-       Ok(project.unwrap())
+   match result {
+       Ok(value) => Ok(value),
+       Err(e) => match e {
+           sqlx::Error::Database(_) => Err(ErrorCategory::Database {
+               message: "Database error".to_string(),
+               subcategory: Some(DatabaseSubcategory::QueryFailed),
+               code: 1000,
+               severity: ErrorSeverity::Error,
+           }),
+           _ => Err(ErrorCategory::Unknown {
+               message: e.to_string(),
+               subcategory: None,
+               code: 9999,
+               severity: ErrorSeverity::Error,
+           }),
+       },
    }
    ```
 
-2. **Frontend Receives Error**
-   ```typescript
-   const { handleErrorWithToast } = useErrorHandler();
-   
-   const loadProject = async (id: string) => {
-     try {
-       const project = await invoke('get_project', { id });
-       // Handle success
-     } catch (error) {
-       handleErrorWithToast(error);
-       // Error toast is shown to user
-     }
-   };
+3. **Error Messages**
+   - Use message templates when possible
+   - Include relevant parameters
+   - Be clear and actionable
+   - Consider localization
+   - Example:
+   ```rust
+   let message = ErrorMessages::format_message(
+       ErrorMessages::DB_CONNECTION_FAILED,
+       &serde_json::json!({ "reason": "Connection timeout" })
+   );
    ```
 
-3. **User Sees Error**
-   - Toast appears with error message
-   - Error is logged to console
-   - User can take appropriate action
-
-This error handling system ensures consistent error handling throughout the application while providing a good user experience.
+4. **Error Codes**
+   - Use consistent code ranges for each category
+   - Document code ranges in comments
+   - Reserve codes for future use
+   - Example ranges:
+   ```rust
+   // Database errors: 1000-1999
+   // Migration errors: 2000-2999
+   // IO errors: 3000-3999
+   // Icon generation errors: 4000-4999
+   // Config errors: 5000-5999
+   // Keyring errors: 7000-7999
+   // Key generation errors: 8000-8999
+   // Project errors: 9000-9999
+   // Connection errors: 10000-10999
+   // Encryption errors: 14000-14999
+   // Key management errors: 15000-15999
+   ```

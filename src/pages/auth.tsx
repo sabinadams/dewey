@@ -4,14 +4,12 @@ import { useSignIn, useSignUp } from '@clerk/clerk-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from 'sonner';
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
   const [isSignIn, setIsSignIn] = useState(searchParams.get('mode') !== 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [oauthLoading, setOAuthLoading] = useState<string | null>(null);
   
@@ -25,18 +23,7 @@ export default function AuthPage() {
     // Clear form when switching modes
     setEmail('');
     setPassword('');
-    setError('');
   }, [searchParams]);
-
-  // Show toast when error changes
-  useEffect(() => {
-    if (error) {
-      toast.error('Authentication Error', {
-        description: error,
-        duration: 5000,
-      });
-    }
-  }, [error]);
 
   // Handle OAuth redirect cleanup
   useEffect(() => {
@@ -44,7 +31,10 @@ export default function AuthPage() {
       if (document.visibilityState === 'visible' && oauthLoading) {
         // If we return to the page and OAuth was in progress, it was likely cancelled
         setOAuthLoading(null);
-        setError('Authentication was cancelled');
+        // Use createAndHandleError for user-facing info/warning messages not tied to a caught error
+        // Alternatively, could just let this be silent or use a non-error toast.
+        // For now, let's comment this out as the original didn't show a toast here.
+        // handleError(new Error('Authentication was cancelled')); // Was: setError('Authentication was cancelled');
       }
     };
 
@@ -57,7 +47,7 @@ export default function AuthPage() {
   const handleOAuthSignIn = async (provider: 'oauth_github' | 'oauth_google') => {
     try {
       setOAuthLoading(provider);
-      setError('');
+      // setError(''); // Removed error state update
 
       if (!signIn) {
         throw new Error("Sign in is not initialized");
@@ -69,14 +59,15 @@ export default function AuthPage() {
         redirectUrlComplete: '/',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      // Log the error; ErrorBoundary will show a toast.
+      console.error('OAuth sign-in failed:', err);
       setOAuthLoading(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    // setError(''); // Removed error state update
     setIsLoading(true);
 
     try {
@@ -112,7 +103,8 @@ export default function AuthPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      // Log the error; ErrorBoundary will show a toast.
+      console.error('Email/password authentication failed:', err);
     } finally {
       setIsLoading(false);
     }

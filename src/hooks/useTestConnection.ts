@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { prepareConnectionTestParams } from '@/lib/database';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 
 type FormValues = {
     databaseType?: string;
@@ -16,6 +18,7 @@ type FormValues = {
 export function useTestConnection() {
     const [isLoading, setIsLoading] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const { handleError, createAndHandleError } = useErrorHandler();
 
     const cancelTest = () => {
         if (abortControllerRef.current) {
@@ -49,7 +52,11 @@ export function useTestConnection() {
             ]);
 
             if (!signal.aborted) {
-                toast.success('Connection successful!');
+                createAndHandleError(
+                  'Connection successful!',
+                  ErrorCategory.DATABASE,
+                  ErrorSeverity.Info
+                );
                 return true;
             }
             return false;
@@ -57,10 +64,7 @@ export function useTestConnection() {
             if (error instanceof Error && error.message === 'Connection test cancelled') {
                 toast.info('Connection test cancelled');
             } else {
-                console.error('Connection test failed:', error);
-                toast.error('Connection failed', {
-                    description: error instanceof Error ? error.message : 'Failed to test connection'
-                });
+                await handleError(error);
             }
             return false;
         } finally {

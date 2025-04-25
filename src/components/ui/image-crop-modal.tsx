@@ -66,7 +66,8 @@ export function ImageCropModal({
       onCropComplete(croppedImage)
       onClose()
     } catch (e) {
-      console.error(e)
+      // Log the error; ErrorBoundary will show a toast.
+      console.error('Failed to crop image:', e);
     }
   }
 

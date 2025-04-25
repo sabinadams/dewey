@@ -29,13 +29,9 @@ export default function Onboarding() {
   ];
 
   const handleComplete = useCallback(async () => {
-    try {
-        await storeOnboarding(true);
-        navigate('/');
-    } catch (error) {
-      console.error('Failed to store onboarding completion:', error);
-    }
-  }, [storeOnboarding]);
+    await storeOnboarding(true);
+    navigate('/');
+  }, [storeOnboarding, navigate]);
 
   const handleDownloadModels = useCallback(async () => {
     setIsDownloading(true);

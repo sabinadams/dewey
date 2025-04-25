@@ -4,7 +4,8 @@ import { useHasEncryptionKeyQuery, useInitializeEncryptionKeyMutation } from '@/
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { parseError } from '@/lib/errors';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 
 interface KeychainStepProps {
   onNext: () => void;
@@ -16,23 +17,33 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
   const { data: hasEncryptionKey, isSuccess } = useHasEncryptionKeyQuery(undefined, {
     skip: !shouldCheckKey
   });
+  const { handleError, createAndHandleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.KEYRING
+  });
 
   useEffect(() => {
     if (isSuccess && hasEncryptionKey && shouldCheckKey) {
       if (hasCreatedKey) {
-        toast.success('Encryption key created', {
-          description: 'Your connections will now be secured with an encryption key.',
-          duration: 1500
-        });
+        createAndHandleError(
+          'Encryption key created',
+          ErrorCategory.KEYRING,
+          ErrorSeverity.Info,
+          undefined,
+          { description: 'Your connections will now be secured with an encryption key.' }
+        );
       } else {
-        toast.success('Encryption key found', {
-          description: 'Your connections will already be secured with an encryption key.',
-          duration: 1500
-        });
+        createAndHandleError(
+          'Encryption key found',
+          ErrorCategory.KEYRING,
+          ErrorSeverity.Info,
+          undefined,
+          { description: 'Your connections will already be secured with an encryption key.' }
+        );
       }
-      onNext();
+      const timer = setTimeout(() => onNext(), 500);
+      return () => clearTimeout(timer);
     }
-  }, [hasEncryptionKey, isSuccess, onNext, shouldCheckKey, hasCreatedKey]);
+  }, [hasEncryptionKey, isSuccess, onNext, shouldCheckKey, hasCreatedKey, createAndHandleError]);
 
   const [initializeEncryptionKey] = useInitializeEncryptionKeyMutation();
 
@@ -44,21 +55,11 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
 
     if (!hasEncryptionKey) {
       try {
-        const result = await initializeEncryptionKey();
-        if (result.data) {
-          setHasCreatedKey(true);
-          setShouldCheckKey(true); // This will trigger the useEffect with the new state
-        } else if (result.error) {
-          const appError = parseError(result.error);
-          toast.error(appError.message, {
-            description: appError.category
-          });
-        }
+        const result = await initializeEncryptionKey().unwrap();
+        setHasCreatedKey(true);
+        setShouldCheckKey(true);
       } catch (error: any) {
-        const appError = parseError(error);
-        toast.error(appError.message, {
-          description: appError.category
-        });
+        await handleError(error);
       }
     }
   };

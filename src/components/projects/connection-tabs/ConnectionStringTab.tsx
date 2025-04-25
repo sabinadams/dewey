@@ -4,7 +4,6 @@ import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { ConnectionString } from "connection-string";
-import { toast } from "sonner";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -15,6 +14,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "../../ui/tooltip";
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 
 export default function ConnectionStringTab({
     isActiveTab
@@ -22,6 +23,7 @@ export default function ConnectionStringTab({
     const { form } = useCreateProjectContext();
     const [connectionString, setConnectionString] = useState("");
     const debouncedConnectionString = useDebounce(connectionString);
+    const { createAndHandleError } = useErrorHandler();
 
     useEffect(() => {
         if (!isActiveTab) {
@@ -68,13 +70,15 @@ export default function ConnectionStringTab({
                 form.trigger(touchedFields as any);
             }
         } catch (error) {
-            console.error("Failed to parse connection string:", error);
-            toast.error("Failed to parse connection string", {
-                description: error instanceof Error ? error.message : 'Unknown error',
-                duration: 5000
-            });
+            createAndHandleError(
+              "Failed to parse connection string",
+              ErrorCategory.VALIDATION,
+              ErrorSeverity.Warning,
+              undefined,
+              { description: error instanceof Error ? error.message : 'Invalid format' } 
+            );
         }
-    }, [debouncedConnectionString, form]);
+    }, [debouncedConnectionString, form, createAndHandleError]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setConnectionString(e.target.value);

@@ -16,7 +16,7 @@ export default function AuthCallback() {
         });
         navigate('/');
       } catch (err) {
-        console.error('Error handling callback:', err);
+        console.error('Auth callback failed:', err);
         navigate('/auth?mode=signin');
       }
     }

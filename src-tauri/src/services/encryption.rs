@@ -128,14 +128,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_encryption_decryption() {
-        let service = EncryptionService::new();
+        // Initialize the encryption key
         let key = vec![0u8; 32];
-        service.initialize_key(key).await;
-
-        let data = b"Hello, World!";
-        let encrypted = service.encrypt(data).await.unwrap();
-        let decrypted = service.decrypt(&encrypted).await.unwrap();
-
-        assert_eq!(data, &decrypted[..]);
+        ENCRYPTION_KEY.set(Arc::new(key.try_into().unwrap())).unwrap();
+    
+        // Test encryption and decryption
+        let original = "Hello, World!";
+        let encrypted = encrypt_string(original).unwrap();
+        let decrypted = decrypt_string(&encrypted).unwrap();
+    
+        assert_eq!(original, decrypted);
     }
 } 

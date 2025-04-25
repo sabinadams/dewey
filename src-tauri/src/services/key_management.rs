@@ -4,22 +4,18 @@ use std::path::PathBuf;
 use std::fs;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
-use directories::ProjectDirs;
-use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
+use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME};
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{
-    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory,
+    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory,
     ErrorCategory
 };
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary
 pub struct KeyManager {
     keyring_entry: Entry,
     key_file_path: PathBuf,
-    key: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 impl KeyManager {
@@ -36,7 +32,6 @@ impl KeyManager {
         Ok(Self {
             keyring_entry,
             key_file_path,
-            key: Arc::new(Mutex::new(None)),
         })
     }
 

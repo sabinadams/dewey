@@ -21,7 +21,8 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
-import { showErrorToast, parseError, ErrorCategory, KeyringSubcategory } from "@/lib/errors"
+import { ErrorCategory, KeyringSubcategory } from "@/lib/errors"
+import { useErrorHandler } from '@/hooks/use-error-handler'
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -36,6 +37,31 @@ const CreateProjectForm = () => {
   const [createProject] = useCreateProjectMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { form } = useCreateProjectContext();
+
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.PROJECT,
+    onError: (error) => {
+      // Only handle the specific keyring error case
+      if (error.category === ErrorCategory.ENCRYPTION && 
+          error.subcategory === KeyringSubcategory.KeyNotFound) {
+        toast.error('Encryption Key Error', {
+          description: 'Please set up an encryption key to continue.',
+          duration: Infinity,
+          dismissible: true,
+          action: {
+            label: 'Set Up',
+            onClick: () => {
+              console.log('Set Up button clicked');
+            }
+          }
+        });
+        return; // Return early to prevent error propagation
+      }
+      
+      // For all other errors, let them propagate to the error boundary
+      throw error;
+    }
+  });
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -120,41 +146,15 @@ const CreateProjectForm = () => {
         projectParams.initial_connection = connection;
       }
 
-      try {
-        // Create the project using RTK Query mutation
-        const result = await createProject(projectParams).unwrap();
-        toast.dismiss(loadingToastId);
-        toast.success('Project created successfully!');
-        // Navigate to the new project
-        navigate(`/project/${result}`);
-      } catch (error) {
-        const appError = parseError(error);
-        toast.dismiss(loadingToastId);
-        console.log(appError);
-        // Handle keychain errors differently
-        if (appError.category === ErrorCategory.KEYRING && 
-            appError.subcategory === KeyringSubcategory.KeyNotFound) {
-          toast.error('Encryption Key Error', {
-            description: 'Please set up an encryption key to continue.',
-            duration: Infinity,
-            dismissible: true,
-            action: {
-              label: 'Set Up',
-              onClick: () => {
-                console.log('Set Up button clicked');
-              }
-            }
-          });
-        } else {
-          // For all other errors, show the error toast
-          showErrorToast(appError);
-        }
-      }
+      // Create the project using RTK Query mutation
+      const result = await createProject(projectParams).unwrap();
+      toast.dismiss(loadingToastId);
+      toast.success('Project created successfully!');
+      // Navigate to the new project
+      navigate(`/project/${result}`);
     } catch (error) {
       toast.dismiss(loadingToastId);
-      // Handle any other errors that might occur
-      const appError = parseError(error);
-      showErrorToast(appError);
+      await handleError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -253,7 +253,6 @@ const CreateProjectForm = () => {
       </form>
     </Form>
   </>
-    ;
 }
 
 export default CreateProjectForm; 

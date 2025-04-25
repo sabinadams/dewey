@@ -51,6 +51,39 @@ export interface AppError {
   message: string;
   severity: ErrorSeverity;
   subcategory?: string;
+  stack?: string;
+  context?: Record<string, any>;
+}
+
+// Utility function to create an AppError
+export function createError(
+  message: string,
+  category: ErrorCategory,
+  severity: ErrorSeverity = ErrorSeverity.Error,
+  subcategory?: string,
+  context?: Record<string, any>
+): AppError {
+  return {
+    message,
+    category,
+    severity,
+    subcategory,
+    context,
+    stack: new Error().stack
+  };
+}
+
+// Utility function to check if an error is recoverable
+export function isRecoverableError(error: AppError): boolean {
+  return (
+    error.severity !== ErrorSeverity.Critical &&
+    error.category !== ErrorCategory.UNKNOWN
+  );
+}
+
+// Utility function to check if an error is critical
+export function isCriticalError(error: AppError): boolean {
+  return error.severity === ErrorSeverity.Critical;
 }
 
 export function parseError(error: any): AppError {
@@ -67,13 +100,14 @@ export function parseError(error: any): AppError {
         category: error.category as ErrorCategory,
         message: error.message,
         severity: error.severity as ErrorSeverity,
-        subcategory: error.subcategory
+        subcategory: error.subcategory,
+        context: error.context,
+        stack: error.stack
       };
     }
 
     // Handle Tauri custom errors
     if (error.status === 'CUSTOM_ERROR' && typeof error.error === 'string') {
-      // Try to parse the error string as JSON
       try {
         const parsedError = JSON.parse(error.error);
         if ('message' in parsedError && 'category' in parsedError && 'severity' in parsedError) {
@@ -81,26 +115,39 @@ export function parseError(error: any): AppError {
             category: parsedError.category as ErrorCategory,
             message: parsedError.message,
             severity: parsedError.severity as ErrorSeverity,
-            subcategory: parsedError.subcategory
+            subcategory: parsedError.subcategory,
+            context: parsedError.context,
+            stack: parsedError.stack
           };
         }
       } catch (e) {
         // If parsing fails, treat it as a plain error message
-        return {
-          category: ErrorCategory.UNKNOWN,
-          message: error.error,
-          severity: ErrorSeverity.Error
-        };
+        return createError(
+          error.error,
+          ErrorCategory.UNKNOWN,
+          ErrorSeverity.Error
+        );
       }
+    }
+
+    // Handle Error objects
+    if (error instanceof Error) {
+      return createError(
+        error.message,
+        ErrorCategory.UNKNOWN,
+        ErrorSeverity.Error,
+        undefined,
+        { stack: error.stack }
+      );
     }
   }
   
   // If we can't parse the error, return it as unknown
-  return {
-    category: ErrorCategory.UNKNOWN,
-    message: typeof error === 'string' ? error : 'An unknown error occurred',
-    severity: ErrorSeverity.Error
-  };
+  return createError(
+    typeof error === 'string' ? error : 'An unknown error occurred',
+    ErrorCategory.UNKNOWN,
+    ErrorSeverity.Error
+  );
 }
 
 function isAppError(error: any): error is AppError {
@@ -120,7 +167,14 @@ export function showErrorToast(error: AppError) {
   
   const toastConfig = {
     description: message,
-    duration: severity === ErrorSeverity.Critical ? 10000 : 5000
+    duration: severity === ErrorSeverity.Critical ? 10000 : 5000,
+    action: isRecoverableError(error) ? {
+      label: 'Retry',
+      onClick: () => {
+        // This will be handled by the error boundary
+        window.location.reload();
+      }
+    } : undefined
   };
 
   switch (severity) {

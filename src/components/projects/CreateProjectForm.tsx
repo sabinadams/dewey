@@ -23,6 +23,8 @@ import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
 import { ErrorCategory, KeyringSubcategory } from "@/lib/errors"
 import { useErrorHandler } from '@/hooks/use-error-handler'
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import SetupEncryptionKey from "@/components/shared/SetupEncryptionKey"
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -36,6 +38,7 @@ const CreateProjectForm = () => {
   const navigate = useNavigate();
   const [createProject, { isLoading: isMutationLoading }] = useCreateProjectMutation();
   const { form } = useCreateProjectContext();
+  const [showEncryptionKeyDialog, setShowEncryptionKeyDialog] = useState(false);
 
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.PROJECT,
@@ -43,15 +46,13 @@ const CreateProjectForm = () => {
       // Handle encryption key errors specifically
       if (error.category === ErrorCategory.KEYRING &&
           error.subcategory === KeyringSubcategory.KeyNotFound) {
-        toast.error('Encryption Key Error', {
-          description: 'Please set up an encryption key to continue.',
+        toast.error('Encryption Key Required', {
+          description: 'Please set up an encryption key to securely store your database credentials.',
           duration: Infinity,
           dismissible: true,
           action: {
             label: 'Set Up',
-            onClick: () => {
-              console.log('Set Up button clicked'); // TODO: Implement actual navigation/action
-            }
+            onClick: () => setShowEncryptionKeyDialog(true)
           }
         });
         return true; // Indicate this specific error was handled locally
@@ -173,6 +174,15 @@ const CreateProjectForm = () => {
         cropShape="round"
       />
     )}
+
+    <Dialog open={showEncryptionKeyDialog} onOpenChange={setShowEncryptionKeyDialog}>
+      <DialogContent className="sm:max-w-[425px]">
+        <SetupEncryptionKey 
+          variant="dialog" 
+          onSuccess={() => setShowEncryptionKeyDialog(false)} 
+        />
+      </DialogContent>
+    </Dialog>
 
     <Form {...form}>
       <form onSubmit={onSubmit}>

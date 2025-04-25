@@ -12,6 +12,7 @@ Welcome to the Dewey documentation! This documentation provides comprehensive gu
 
 - [Error Handling](core-concepts/error-handling.md)
 - [Onboarding](core-concepts/onboarding.md)
+- [Onboarding Version Management](core-concepts/onboarding-version.md)
 - [Project Structure](core-concepts/project-structure.md)
 
 ## Development

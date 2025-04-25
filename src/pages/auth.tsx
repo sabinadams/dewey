@@ -4,6 +4,8 @@ import { useSignIn, useSignUp } from '@clerk/clerk-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory } from '@/lib/errors';
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
@@ -16,6 +18,9 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { signIn, setActive: setSignInActive } = useSignIn();
   const { signUp, setActive: setSignUpActive } = useSignUp();
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.AUTH
+  });
 
   // Update mode when URL params change
   useEffect(() => {
@@ -59,8 +64,8 @@ export default function AuthPage() {
         redirectUrlComplete: '/',
       });
     } catch (err) {
-      // Log the error; ErrorBoundary will show a toast.
-      console.error('OAuth sign-in failed:', err);
+      // Use error handler hook
+      await handleError(err);
       setOAuthLoading(null);
     }
   };
@@ -103,8 +108,8 @@ export default function AuthPage() {
         }
       }
     } catch (err) {
-      // Log the error; ErrorBoundary will show a toast.
-      console.error('Email/password authentication failed:', err);
+      // Use error handler hook
+      await handleError(err);
     } finally {
       setIsLoading(false);
     }

@@ -15,6 +15,9 @@ import {
     TooltipTrigger,
 } from "../../ui/tooltip";
 import { useToast } from '@/hooks/use-toast';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
+import { createError } from '@/lib/errors';
 
 export default function ConnectionStringTab({
     isActiveTab
@@ -23,6 +26,7 @@ export default function ConnectionStringTab({
     const [connectionString, setConnectionString] = useState("");
     const debouncedConnectionString = useDebounce(connectionString);
     const { showToast } = useToast();
+    const { handleError } = useErrorHandler();
 
     useEffect(() => {
         if (!isActiveTab) {
@@ -69,13 +73,9 @@ export default function ConnectionStringTab({
                 form.trigger(touchedFields as any);
             }
         } catch (error) {
-            showToast(
-                "Failed to parse connection string",
-                'warning',
-                { description: error instanceof Error ? error.message : 'Invalid format' }
-            );
+            handleError(error);
         }
-    }, [debouncedConnectionString, form, showToast]);
+    }, [debouncedConnectionString, form, handleError]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setConnectionString(e.target.value);

@@ -81,6 +81,21 @@ export function parseError(error: any): AppError {
 
   // Handle Tauri errors
   if (typeof error === 'object' && error !== null) {
+    // Handle backend error format where category is key and subcategory is value
+    const categoryKeys = Object.keys(error).filter(key => 
+      Object.values(ErrorCategory).includes(key as ErrorCategory)
+    );
+    if (categoryKeys.length === 1) {
+      const category = categoryKeys[0] as ErrorCategory;
+      const subcategory = error[category];
+      return createError(
+        `Database error: ${subcategory}`,
+        category,
+        ErrorSeverity.Error,
+        subcategory
+      );
+    }
+
     // Handle plain objects that might contain AppError JSON in message
     if (!isAppError(error) && 'message' in error && typeof error.message === 'string') {
       try {

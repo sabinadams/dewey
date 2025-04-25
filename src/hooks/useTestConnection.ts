@@ -2,9 +2,9 @@ import { useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { prepareConnectionTestParams } from '@/lib/database';
 import { useErrorHandler } from '@/hooks/use-error-handler';
-import { useToast } from '@/hooks/use-toast';
 import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 import { createError } from '@/lib/errors';
+import { useToast } from '@/hooks/use-toast';
 
 type FormValues = {
     databaseType?: string;
@@ -44,7 +44,13 @@ export function useTestConnection() {
 
             // Create a promise that rejects if the signal is aborted
             const abortPromise = new Promise((_, reject) => {
-                signal.addEventListener('abort', () => reject(new Error('Connection test cancelled')));
+                signal.addEventListener('abort', () => {
+                    reject(createError(
+                        'Connection test cancelled',
+                        ErrorCategory.VALIDATION,
+                        ErrorSeverity.Info
+                    ));
+                });
             });
 
             // Race between the connection test and abort signal
@@ -60,16 +66,11 @@ export function useTestConnection() {
             return false;
         } catch (error) {
             if (error instanceof Error && error.message === 'Connection test cancelled') {
-                showToast('Connection test cancelled', 'info');
-            } else {
-                // Create a specific AppError for connection failures
-                const connectionError = createError(
-                    error instanceof Error ? error.message : 'Failed to connect to the database.', // Use original message if available
-                    ErrorCategory.DATABASE,
-                    ErrorSeverity.Error
-                );
-                await handleError(connectionError);
+                // This is an expected cancellation, no need to handle as error
+                return false;
             }
+            // The backend already sends properly structured errors, just pass it through
+            await handleError(error);
             return false;
         } finally {
             if (abortControllerRef.current?.signal.aborted) {

@@ -6,13 +6,10 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::sync::{Arc, OnceLock};
 use tracing::{debug, error};
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{ErrorCategory, EncryptionSubcategory};
 use super::key_management::KeyManager;
-
-static ENCRYPTION_KEY: OnceLock<Arc<[u8; 32]>> = OnceLock::new();
 
 #[derive(Serialize, Deserialize)]
 struct EncryptedData {
@@ -24,11 +21,8 @@ struct EncryptedData {
 pub async fn initialize_encryption_key() -> AppResult<()> {
     let key_manager = KeyManager::new()?;
     match key_manager.get_or_create_key().await {
-        Ok(key) => {
+        Ok(_) => {
             debug!("Successfully initialized encryption key");
-            if ENCRYPTION_KEY.set(Arc::new(key.try_into().unwrap())).is_err() {
-                error!("Encryption key already initialized");
-            }
             Ok(())
         }
         Err(e) => {
@@ -38,21 +32,11 @@ pub async fn initialize_encryption_key() -> AppResult<()> {
     }
 }
 
-/// Get the encryption key
-fn get_encryption_key() -> AppResult<Arc<[u8; 32]>> {
-    ENCRYPTION_KEY.get()
-        .map(Arc::clone)
-        .ok_or_else(|| AppError::new(
-            "Encryption key not found",
-            ErrorCategory::Encryption(EncryptionSubcategory::KeyNotFound),
-            ErrorSeverity::Error
-        ))
-}
-
 /// Encrypt a string value
 pub fn encrypt_string(value: &str) -> AppResult<String> {
-    let key = get_encryption_key()?;
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
+    let key_manager = KeyManager::new()?;
+    let key = key_manager.get_key_from_keyring()?;
+    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
     
     // Generate a random 96-bits nonce
     let mut nonce = [0u8; 12];
@@ -81,8 +65,9 @@ pub fn encrypt_string(value: &str) -> AppResult<String> {
 
 /// Decrypt a string value
 pub fn decrypt_string(encrypted_value: &str) -> AppResult<String> {
-    let key = get_encryption_key()?;
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&*key));
+    let key_manager = KeyManager::new()?;
+    let key = key_manager.get_key_from_keyring()?;
+    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
 
     let encrypted_data: EncryptedData = serde_json::from_str(encrypted_value)
         .map_err(|e| AppError::new(
@@ -128,10 +113,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_encryption_decryption() {
-        // Initialize the encryption key
-        let key = vec![0u8; 32];
-        ENCRYPTION_KEY.set(Arc::new(key.try_into().unwrap())).unwrap();
-    
         // Test encryption and decryption
         let original = "Hello, World!";
         let encrypted = encrypt_string(original).unwrap();

@@ -40,9 +40,10 @@ const CreateProjectForm = () => {
 
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.PROJECT,
+    preventPropagation: true,
+    showToast: false,
     onError: (error) => {
-      // Only handle the specific keyring error case
-      if (error.category === ErrorCategory.ENCRYPTION && 
+      if (error.category === ErrorCategory.KEYRING && 
           error.subcategory === KeyringSubcategory.KeyNotFound) {
         toast.error('Encryption Key Error', {
           description: 'Please set up an encryption key to continue.',
@@ -55,11 +56,11 @@ const CreateProjectForm = () => {
             }
           }
         });
-        return; // Return early to prevent error propagation
+      } else {
+        toast.error('Error creating project', {
+          description: error.message
+        });
       }
-      
-      // For all other errors, let them propagate to the error boundary
-      throw error;
     }
   });
 

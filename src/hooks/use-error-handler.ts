@@ -6,6 +6,8 @@ interface UseErrorHandlerOptions {
   onRecover?: () => void;
   defaultCategory?: ErrorCategory;
   defaultSeverity?: ErrorSeverity;
+  preventPropagation?: boolean;
+  showToast?: boolean;
 }
 
 export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
@@ -34,10 +36,19 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       };
 
       setError(finalError);
-      showErrorToast(finalError);
+      
+      // Only show toast if explicitly enabled
+      if (options.showToast !== false) {
+        showErrorToast(finalError);
+      }
       
       if (options.onError) {
         options.onError(finalError);
+      }
+
+      // If we're not preventing propagation, throw the error
+      if (!options.preventPropagation) {
+        throw finalError;
       }
 
       return finalError;

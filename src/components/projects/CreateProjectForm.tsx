@@ -40,8 +40,6 @@ const CreateProjectForm = () => {
 
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.PROJECT,
-    preventPropagation: true,
-    showToast: false,
     onError: (error) => {
       if (error.category === ErrorCategory.KEYRING && 
           error.subcategory === KeyringSubcategory.KeyNotFound) {
@@ -56,11 +54,9 @@ const CreateProjectForm = () => {
             }
           }
         });
-      } else {
-        toast.error('Error creating project', {
-          description: error.message
-        });
+        return true; // Handle this error locally
       }
+      return false; // Let other errors propagate to the error boundary
     }
   });
 

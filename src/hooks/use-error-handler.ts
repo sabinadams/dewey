@@ -2,12 +2,10 @@ import { useState, useCallback } from 'react';
 import { AppError, ErrorCategory, ErrorSeverity, createError, parseError, showErrorToast } from '@/lib/errors';
 
 interface UseErrorHandlerOptions {
-  onError?: (error: AppError) => void;
+  onError?: (error: AppError) => boolean | void;
   onRecover?: () => void;
   defaultCategory?: ErrorCategory;
   defaultSeverity?: ErrorSeverity;
-  preventPropagation?: boolean;
-  showToast?: boolean;
 }
 
 export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
@@ -37,17 +35,12 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
 
       setError(finalError);
       
-      // Only show toast if explicitly enabled
-      if (options.showToast !== false) {
-        showErrorToast(finalError);
-      }
-      
-      if (options.onError) {
-        options.onError(finalError);
-      }
+      // If onError returns true, we prevent propagation
+      const shouldPreventPropagation = options.onError?.(finalError) === true;
 
-      // If we're not preventing propagation, throw the error
-      if (!options.preventPropagation) {
+      // If we're not preventing propagation, show toast and throw the error
+      if (!shouldPreventPropagation) {
+        showErrorToast(finalError);
         throw finalError;
       }
 

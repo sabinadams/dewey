@@ -8,10 +8,7 @@ use crate::services::storage::{
 use crate::utils;
 use crate::state::AppState;
 use crate::error::{AppError, AppResult, ErrorSeverity};
-use crate::error::categories::{
-    ProjectSubcategory, DatabaseSubcategory, IconSubcategory, ConnectionSubcategory,
-    ErrorCategory
-};
+use crate::error::categories::{DatabaseSubcategory, IconSubcategory, ErrorCategory};
 use blake3;
 use tauri::State;
 use tracing::info;

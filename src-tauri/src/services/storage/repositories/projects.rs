@@ -2,7 +2,7 @@ use crate::error::{AppError, ErrorSeverity};
 use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
 use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, SqlitePool, Transaction, Executor};
+use sqlx::{FromRow, Row, SqlitePool, Transaction};
 use std::sync::Arc;
 use tracing::debug;
 

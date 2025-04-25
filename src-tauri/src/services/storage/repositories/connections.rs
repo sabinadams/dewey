@@ -1,7 +1,7 @@
 use crate::types::AppResult;
 use crate::services::encryption::encrypt_string;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, SqlitePool, Transaction, Executor};
+use sqlx::{FromRow, Row, SqlitePool, Transaction};
 use std::sync::Arc;
 use tracing::debug;
 use crate::error::{AppError, ErrorSeverity};

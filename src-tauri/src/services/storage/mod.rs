@@ -100,4 +100,14 @@ impl LocalStorage {
     pub fn get_app_dir() -> &'static PathBuf {
         APP_DIR.get().expect(constants::errors::APP_DIR_NOT_INITIALIZED)
     }
+
+    #[cfg(test)]
+    pub fn set_app_dir_for_testing(path: PathBuf) {
+        use std::sync::Once;
+        static INIT: Once = Once::new();
+        
+        INIT.call_once(|| {
+            APP_DIR.get_or_init(|| path);
+        });
+    }
 } 

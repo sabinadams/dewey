@@ -120,13 +120,7 @@ export function showErrorToast(error: AppError) {
   
   const toastConfig = {
     description: message,
-    duration: severity === ErrorSeverity.Critical ? 10000 : 5000,
-    action: category === ErrorCategory.KEYRING || category === ErrorCategory.KEY_GENERATION ? {
-      label: 'Set Up',
-      onClick: () => {
-        window.location.href = '/onboarding';
-      }
-    } : undefined
+    duration: severity === ErrorSeverity.Critical ? 10000 : 5000
   };
 
   switch (severity) {

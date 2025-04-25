@@ -40,11 +40,14 @@ export function RouteRenderer() {
   let shouldRedirectToRoot = false;
   let shouldRedirectToProject = false;
   let targetProjectRoute = '';
+  let shouldRedirectToHome = false;
 
   if (isAuthLoaded) {
     if (isSignedIn && userId) {
       if (isPublic && location.pathname !== '/onboarding') {
         shouldRedirectToRoot = true;
+      } else if (location.pathname === '/onboarding' && !shouldRunOnboarding) {
+        shouldRedirectToHome = true;
       } else if (isOnRoot) {
         // Only consider redirecting from root if projects have successfully loaded
         if (projectsSuccess && projects && projects.length > 0) {
@@ -66,6 +69,9 @@ export function RouteRenderer() {
     if (shouldRunOnboarding && location.pathname !== '/onboarding') {
       console.log("[RouteRenderer] Redirecting to onboarding");
       navigate('/onboarding', { replace: true });
+    } else if (shouldRedirectToHome) {
+      console.log("[RouteRenderer] Redirecting to home (onboarding completed)");
+      navigate('/', { replace: true });
     } else if (shouldRedirectToRoot) {
       // No need to check isAuthLoaded here, decision flags depend on it already
       console.log("[RouteRenderer] Redirecting to / (from public)");
@@ -79,7 +85,7 @@ export function RouteRenderer() {
       navigate(targetProjectRoute, { replace: true });
     }
     // Re-run effect if redirect conditions change
-  }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname, shouldRunOnboarding]);
+  }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname, shouldRunOnboarding, shouldRedirectToHome]);
 
 
   // --- Loading State --- 
@@ -95,7 +101,7 @@ export function RouteRenderer() {
 
   // --- Render Null during Redirect --- 
   // If any redirect should happen, render null while useEffect handles it
-  if (shouldRedirectToRoot || shouldRedirectToAuth || shouldRedirectToProject) {
+  if (shouldRedirectToRoot || shouldRedirectToAuth || shouldRedirectToProject || shouldRedirectToHome) {
     console.log("[RouteRenderer] Redirect pending, rendering null");
     return null;
   }

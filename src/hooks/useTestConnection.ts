@@ -47,7 +47,7 @@ export function useTestConnection() {
                 signal.addEventListener('abort', () => {
                     reject(createError(
                         'Connection test cancelled',
-                        ErrorCategory.VALIDATION,
+                        ErrorCategory.DATABASE,
                         ErrorSeverity.Info
                     ));
                 });

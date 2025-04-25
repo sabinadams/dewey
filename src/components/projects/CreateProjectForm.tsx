@@ -147,7 +147,6 @@ const CreateProjectForm = () => {
 
     } catch (error) { // This error is thrown by unwrap() and should be the AppError
       toast.dismiss(loadingToastId);
-      console.log("Raw error caught by unwrap().catch():", error); // Log the error received
 
       // Call handleError. It will call onError.
       // If onError returns false, handleError shows toast and throws.
@@ -158,7 +157,6 @@ const CreateProjectForm = () => {
         // Error was thrown by handleError (because onError returned false),
         // but we don't need to do anything else with it here.
         // The toast was already shown by showErrorToast inside handleError.
-        console.error("Project creation failed after handling:", handledError)
       }
     }
     // No finally block needed

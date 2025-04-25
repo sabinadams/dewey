@@ -28,7 +28,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: any, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
     const parsedError = parseError(error);
     showErrorToast(parsedError);
   }

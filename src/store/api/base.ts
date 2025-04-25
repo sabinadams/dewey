@@ -6,8 +6,6 @@ export const tauriBaseQuery = async ({ command, args }: { command: string; args?
     const result = await invoke(command, args);
     return { data: result };
   } catch (rawError) {
-    console.error(`Error invoking command '{command}':`, rawError); // Log the raw error
-
     // Attempt to parse the error into our AppError structure
     const appError = parseError(rawError);
 

@@ -54,7 +54,6 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       }
 
       // Parse the error if it's not already an AppError
-      console.log("[handleError] Error received before parseError:", error);
       const appError = parseError(error);
       
       // Override category and severity if provided
@@ -77,7 +76,6 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       }
 
       // Error wasn't handled locally, show toast and throw
-      console.log("Error passed to showErrorToast:", finalError);
       showErrorToast(finalError);
       throw finalError;
     } finally {

@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { createContext, useContext } from "react"
 import { useForm, UseFormReturn } from "react-hook-form"
 import { z } from "zod"
+import { useEffect } from "react"
 
 // Define the database connection schema
 const baseConnectionSchema = z.object({
@@ -220,7 +221,20 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       password: "",
       database: ""
     },
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    criteriaMode: 'all',
   })
+
+  // Handle form errors
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (type === 'change' && name) {
+        form.trigger(name);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   return (
     <CreateProjectContext.Provider value={{ form }}>

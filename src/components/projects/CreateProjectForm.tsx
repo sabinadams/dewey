@@ -41,6 +41,7 @@ const CreateProjectForm = () => {
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.PROJECT,
     onError: (error) => {
+      // Handle encryption key errors
       if (error.category === ErrorCategory.KEYRING && 
           error.subcategory === KeyringSubcategory.KeyNotFound) {
         toast.error('Encryption Key Error', {
@@ -56,7 +57,17 @@ const CreateProjectForm = () => {
         });
         return true; // Handle this error locally
       }
-      return false; // Let other errors propagate to the error boundary
+
+      // Handle non-validation errors
+      if (error.category !== ErrorCategory.VALIDATION) {
+        toast.error('Error', {
+          description: error.message,
+          duration: 5000
+        });
+        return true;
+      }
+
+      return false; // Let React Hook Form handle validation errors
     }
   });
 

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { AppError, ErrorCategory, ErrorSeverity, createError, parseError, showErrorToast } from '@/lib/errors';
+import { ZodError } from 'zod';
 
 interface UseErrorHandlerOptions {
   onError?: (error: AppError) => boolean | void;
@@ -21,6 +22,37 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
   ) => {
     setIsHandlingError(true);
     try {
+      // Handle React Hook errors
+      if (error instanceof Error && error.message.includes('should be used within')) {
+        const appError = createError(
+          error.message,
+          ErrorCategory.VALIDATION,
+          ErrorSeverity.Error,
+          'HookUsage'
+        );
+        setError(appError);
+        if (options.onError) {
+          return options.onError(appError);
+        }
+        return true; // Handle hook errors locally by default
+      }
+
+      // Handle Zod validation errors
+      if (error instanceof ZodError) {
+        const firstError = error.errors[0];
+        const appError = createError(
+          firstError.message,
+          ErrorCategory.VALIDATION,
+          ErrorSeverity.Error,
+          firstError.path.join('.')
+        );
+        setError(appError);
+        if (options.onError) {
+          return options.onError(appError);
+        }
+        return true; // Handle validation errors locally by default
+      }
+
       // Parse the error if it's not already an AppError
       const appError = parseError(error);
       
@@ -38,13 +70,14 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       // If onError returns true, we prevent propagation
       const shouldPreventPropagation = options.onError?.(finalError) === true;
 
-      // If we're not preventing propagation, show toast and throw the error
-      if (!shouldPreventPropagation) {
-        showErrorToast(finalError);
-        throw finalError;
+      if (shouldPreventPropagation) {
+        // Error was handled locally, return it without throwing
+        return finalError;
       }
 
-      return finalError;
+      // Error wasn't handled locally, show toast and throw
+      showErrorToast(finalError);
+      throw finalError;
     } finally {
       setIsHandlingError(false);
     }

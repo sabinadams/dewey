@@ -1,11 +1,11 @@
 import { KeyRound } from 'lucide-react';
 import BaseStep from './BaseStep';
 import { useHasEncryptionKeyQuery, useInitializeEncryptionKeyMutation } from '@/store/api/keychain';
-import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useErrorHandler } from '@/hooks/use-error-handler';
 import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
+import { useToast } from '@/hooks/use-toast';
 
 interface KeychainStepProps {
   onNext: () => void;
@@ -17,33 +17,30 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
   const { data: hasEncryptionKey, isSuccess } = useHasEncryptionKeyQuery(undefined, {
     skip: !shouldCheckKey
   });
-  const { handleError, createAndHandleError } = useErrorHandler({
+  const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.KEYRING
   });
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (isSuccess && hasEncryptionKey && shouldCheckKey) {
       if (hasCreatedKey) {
-        createAndHandleError(
+        showToast(
           'Encryption key created',
-          ErrorCategory.KEYRING,
-          ErrorSeverity.Info,
-          undefined,
+          'success',
           { description: 'Your connections will now be secured with an encryption key.' }
         );
       } else {
-        createAndHandleError(
+        showToast(
           'Encryption key found',
-          ErrorCategory.KEYRING,
-          ErrorSeverity.Info,
-          undefined,
+          'success',
           { description: 'Your connections will already be secured with an encryption key.' }
         );
       }
       const timer = setTimeout(() => onNext(), 500);
       return () => clearTimeout(timer);
     }
-  }, [hasEncryptionKey, isSuccess, onNext, shouldCheckKey, hasCreatedKey, createAndHandleError]);
+  }, [hasEncryptionKey, isSuccess, onNext, shouldCheckKey, hasCreatedKey, showToast]);
 
   const [initializeEncryptionKey] = useInitializeEncryptionKeyMutation();
 

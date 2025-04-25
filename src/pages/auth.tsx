@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useErrorHandler } from '@/hooks/use-error-handler';
+import { useToast } from '@/hooks/use-toast';
 import { ErrorCategory } from '@/lib/errors';
 
 export default function AuthPage() {
@@ -21,6 +22,7 @@ export default function AuthPage() {
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.AUTH
   });
+  const { showToast } = useToast();
 
   // Update mode when URL params change
   useEffect(() => {
@@ -36,10 +38,8 @@ export default function AuthPage() {
       if (document.visibilityState === 'visible' && oauthLoading) {
         // If we return to the page and OAuth was in progress, it was likely cancelled
         setOAuthLoading(null);
-        // Use createAndHandleError for user-facing info/warning messages not tied to a caught error
-        // Alternatively, could just let this be silent or use a non-error toast.
-        // For now, let's comment this out as the original didn't show a toast here.
-        // handleError(new Error('Authentication was cancelled')); // Was: setError('Authentication was cancelled');
+        // Use showToast for non-error messages like this one
+        showToast('Authentication was cancelled', 'info');
       }
     };
 
@@ -47,7 +47,7 @@ export default function AuthPage() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [oauthLoading]);
+  }, [oauthLoading, showToast]);
 
   const handleOAuthSignIn = async (provider: 'oauth_github' | 'oauth_google') => {
     try {

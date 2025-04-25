@@ -19,11 +19,11 @@ Dewey implements a centralized error handling system built around React hooks an
     * Tracks error state with `error` and `isHandlingError` flags
     * Can be configured with default categories/severities and callbacks for local error handling
 
-3. **`ToastService`**: A singleton service that manages error notifications.
-    * Queues errors to prevent overwhelming the user
-    * Shows appropriate toast styles based on error severity
-    * Handles toast duration based on severity
-    * Provides action buttons for critical errors
+3. **`useToast` Hook**: A hook for displaying non-error notifications to users.
+    * Provides a `showToast` function to display messages
+    * Supports different severity levels: 'info', 'success', 'warning', 'error'
+    * Should be used for non-error notifications (e.g., success messages, info messages)
+    * Should NOT be used for actual errors - use `useErrorHandler` instead
 
 4. **`ErrorBoundary` Component**: A top-level component that acts as a final safety net.
     * Catches uncaught exceptions bubbling up from components
@@ -32,6 +32,76 @@ Dewey implements a centralized error handling system built around React hooks an
     * Shows critical error messages for non-recoverable errors
 
 ## Implementation Guidelines
+
+**When to Use `useErrorHandler` vs `useToast`:**
+
+Use `useErrorHandler` when:
+- Handling actual errors (e.g., failed API calls, validation errors)
+- You need error tracking and logging
+- You need to handle errors in a standardized way
+- You need to provide error recovery options
+
+Use `useToast` when:
+- Showing success messages
+- Showing informational messages
+- Showing non-error warnings
+- You just need a simple notification without error handling
+
+**Example Usage:**
+
+```typescript
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { useToast } from '@/hooks/use-toast';
+import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
+import { invoke } from '@tauri-apps/api/core';
+
+function MyComponent() {
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.UNKNOWN
+  });
+  const { showToast } = useToast();
+
+  const handleAction = async () => {
+    try {
+      await invoke('some_command');
+      showToast('Operation successful', 'success');
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  return <button onClick={handleAction}>Do Something</button>;
+}
+```
+
+**Common Mistakes to Avoid:**
+
+1. Using `createAndHandleError` for non-error messages
+   ```typescript
+   // ❌ Wrong
+   createAndHandleError('Operation successful', ErrorCategory.UNKNOWN, ErrorSeverity.Info);
+   
+   // ✅ Correct
+   showToast('Operation successful', 'success');
+   ```
+
+2. Using `showToast` for actual errors
+   ```typescript
+   // ❌ Wrong
+   showToast('Failed to save changes', 'error');
+   
+   // ✅ Correct
+   handleError(new Error('Failed to save changes'));
+   ```
+
+3. Mixing error handling and toast notifications
+   ```typescript
+   // ❌ Wrong
+   createAndHandleError('Invalid input', ErrorCategory.VALIDATION, ErrorSeverity.Warning);
+   
+   // ✅ Correct
+   handleError(new Error('Invalid input'));
+   ```
 
 **Catching and Handling Errors:**
 

@@ -4,7 +4,7 @@ import { useHasEncryptionKeyQuery, useInitializeEncryptionKeyMutation } from '@/
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useErrorHandler } from '@/hooks/use-error-handler';
-import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
+import { ErrorCategory } from '@/lib/errors';
 import { useToast } from '@/hooks/use-toast';
 
 interface KeychainStepProps {
@@ -52,7 +52,7 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
 
     if (!hasEncryptionKey) {
       try {
-        const result = await initializeEncryptionKey().unwrap();
+        await initializeEncryptionKey().unwrap();
         setHasCreatedKey(true);
         setShouldCheckKey(true);
       } catch (error: any) {

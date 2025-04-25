@@ -14,8 +14,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "../../ui/tooltip";
-import { useErrorHandler } from '@/hooks/use-error-handler';
-import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ConnectionStringTab({
@@ -24,7 +22,6 @@ export default function ConnectionStringTab({
     const { form } = useCreateProjectContext();
     const [connectionString, setConnectionString] = useState("");
     const debouncedConnectionString = useDebounce(connectionString);
-    const { createAndHandleError } = useErrorHandler();
     const { showToast } = useToast();
 
     useEffect(() => {

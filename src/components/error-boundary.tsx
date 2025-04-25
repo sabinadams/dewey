@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppError, ErrorCategory, ErrorSeverity, parseError, showErrorToast } from '@/lib/errors';
+import { AppError, ErrorCategory, ErrorSeverity, parseError } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -27,9 +27,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     };
   }
 
-  componentDidCatch(error: any, errorInfo: React.ErrorInfo) {
-    const parsedError = parseError(error);
-    showErrorToast(parsedError);
+  componentDidCatch(error: any) {
+    // Log the error to an error reporting service
+    console.error('Error caught by boundary:', error);
   }
 
   handleRetry = () => {

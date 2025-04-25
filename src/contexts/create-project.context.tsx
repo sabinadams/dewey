@@ -1,8 +1,7 @@
-import { zodResolver } from "@hookform/resolvers/zod"
 import { createContext, useContext } from "react"
 import { useForm, UseFormReturn } from "react-hook-form"
-import { z } from "zod"
-import { useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 
 // Define the database connection schema
 const baseConnectionSchema = z.object({

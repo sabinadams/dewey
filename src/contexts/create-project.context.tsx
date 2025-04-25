@@ -221,20 +221,10 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       password: "",
       database: ""
     },
-    mode: 'onChange',
-    reValidateMode: 'onChange',
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
     criteriaMode: 'all',
   })
-
-  // Handle form errors
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change' && name) {
-        form.trigger(name);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   return (
     <CreateProjectContext.Provider value={{ form }}>

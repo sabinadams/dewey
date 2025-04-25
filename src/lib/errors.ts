@@ -74,8 +74,6 @@ export function createError(
 }
 
 export function parseError(error: any): AppError {
-  console.log("[parseError] Received error object:", error, "Type:", typeof error, "Is instanceof Error:", error instanceof Error);
-
   // If it's already an AppError, return it
   if (isAppError(error)) {
     return error;
@@ -83,23 +81,17 @@ export function parseError(error: any): AppError {
 
   // Handle Tauri errors
   if (typeof error === 'object' && error !== null) {
-
-    // <<< NEW CHECK: Handle plain objects that might contain AppError JSON in message
+    // Handle plain objects that might contain AppError JSON in message
     if (!isAppError(error) && 'message' in error && typeof error.message === 'string') {
-      console.log("[parseError] Checking plain object message for JSON:", error.message);
       try {
         const parsedMessage = JSON.parse(error.message);
-        const isParsedAppError = isAppError(parsedMessage);
-        console.log("[parseError] Parsed plain object message:", parsedMessage, "Is AppError?", isParsedAppError);
-        if (isParsedAppError) {
-          // Success! Return the parsed AppError from the message string
+        if (isAppError(parsedMessage)) {
           return parsedMessage;
         }
       } catch (e) {
         // JSON parsing failed, proceed to other checks
-        console.error("[parseError] JSON.parse failed for plain object message:", e);
       }
-    } // <<< END NEW CHECK
+    }
 
     // Handle serialized AppError
     if ('message' in error && 'category' in error && 'severity' in error) {
@@ -139,24 +131,18 @@ export function parseError(error: any): AppError {
 
     // Handle Error objects
     if (error instanceof Error) {
-      console.log("[parseError] Attempting to parse error.message:", error.message);
       // Attempt to parse the message as JSON representing an AppError
       try {
         const parsedMessage = JSON.parse(error.message);
-        const isParsedAppError = isAppError(parsedMessage);
-        console.log("[parseError] Parsed message:", parsedMessage, "Is AppError?", isParsedAppError);
-        if (isParsedAppError) {
-          // It's our structured error, embedded in the message
+        if (isAppError(parsedMessage)) {
           return parsedMessage;
         }
       } catch (e) {
-        console.error("[parseError] JSON.parse failed:", e);
         // Parsing failed, message is likely not JSON or not our AppError structure
         // Proceed to treat it as a standard error message below
       }
 
       // If message wasn't a valid AppError JSON, create a standard UNKNOWN error
-      console.log("[parseError] Falling back to UNKNOWN error for message:", error.message);
       return createError(
         error.message,
         ErrorCategory.UNKNOWN,

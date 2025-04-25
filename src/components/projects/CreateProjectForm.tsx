@@ -41,7 +41,6 @@ const CreateProjectForm = () => {
     defaultCategory: ErrorCategory.PROJECT,
     onError: (error) => {
       // Handle encryption key errors specifically
-      console.log('Error passed to onError:', error); // Keep log for verification
       if (error.category === ErrorCategory.KEYRING &&
           error.subcategory === KeyringSubcategory.KeyNotFound) {
         toast.error('Encryption Key Error', {

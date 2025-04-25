@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { AppError, ErrorCategory, ErrorSeverity, parseError } from '@/lib/errors'; // Import necessary items
+import { parseError } from '@/lib/errors'; // Import necessary items
 
 export const tauriBaseQuery = async ({ command, args }: { command: string; args?: any }) => {
   try {

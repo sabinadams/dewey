@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
-import { handleTauriCommand, showErrorToast, parseError, ErrorCategory, KeyringSubcategory } from "@/lib/errors"
+import { showErrorToast, parseError, ErrorCategory, KeyringSubcategory } from "@/lib/errors"
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state

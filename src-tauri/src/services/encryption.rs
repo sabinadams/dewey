@@ -10,8 +10,6 @@ use std::sync::{Arc, OnceLock};
 use tracing::{debug, error};
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{ErrorCategory, EncryptionSubcategory};
-use tokio::sync::Mutex;
-
 use super::key_management::KeyManager;
 
 static ENCRYPTION_KEY: OnceLock<Arc<[u8; 32]>> = OnceLock::new();
@@ -122,82 +120,6 @@ pub fn decrypt_string(encrypted_value: &str) -> AppResult<String> {
             ErrorCategory::Encryption(EncryptionSubcategory::Utf8DecodeFailed),
             ErrorSeverity::Error
         ))
-}
-
-pub struct EncryptionService {
-    key: Arc<Mutex<Option<Vec<u8>>>>,
-}
-
-impl EncryptionService {
-    pub fn new() -> Self {
-        Self {
-            key: Arc::new(Mutex::new(None)),
-        }
-    }
-
-    pub async fn initialize_key(&self, key: Vec<u8>) {
-        let mut key_guard = self.key.lock().await;
-        *key_guard = Some(key);
-    }
-
-    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
-        let key = self.key
-            .lock()
-            .await
-            .clone()
-            .ok_or_else(|| AppError::new(
-                "Encryption key not initialized",
-                ErrorCategory::Encryption(EncryptionSubcategory::KeyNotInitialized),
-                ErrorSeverity::Error
-            ))?;
-        Ok(key)
-    }
-
-    pub async fn encrypt(&self, data: &[u8]) -> AppResult<Vec<u8>> {
-        let key = self.get_key().await?;
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|e| AppError::new(
-                e.to_string(),
-                ErrorCategory::Encryption(EncryptionSubcategory::InvalidKey),
-                ErrorSeverity::Error
-            ))?;
-
-        let mut nonce = [0u8; 12];
-        rand::thread_rng().fill_bytes(&mut nonce);
-        let nonce = Nonce::from_slice(&nonce);
-
-        let encrypted_data = cipher
-            .encrypt(nonce, data)
-            .map_err(|e| AppError::new(
-                e.to_string(),
-                ErrorCategory::Encryption(EncryptionSubcategory::EncryptionFailed),
-                ErrorSeverity::Error
-            ))?;
-
-        // Prepend the nonce to the encrypted data
-        let mut result = nonce.to_vec();
-        result.extend_from_slice(&encrypted_data);
-        Ok(result)
-    }
-
-    pub async fn decrypt(&self, data: &[u8]) -> AppResult<Vec<u8>> {
-        let key = self.get_key().await?;
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|e| AppError::new(
-                e.to_string(),
-                ErrorCategory::Encryption(EncryptionSubcategory::InvalidKey),
-                ErrorSeverity::Error
-            ))?;
-
-        let nonce = Nonce::from_slice(&data[..12]);
-        cipher
-            .decrypt(nonce, &data[12..])
-            .map_err(|e| AppError::new(
-                e.to_string(),
-                ErrorCategory::Encryption(EncryptionSubcategory::DecryptionFailed),
-                ErrorSeverity::Error
-            ))
-    }
 }
 
 #[cfg(test)]

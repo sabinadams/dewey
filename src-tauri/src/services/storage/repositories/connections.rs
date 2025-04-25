@@ -1,11 +1,14 @@
 use crate::types::AppResult;
-use crate::services::encryption::{encrypt_string, decrypt_string};
+use crate::services::encryption::encrypt_string;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
 use std::sync::Arc;
 use tracing::debug;
+use crate::error::{AppError, ErrorSeverity};
+use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
 
-#[derive(Debug, Serialize, Deserialize)]
+/// Represents a database connection in the application
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Connection {
     pub id: i64,
     pub connection_name: String,
@@ -22,6 +25,7 @@ pub struct Connection {
     pub updated_at: Option<i64>,
 }
 
+/// Represents a new database connection to be created
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewConnection {
     pub connection_name: String,
@@ -33,39 +37,6 @@ pub struct NewConnection {
     pub username: String,
     pub password: String,
     pub database: String,
-}
-
-#[derive(Debug, FromRow)]
-struct EncryptedConnection {
-    pub id: i64,
-    pub connection_name: String,
-    pub project_id: i64,
-    pub db_type: String,
-    pub encrypted_host: String,
-    pub encrypted_port: String,
-    pub encrypted_username: String,
-    pub encrypted_password: String,
-    pub encrypted_database: String,
-    pub created_at: Option<i64>,
-    pub updated_at: Option<i64>,
-}
-
-impl From<EncryptedConnection> for Connection {
-    fn from(ec: EncryptedConnection) -> Self {
-        Self {
-            id: ec.id,
-            connection_name: ec.connection_name,
-            project_id: ec.project_id,
-            db_type: ec.db_type,
-            host: decrypt_string(&ec.encrypted_host).unwrap_or_default(),
-            port: decrypt_string(&ec.encrypted_port).unwrap_or_default(),
-            username: decrypt_string(&ec.encrypted_username).unwrap_or_default(),
-            password: decrypt_string(&ec.encrypted_password).unwrap_or_default(),
-            database: decrypt_string(&ec.encrypted_database).unwrap_or_default(),
-            created_at: ec.created_at,
-            updated_at: ec.updated_at,
-        }
-    }
 }
 
 pub struct ConnectionRepository {
@@ -107,45 +78,27 @@ impl ConnectionRepository {
         Ok(id)
     }
 
-    pub async fn get_by_id(&self, id: i64) -> AppResult<Option<Connection>> {
-        let connection = sqlx::query_as::<_, EncryptedConnection>(
-            r#"
-            SELECT * FROM connections WHERE id = ?
-            "#
-        )
-        .bind(id)
-        .fetch_optional(&*self.pool)
-        .await?;
-
-        Ok(connection.map(Connection::from))
-    }
-
-    pub async fn get_all(&self) -> AppResult<Vec<Connection>> {
-        let connections = sqlx::query_as::<_, EncryptedConnection>(
-            r#"
-            SELECT * FROM connections
-            "#
-        )
-        .fetch_all(&*self.pool)
-        .await?;
-
-        Ok(connections.into_iter().map(Connection::from).collect())
-    }
-
     pub async fn get_by_project(&self, project_id: i64) -> AppResult<Vec<Connection>> {
         debug!("Fetching connections for project: {}", project_id);
         
-        let connections = sqlx::query_as::<_, EncryptedConnection>(
-            r#"
-            SELECT * FROM connections 
+        let connections = sqlx::query_as::<_, Connection>(
+            r"
+            SELECT id, project_id, connection_name, db_type, host, port, username, password, database, created_at, updated_at
+            FROM connections
             WHERE project_id = ?
             ORDER BY created_at ASC
-            "#
+            "
         )
         .bind(project_id)
         .fetch_all(&*self.pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
 
-        Ok(connections.into_iter().map(Connection::from).collect())
+        debug!("Found {} connections", connections.len());
+        Ok(connections)
     }
 }

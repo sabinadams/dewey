@@ -159,31 +159,8 @@ impl KeyManager {
     }
 
     fn get_key_file_path() -> AppResult<PathBuf> {
-        let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or_else(|| AppError::new(
-                "Could not determine project directories",
-                ErrorCategory::Config(ConfigSubcategory::ParseError),
-                ErrorSeverity::Error,
-            ))?;
-        
-        Ok(proj_dirs.config_dir().join(FILE_NAME))
-    }
-
-    pub async fn set_key(&self, key: Vec<u8>) -> AppResult<()> {
-        let mut key_guard = self.key.lock().await;
-        *key_guard = Some(key);
-        Ok(())
-    }
-
-    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
-        self.key
-            .lock()
-            .await
-            .clone()
-            .ok_or_else(|| AppError::new(
-                "Key not initialized".to_string(),
-                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotInitialized),
-                ErrorSeverity::Error,
-            ))
+        let app_dir = crate::services::storage::LocalStorage::get_app_dir();
+        let key_file = app_dir.join("encryption.key");
+        Ok(key_file)
     }
 } 

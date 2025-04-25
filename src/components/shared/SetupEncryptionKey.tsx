@@ -1,5 +1,5 @@
 import { KeyRound, Info } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHasEncryptionKeyQuery, useInitializeEncryptionKeyMutation } from '@/store/api/keychain';
 import { useErrorHandler } from '@/hooks/use-error-handler';
@@ -24,6 +24,7 @@ interface SetupEncryptionKeyProps {
 const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryptionKeyProps) => {
   const [shouldCheckKey, setShouldCheckKey] = useState(false);
   const [hasCreatedKey, setHasCreatedKey] = useState(false);
+  const hasShownToast = useRef(false);
   const { data: hasEncryptionKey, isSuccess } = useHasEncryptionKeyQuery(undefined, {
     skip: !shouldCheckKey
   });
@@ -33,7 +34,8 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (isSuccess && hasEncryptionKey && shouldCheckKey) {
+    if (isSuccess && hasEncryptionKey && shouldCheckKey && !hasShownToast.current) {
+      hasShownToast.current = true;
       if (hasCreatedKey) {
         showToast(
           'Encryption key created',

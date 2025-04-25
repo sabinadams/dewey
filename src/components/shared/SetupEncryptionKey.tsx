@@ -6,7 +6,6 @@ import { useErrorHandler } from '@/hooks/use-error-handler';
 import { ErrorCategory } from '@/lib/errors';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,

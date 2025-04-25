@@ -1,5 +1,3 @@
-import { KeyRound } from 'lucide-react';
-import BaseStep from './BaseStep';
 import SetupEncryptionKey from '@/components/shared/SetupEncryptionKey';
 
 interface KeychainStepProps {

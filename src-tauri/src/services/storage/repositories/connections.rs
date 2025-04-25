@@ -69,11 +69,11 @@ impl ConnectionRepository {
         .bind(&connection.connection_name)
         .bind(connection.project_id.expect("project_id is required for database insertion"))
         .bind(&connection.db_type)
-        .bind(encrypt_string(&connection.host).await?)
-        .bind(encrypt_string(&connection.port).await?)
-        .bind(encrypt_string(&connection.username).await?)
-        .bind(encrypt_string(&connection.password).await?)
-        .bind(encrypt_string(&connection.database).await?);
+        .bind(encrypt_string(&connection.host)?)
+        .bind(encrypt_string(&connection.port)?)
+        .bind(encrypt_string(&connection.username)?)
+        .bind(encrypt_string(&connection.password)?)
+        .bind(encrypt_string(&connection.database)?);
 
         let result = if let Some(tx) = tx {
             query.fetch_one(&mut **tx).await
@@ -131,11 +131,11 @@ impl ConnectionRepository {
         .bind(&connection.connection_name)
         .bind(connection.project_id.expect("project_id is required for database insertion"))
         .bind(&connection.db_type)
-        .bind(encrypt_string(&connection.host).await?)
-        .bind(encrypt_string(&connection.port).await?)
-        .bind(encrypt_string(&connection.username).await?)
-        .bind(encrypt_string(&connection.password).await?)
-        .bind(encrypt_string(&connection.database).await?)
+        .bind(encrypt_string(&connection.host)?)
+        .bind(encrypt_string(&connection.port)?)
+        .bind(encrypt_string(&connection.username)?)
+        .bind(encrypt_string(&connection.password)?)
+        .bind(encrypt_string(&connection.database)?)
         .fetch_one(&mut **tx)
         .await?;
         

@@ -38,7 +38,7 @@ impl KeyManager {
     /// Gets the encryption key, generating and storing a new one if it doesn't exist
     pub async fn get_or_create_key(&self) -> AppResult<Vec<u8>> {
         // Try to get the key from the system keyring first
-        match self.get_key_from_keyring().await {
+        match self.get_key_from_keyring() {
             Ok(key) => {
                 debug!("Retrieved encryption key from system keyring");
                 Ok(key)
@@ -76,8 +76,7 @@ impl KeyManager {
         Ok(self.key_file_path.exists())
     }
 
-    /// Get the key from the system keyring
-    pub async fn get_key_from_keyring(&self) -> AppResult<Vec<u8>> {
+    fn get_key_from_keyring(&self) -> AppResult<Vec<u8>> {
         let key_str = self.keyring_entry
             .get_password()
             .map_err(|e| AppError::new(
@@ -92,15 +91,6 @@ impl KeyManager {
                 ErrorCategory::Keyring(KeyringSubcategory::InvalidKey),
                 ErrorSeverity::Error,
             ))?;
-
-        // Validate key length
-        if key_bytes.len() != 32 {
-            return Err(AppError::new(
-                "Invalid key length",
-                ErrorCategory::Keyring(KeyringSubcategory::InvalidKey),
-                ErrorSeverity::Error,
-            ));
-        }
         
         Ok(key_bytes)
     }
@@ -119,36 +109,17 @@ impl KeyManager {
                 ErrorCategory::KeyGeneration(KeyManagementSubcategory::InvalidLength),
                 ErrorSeverity::Error,
             ))?;
-
-        // Validate key length
-        if key_bytes.len() != 32 {
-            return Err(AppError::new(
-                "Invalid key length",
-                ErrorCategory::KeyGeneration(KeyManagementSubcategory::InvalidLength),
-                ErrorSeverity::Error,
-            ));
-        }
         
         Ok(key_bytes)
     }
 
     fn generate_new_key(&self) -> AppResult<Vec<u8>> {
-        let mut key = vec![0u8; 32];
+        let mut key = Vec::new();
         OsRng.fill_bytes(&mut key);
-        debug!("Generated new 32-byte key");
         Ok(key)
     }
 
     fn store_key(&self, key: &[u8]) -> AppResult<()> {
-        // Validate key length
-        if key.len() != 32 {
-            return Err(AppError::new(
-                "Invalid key length",
-                ErrorCategory::KeyGeneration(KeyManagementSubcategory::InvalidLength),
-                ErrorSeverity::Error,
-            ));
-        }
-
         let key_str = BASE64.encode(key);
         
         // Try to store in system keyring first

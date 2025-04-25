@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "clean:appdir": "mkdir -p ~/Library/Application\\ Support/com.dewey.app && find ~/Library/Application\\ Support/com.dewey.app -mindepth 1 -delete",
+    "clean:keychain": "security delete-generic-password -s dewey",
+    "clean": "npm run clean:appdir && npm run clean:keychain"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.28.0",

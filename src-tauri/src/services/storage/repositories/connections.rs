@@ -1,7 +1,7 @@
 use crate::types::AppResult;
 use crate::services::encryption::encrypt_string;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, SqlitePool};
+use sqlx::{FromRow, Row, SqlitePool, Transaction, Executor};
 use std::sync::Arc;
 use tracing::debug;
 use crate::error::{AppError, ErrorSeverity};
@@ -48,10 +48,14 @@ impl ConnectionRepository {
         Self { pool }
     }
     
-    pub async fn create(&self, connection: &NewConnection) -> AppResult<i64> {
+    pub async fn create(
+        &self,
+        connection: &NewConnection,
+        tx: Option<&mut Transaction<'_, sqlx::Sqlite>>,
+    ) -> AppResult<i64> {
         debug!("Creating new connection: {:?}", connection);
         
-        let result = sqlx::query(
+        let query = sqlx::query(
             r#"
             INSERT INTO connections (
                 connection_name, project_id, db_type, 
@@ -69,9 +73,13 @@ impl ConnectionRepository {
         .bind(encrypt_string(&connection.port)?)
         .bind(encrypt_string(&connection.username)?)
         .bind(encrypt_string(&connection.password)?)
-        .bind(encrypt_string(&connection.database)?)
-        .fetch_one(&*self.pool)
-        .await?;
+        .bind(encrypt_string(&connection.database)?);
+
+        let result = if let Some(tx) = tx {
+            query.fetch_one(&mut **tx).await
+        } else {
+            query.fetch_one(&*self.pool).await
+        }?;
         
         let id = result.get(0);
         debug!("Created connection with ID: {}", id);
@@ -100,5 +108,39 @@ impl ConnectionRepository {
 
         debug!("Found {} connections", connections.len());
         Ok(connections)
+    }
+
+    pub async fn create_with_transaction(
+        &self,
+        connection: &NewConnection,
+        tx: &mut Transaction<'_, sqlx::Sqlite>,
+    ) -> AppResult<i64> {
+        debug!("Creating new connection: {:?}", connection);
+        
+        let result = sqlx::query(
+            r#"
+            INSERT INTO connections (
+                connection_name, project_id, db_type, 
+                encrypted_host, encrypted_port, encrypted_username, 
+                encrypted_password, encrypted_database
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
+            "#
+        )
+        .bind(&connection.connection_name)
+        .bind(connection.project_id.expect("project_id is required for database insertion"))
+        .bind(&connection.db_type)
+        .bind(encrypt_string(&connection.host)?)
+        .bind(encrypt_string(&connection.port)?)
+        .bind(encrypt_string(&connection.username)?)
+        .bind(encrypt_string(&connection.password)?)
+        .bind(encrypt_string(&connection.database)?)
+        .fetch_one(&mut **tx)
+        .await?;
+        
+        let id = result.get(0);
+        debug!("Created connection with ID: {}", id);
+        Ok(id)
     }
 }

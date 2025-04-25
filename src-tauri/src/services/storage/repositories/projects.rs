@@ -2,7 +2,7 @@ use crate::error::{AppError, ErrorSeverity};
 use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
 use crate::types::AppResult;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, SqlitePool};
+use sqlx::{FromRow, Row, SqlitePool, Transaction, Executor};
 use std::sync::Arc;
 use tracing::debug;
 
@@ -31,12 +31,24 @@ impl ProjectRepository {
 
     /// Create a new project
     ///
+    /// # Arguments
+    /// * `name` - The name of the project
+    /// * `user_id` - The ID of the user creating the project
+    /// * `icon_path` - Optional path to the project's icon
+    /// * `tx` - Optional transaction to use for the operation
+    ///
     /// # Errors
     /// Returns an error if there was a problem executing the query
-    pub async fn create(&self, name: &str, user_id: &str, icon_path: Option<&str>) -> AppResult<i64> {
+    pub async fn create(
+        &self,
+        name: &str,
+        user_id: &str,
+        icon_path: Option<&str>,
+        tx: Option<&mut Transaction<'_, sqlx::Sqlite>>,
+    ) -> AppResult<i64> {
         debug!("Creating new project '{}' for user: {}", name, user_id);
         
-        let result = sqlx::query(
+        let query = sqlx::query(
             r"
             INSERT INTO projects (name, user_id, icon_path, created_at, updated_at)
             VALUES (?, ?, ?, unixepoch(), unixepoch())
@@ -45,9 +57,13 @@ impl ProjectRepository {
         )
         .bind(name)
         .bind(user_id)
-        .bind(icon_path)
-        .fetch_one(&*self.pool)
-        .await
+        .bind(icon_path);
+
+        let result = if let Some(tx) = tx {
+            query.fetch_one(&mut **tx).await
+        } else {
+            query.fetch_one(&*self.pool).await
+        }
         .map_err(|e| AppError::new(
             e.to_string(),
             ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
@@ -85,5 +101,41 @@ impl ProjectRepository {
 
         debug!("Found {} projects", projects.len());
         Ok(projects)
+    }
+
+    /// Create a new project within a transaction
+    ///
+    /// # Errors
+    /// Returns an error if there was a problem executing the query
+    pub async fn create_with_transaction(
+        &self,
+        name: &str,
+        user_id: &str,
+        icon_path: Option<&str>,
+        tx: &mut Transaction<'_, sqlx::Sqlite>,
+    ) -> AppResult<i64> {
+        debug!("Creating new project '{}' for user: {}", name, user_id);
+        
+        let result = sqlx::query(
+            r"
+            INSERT INTO projects (name, user_id, icon_path, created_at, updated_at)
+            VALUES (?, ?, ?, unixepoch(), unixepoch())
+            RETURNING id
+            "
+        )
+        .bind(name)
+        .bind(user_id)
+        .bind(icon_path)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(|e| AppError::new(
+            e.to_string(),
+            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+            ErrorSeverity::Error,
+        ))?;
+
+        let id = result.get(0);
+        debug!("Project created successfully");
+        Ok(id)
     }
 } 

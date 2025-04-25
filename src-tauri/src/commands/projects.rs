@@ -91,23 +91,38 @@ pub async fn create_project(
             ))?
     };
 
+    // Start a transaction
+    let mut tx = state.db.begin().await
+        .map_err(|e| AppError::new(
+            format!("Failed to start transaction: {}", e),
+            ErrorCategory::Database(DatabaseSubcategory::TransactionFailed),
+            ErrorSeverity::Error,
+        ))?;
+
     // Create the project with the icon path
     let project_repo = ProjectRepository::new(state.db.clone());
     let connection_repo = ConnectionRepository::new(state.db.clone());
 
     // Create the project first
-    let project_id = project_repo
+    let project_id = match project_repo
         .create(
             &name,
             &user_id,
             Some(&final_icon_path),
+            Some(&mut tx),
         )
         .await
-        .context(AppError::new(
-            "Failed to create project",
-            ErrorCategory::Project(ProjectSubcategory::InvalidPath),
-            ErrorSeverity::Error,
-        ))?;
+    {
+        Ok(id) => id,
+        Err(e) => {
+            // Clean up the icon file
+            let icon_path = icon_generator.get_icon_path(&final_icon_path);
+            if let Err(cleanup_err) = std::fs::remove_file(&icon_path) {
+                info!("Failed to clean up icon file: {}", cleanup_err);
+            }
+            return Err(e.into());
+        }
+    };
 
     // If an initial connection was provided, create it
     if let Some(initial_connection) = initial_connection {
@@ -123,12 +138,28 @@ pub async fn create_project(
             database: initial_connection.database
         };
 
-        connection_repo.create(&connection).await
-            .context(AppError::new(
-                "Failed to create initial connection for project",
-                ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
-                ErrorSeverity::Error,
-            ))?;
+        if let Err(e) = connection_repo.create(&connection, Some(&mut tx)).await {
+            // Clean up the icon file
+            let icon_path = icon_generator.get_icon_path(&final_icon_path);
+            if let Err(cleanup_err) = std::fs::remove_file(&icon_path) {
+                info!("Failed to clean up icon file: {}", cleanup_err);
+            }
+            return Err(e.into());
+        }
+    }
+
+    // Commit the transaction
+    if let Err(e) = tx.commit().await {
+        // Clean up the icon file
+        let icon_path = icon_generator.get_icon_path(&final_icon_path);
+        if let Err(cleanup_err) = std::fs::remove_file(&icon_path) {
+            info!("Failed to clean up icon file: {}", cleanup_err);
+        }
+        return Err(AppError::new(
+            format!("Failed to commit transaction: {}", e),
+            ErrorCategory::Database(DatabaseSubcategory::TransactionFailed),
+            ErrorSeverity::Error,
+        ));
     }
 
     Ok(project_id)

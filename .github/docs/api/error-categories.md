@@ -1,80 +1,155 @@
 # Error Categories Reference
 
-This document outlines the categorization system used for errors in Dewey.
+This document outlines the error categorization system used in Dewey.
 
 ## Overview
 
-Errors in Dewey are categorized into three main groups based on their origin and impact:
+Errors in Dewey are categorized using the `ErrorCategory` enum, which defines the source or type of error. Each category may have associated subcategories for more specific error types.
 
-1. **User Errors**: Errors caused by invalid user input or actions
-2. **System Errors**: Errors caused by technical failures
-3. **Business Logic Errors**: Errors caused by business rule violations
+## Error Categories
 
-## Category Details
+### Database Errors
+- **Category**: `DATABASE`
+- **Description**: Errors related to database operations
+- **Common Use Cases**:
+  - Failed database queries
+  - Connection issues
+  - Transaction failures
+  - Migration problems
 
-### User Errors
+### Migration Errors
+- **Category**: `MIGRATION`
+- **Description**: Errors during database migrations
+- **Common Use Cases**:
+  - Failed schema updates
+  - Data migration failures
+  - Version conflicts
 
-User errors occur when the input provided by the user is invalid or doesn't meet the required criteria.
+### I/O Errors
+- **Category**: `IO`
+- **Description**: File system and I/O operation errors
+- **Common Use Cases**:
+  - File not found
+  - Permission denied
+  - Read/write failures
+  - Path resolution issues
 
-**Characteristics:**
-- Client-side validation should catch most of these
-- Can be resolved by user action
-- Should provide clear guidance to users
-- Typically non-critical severity
+### Configuration Errors
+- **Category**: `CONFIG`
+- **Description**: Configuration-related errors
+- **Common Use Cases**:
+  - Invalid configuration values
+  - Missing configuration
+  - Configuration parsing errors
 
-**Common Causes:**
-- Invalid input format
-- Missing required fields
-- Out-of-range values
-- Invalid combinations of inputs
+### Icon Generation Errors
+- **Category**: `ICON_GENERATION`
+- **Description**: Errors during icon generation
+- **Common Use Cases**:
+  - Image processing failures
+  - Format conversion errors
+  - Size adjustment issues
 
-### System Errors
+### Image Errors
+- **Category**: `IMAGE`
+- **Description**: General image processing errors
+- **Common Use Cases**:
+  - Invalid image format
+  - Corrupted image data
+  - Processing failures
 
-System errors occur when there are technical failures in the application infrastructure.
+### File Not Found Errors
+- **Category**: `FILE_NOT_FOUND`
+- **Description**: Specific file not found errors
+- **Common Use Cases**:
+  - Missing project files
+  - Missing configuration files
+  - Missing resource files
 
-**Characteristics:**
-- Often require technical intervention
-- May indicate infrastructure problems
-- Can be critical to system operation
-- Should be logged with detailed technical information
+### Unknown Errors
+- **Category**: `UNKNOWN`
+- **Description**: Unclassified or unexpected errors
+- **Common Use Cases**:
+  - Unhandled exceptions
+  - Third-party library errors
+  - Unexpected system states
 
-**Common Causes:**
-- Database connection failures
-- File system errors
-- Network issues
-- Resource exhaustion
-- Third-party service failures
+### Keyring Errors
+- **Category**: `KEYRING`
+- **Description**: Encryption key management errors
+- **Common Use Cases**:
+  - Key not found
+  - Key access denied
+  - Key storage failures
 
-### Business Logic Errors
+### Key Generation Errors
+- **Category**: `KEY_GENERATION`
+- **Description**: Errors during key generation
+- **Common Use Cases**:
+  - Generation failures
+  - Invalid parameters
+  - Resource constraints
 
-Business logic errors occur when an operation violates business rules or constraints.
+### Project Errors
+- **Category**: `PROJECT`
+- **Description**: Project-related errors
+- **Common Use Cases**:
+  - Project not found
+  - Invalid project name
+  - Invalid project path
+  - Project access issues
 
-**Characteristics:**
-- Enforce business rules and constraints
-- May require business process changes
-- Often need business context to resolve
-- Can be critical to business operations
+### Icon Errors
+- **Category**: `ICON`
+- **Description**: Icon-related errors
+- **Common Use Cases**:
+  - Invalid icon format
+  - Icon processing failures
+  - Icon storage issues
 
-**Common Causes:**
-- Invalid state transitions
-- Business rule violations
-- Permission issues
-- Resource conflicts
-- Business process violations
+### Connection Errors
+- **Category**: `CONNECTION`
+- **Description**: Connection-related errors
+- **Common Use Cases**:
+  - Connection failures
+  - Timeout errors
+  - Protocol errors
 
-## Category Decision Tree
+### Validation Errors
+- **Category**: `VALIDATION`
+- **Description**: Input validation errors
+- **Common Use Cases**:
+  - Invalid input format
+  - Missing required fields
+  - Value range violations
+  - Business rule violations
 
-```mermaid
-graph TD
-    A[Error Occurs] --> B{User Input?}
-    B -->|Yes| C[User Error]
-    B -->|No| D{Technical Failure?}
-    D -->|Yes| E[System Error]
-    D -->|No| F[Business Logic Error]
-    C --> G[Provide User Guidance]
-    E --> H[Log Technical Details]
-    F --> I[Enforce Business Rules]
-```
+### Authentication Errors
+- **Category**: `AUTH`
+- **Description**: Authentication and authorization errors
+- **Common Use Cases**:
+  - Invalid credentials
+  - Session expired
+  - Permission denied
+  - Authentication service failures
+
+### Encryption Errors
+- **Category**: `ENCRYPTION`
+- **Description**: Encryption and decryption errors
+- **Common Use Cases**:
+  - Encryption failures
+  - Decryption failures
+  - Key management issues
+  - Algorithm errors
+
+## Category Selection Guidelines
+
+When selecting an error category:
+
+1. Choose the most specific category that matches the error's source
+2. Use subcategories when available for more precise error identification
+3. Default to `UNKNOWN` only when no other category fits
+4. Consider the error's impact when selecting severity
 
 ## Related Documentation
 

@@ -4,25 +4,32 @@ Dewey implements a centralized error handling system built around React hooks an
 
 ## Core Concepts
 
-1.  **`AppError` Object**: All errors, whether originating from the backend (via Tauri commands) or the frontend, are parsed or converted into a standardized `AppError` object. This object contains:
-    *   `message`: A user-friendly error message.
-    *   `category`: An `ErrorCategory` enum value indicating the source or type of error (e.g., `DATABASE`, `VALIDATION`, `KEYRING`). Defined in `src/lib/errors.ts`.
-    *   `severity`: An `ErrorSeverity` enum value (`Info`, `Warning`, `Error`, `Critical`). Defined in `src/lib/errors.ts`.
-    *   `subcategory` (optional): More specific detail within a category (e.g., `NotFound` for `PROJECT` category).
-    *   `originalError` (optional): The original error object for debugging.
-    *   `context` (optional): Additional relevant data.
+1. **`AppError` Object**: All errors, whether originating from the backend (via Tauri commands) or the frontend, are parsed or converted into a standardized `AppError` object. This object contains:
+    * `message`: A user-friendly error message
+    * `category`: An `ErrorCategory` enum value indicating the source or type of error (e.g., `DATABASE`, `VALIDATION`, `KEYRING`)
+    * `severity`: An `ErrorSeverity` enum value (`Info`, `Warning`, `Error`, `Critical`)
+    * `subcategory` (optional): More specific detail within a category (e.g., `NotFound` for `PROJECT` category)
+    * `context` (optional): Additional relevant data
+    * `stack` (optional): Error stack trace for debugging
 
-2.  **`useErrorHandler` Hook**: This is the primary mechanism for handling errors within React components.
-    *   Provides a `handleError` function to process errors.
-    *   Provides `createAndHandleError` to create and process errors from simple messages.
-    *   Can be configured with default categories/severities and an `onError` callback for local error handling.
+2. **`useErrorHandler` Hook**: This is the primary mechanism for handling errors within React components.
+    * Provides a `handleError` function to process errors
+    * Provides `createAndHandleError` to create and process errors from simple messages
+    * Provides `clearError` to reset error state
+    * Tracks error state with `error` and `isHandlingError` flags
+    * Can be configured with default categories/severities and callbacks for local error handling
 
-3.  **`showErrorToast` Function**: Automatically called by `handleError` (unless handled locally) to display standardized toast notifications using the `sonner` library. The appearance and duration of the toast are determined by the `AppError`'s severity and category.
+3. **`ToastService`**: A singleton service that manages error notifications.
+    * Queues errors to prevent overwhelming the user
+    * Shows appropriate toast styles based on error severity
+    * Handles toast duration based on severity
+    * Provides action buttons for critical errors
 
-4.  **`ErrorBoundary` Component**: A top-level component (`src/components/error-boundary.tsx`) that acts as a final safety net.
-    *   Catches uncaught exceptions bubbling up from components.
-    *   Displays a generic error UI or a specific critical error UI.
-    *   Shows a toast *only* for `Critical` severity errors to avoid duplicate notifications handled lower down.
+4. **`ErrorBoundary` Component**: A top-level component that acts as a final safety net.
+    * Catches uncaught exceptions bubbling up from components
+    * Displays appropriate UI based on error severity
+    * Provides retry functionality for recoverable errors
+    * Shows critical error messages for non-recoverable errors
 
 ## Implementation Guidelines
 
@@ -36,17 +43,20 @@ import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
 import { invoke } from '@tauri-apps/api/core';
 
 function MyComponent() {
-  const { handleError, createAndHandleError } = useErrorHandler({
+  const { handleError, createAndHandleError, error, isHandlingError } = useErrorHandler({
     // Optional: Set default category/severity for errors handled here
     defaultCategory: ErrorCategory.UNKNOWN,
     // Optional: Handle specific errors locally without showing a global toast
     onError: (appError) => {
       if (appError.category === ErrorCategory.VALIDATION) {
-        // Example: Handle validation errors locally (e.g., update form state)
-        console.log("Handling validation error locally:", appError.message);
+        // Handle validation errors locally (e.g., update form state)
         return true; // Returning true prevents the global toast and stops propagation
       }
       return false; // Let other errors show a toast and propagate
+    },
+    // Optional: Handle error recovery
+    onRecover: () => {
+      // Reset component state after error is cleared
     }
   });
 
@@ -62,36 +72,63 @@ function MyComponent() {
   };
 
   const createCustomError = () => {
-    // Create an error from a simple message
+    // Create an error from a simple message with context
     createAndHandleError(
       'Something specific went wrong here.',
-      ErrorCategory.PROJECT, // Be specific
-      ErrorSeverity.Warning
+      ErrorCategory.PROJECT,
+      ErrorSeverity.Warning,
+      'CustomSubcategory',
+      { additionalInfo: 'context data' }
     );
   };
 
   return (
-    <button onClick={performAction}>Perform Action</button>
+    <div>
+      {error && <div className="error-message">{error.message}</div>}
+      <button onClick={performAction} disabled={isHandlingError}>
+        Perform Action
+      </button>
+    </div>
   );
 }
 ```
 
 **Key Principles:**
 
-1.  **Use `useErrorHandler`:** Always use this hook in components that perform operations that might fail.
-2.  **Call `handleError`:** Pass caught errors to the `handleError` function from the hook. It handles parsing, logging (implicitly via console errors), displaying toasts (via `showErrorToast`), and re-throwing if necessary for the `ErrorBoundary`.
-3.  **Avoid Direct `toast` Calls for Errors:** Do **not** use `toast.error()`, `toast.warning()`, etc., directly for displaying errors. Use `handleError` or `createAndHandleError` to ensure consistency and proper categorization. Direct `toast` calls are acceptable for non-error notifications (e.g., success messages, info confirmations *not* generated by `createAndHandleError`).
-4.  **Categorize Appropriately:** When using `createAndHandleError`, provide meaningful `ErrorCategory` and `ErrorSeverity`.
-5.  **Local Handling via `onError`:** Use the `onError` callback in `useErrorHandler` *only* when you need to perform specific local actions for certain errors *instead of* showing the global toast. Return `true` from `onError` to signify the error was fully handled locally.
+1. **Use `useErrorHandler`:** Always use this hook in components that perform operations that might fail.
+2. **Call `handleError`:** Pass caught errors to the `handleError` function from the hook. It handles parsing, displaying toasts, and re-throwing if necessary.
+3. **Avoid Direct `toast` Calls for Errors:** Use `handleError` or `createAndHandleError` to ensure consistency and proper categorization.
+4. **Categorize Appropriately:** When using `createAndHandleError`, provide meaningful `ErrorCategory` and `ErrorSeverity`.
+5. **Local Handling via `onError`:** Use the `onError` callback in `useErrorHandler` when you need to perform specific local actions for certain errors.
+6. **Clean Up Resources:** Use `finally` blocks to clean up resources and reset state after error handling.
 
 ## Error Categories & Severity
 
-Refer to the enums defined in `src/lib/errors.ts` for the canonical list of categories and severities.
+The application uses the following error categories and severities:
 
-*   **`ErrorCategory`**: Defines the origin or type of error (e.g., `DATABASE`, `KEYRING`, `VALIDATION`, `AUTH`, `IO`, `PROJECT`).
-*   **`ErrorSeverity`**: Defines the impact (`Info`, `Warning`, `Error`, `Critical`). This influences the toast appearance and duration.
+### Error Categories
+- `DATABASE`: Database-related errors
+- `MIGRATION`: Database migration errors
+- `IO`: File system and I/O errors
+- `CONFIG`: Configuration errors
+- `ICON_GENERATION`: Icon generation errors
+- `IMAGE`: Image processing errors
+- `FILE_NOT_FOUND`: File not found errors
+- `UNKNOWN`: Unknown or unclassified errors
+- `KEYRING`: Encryption key management errors
+- `KEY_GENERATION`: Key generation errors
+- `PROJECT`: Project-related errors
+- `ICON`: Icon-related errors
+- `CONNECTION`: Connection-related errors
+- `VALIDATION`: Validation errors
+- `AUTH`: Authentication errors
+- `ENCRYPTION`: Encryption-related errors
 
-By adhering to this system, we ensure a robust, consistent, and user-friendly approach to managing errors in Dewey.
+### Error Severity
+- `Info`: Informational messages
+- `Warning`: Warning messages
+- `Error`: Error messages
+- `Critical`: Critical error messages
 
 ## Error Response Format
 
@@ -99,17 +136,14 @@ All error responses follow a consistent format:
 
 ```json
 {
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable message",
-    "type": "ERROR_TYPE",
-    "category": "ERROR_CATEGORY",
-    "severity": "SEVERITY_LEVEL",
-    "timestamp": "ISO-8601 timestamp",
-    "context": {
-      // Additional error-specific context
-    }
-  }
+  "category": "ERROR_CATEGORY",
+  "message": "Human-readable message",
+  "severity": "SEVERITY_LEVEL",
+  "subcategory": "ERROR_SUBCATEGORY",
+  "context": {
+    // Additional error-specific context
+  },
+  "stack": "Error stack trace"
 }
 ```
 

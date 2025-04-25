@@ -4,20 +4,25 @@ import { useSignIn, useSignUp } from '@clerk/clerk-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from 'sonner';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { useToast } from '@/hooks/use-toast';
+import { ErrorCategory } from '@/lib/errors';
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
   const [isSignIn, setIsSignIn] = useState(searchParams.get('mode') !== 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [oauthLoading, setOAuthLoading] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const { signIn, setActive: setSignInActive } = useSignIn();
   const { signUp, setActive: setSignUpActive } = useSignUp();
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.AUTH
+  });
+  const { showToast } = useToast();
 
   // Update mode when URL params change
   useEffect(() => {
@@ -25,18 +30,7 @@ export default function AuthPage() {
     // Clear form when switching modes
     setEmail('');
     setPassword('');
-    setError('');
   }, [searchParams]);
-
-  // Show toast when error changes
-  useEffect(() => {
-    if (error) {
-      toast.error('Authentication Error', {
-        description: error,
-        duration: 5000,
-      });
-    }
-  }, [error]);
 
   // Handle OAuth redirect cleanup
   useEffect(() => {
@@ -44,7 +38,8 @@ export default function AuthPage() {
       if (document.visibilityState === 'visible' && oauthLoading) {
         // If we return to the page and OAuth was in progress, it was likely cancelled
         setOAuthLoading(null);
-        setError('Authentication was cancelled');
+        // Use showToast for non-error messages like this one
+        showToast('Authentication was cancelled', 'info');
       }
     };
 
@@ -52,12 +47,12 @@ export default function AuthPage() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [oauthLoading]);
+  }, [oauthLoading, showToast]);
 
   const handleOAuthSignIn = async (provider: 'oauth_github' | 'oauth_google') => {
     try {
       setOAuthLoading(provider);
-      setError('');
+      // setError(''); // Removed error state update
 
       if (!signIn) {
         throw new Error("Sign in is not initialized");
@@ -69,14 +64,15 @@ export default function AuthPage() {
         redirectUrlComplete: '/',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      // Use error handler hook
+      await handleError(err);
       setOAuthLoading(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    // setError(''); // Removed error state update
     setIsLoading(true);
 
     try {
@@ -112,7 +108,8 @@ export default function AuthPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      // Use error handler hook
+      await handleError(err);
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,7 @@
-import { zodResolver } from "@hookform/resolvers/zod"
 import { createContext, useContext } from "react"
 import { useForm, UseFormReturn } from "react-hook-form"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 
 // Define the database connection schema
 const baseConnectionSchema = z.object({
@@ -220,6 +220,9 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       password: "",
       database: ""
     },
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
+    criteriaMode: 'all',
   })
 
   return (

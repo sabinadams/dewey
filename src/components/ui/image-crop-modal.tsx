@@ -3,6 +3,8 @@ import Cropper from 'react-easy-crop'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { ErrorCategory } from '@/lib/errors'
 
 interface Point {
   x: number
@@ -37,6 +39,9 @@ export function ImageCropModal({
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [imageUrl, setImageUrl] = useState<string>('')
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.IMAGE
+  })
 
   // Create a URL for the image when the component mounts
   React.useEffect(() => {
@@ -66,7 +71,7 @@ export function ImageCropModal({
       onCropComplete(croppedImage)
       onClose()
     } catch (e) {
-      console.error(e)
+      await handleError(e)
     }
   }
 

@@ -21,7 +21,8 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { fileToBase64 } from "@/lib/utils"
 import CreateConnectionForm from "./CreateConnectionForm"
-import { handleTauriCommand, showErrorToast, parseError, ErrorCategory, KeyringSubcategory } from "@/lib/errors"
+import { ErrorCategory, KeyringSubcategory } from "@/lib/errors"
+import { useErrorHandler } from '@/hooks/use-error-handler'
 
 const CreateProjectForm = () => {
   // Track the actual file and preview URL separately from the form state
@@ -33,9 +34,32 @@ const CreateProjectForm = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [createProject] = useCreateProjectMutation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createProject, { isLoading: isMutationLoading }] = useCreateProjectMutation();
   const { form } = useCreateProjectContext();
+
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.PROJECT,
+    onError: (error) => {
+      // Handle encryption key errors specifically
+      if (error.category === ErrorCategory.KEYRING &&
+          error.subcategory === KeyringSubcategory.KeyNotFound) {
+        toast.error('Encryption Key Error', {
+          description: 'Please set up an encryption key to continue.',
+          duration: Infinity,
+          dismissible: true,
+          action: {
+            label: 'Set Up',
+            onClick: () => {
+              console.log('Set Up button clicked'); // TODO: Implement actual navigation/action
+            }
+          }
+        });
+        return true; // Indicate this specific error was handled locally
+      }
+      // Let useErrorHandler handle other errors (show toast, throw)
+      return false;
+    }
+  });
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -97,71 +121,45 @@ const CreateProjectForm = () => {
   };
 
   const onSubmit = form.handleSubmit(async (data: CreateProjectFormData) => {
-    setIsSubmitting(true);
     const loadingToastId = toast.loading('Creating project...', {
       duration: Infinity,
     });
     try {
-      // Create the project params object
       const projectParams: CreateProjectParams = {
         name: data.name,
         user_id: userId || '',
       };
-
-      // If there's a file to upload, add it to the project params
       if (currentFile) {
         const fileBase64 = await fileToBase64(currentFile);
         projectParams.custom_icon_data = fileBase64;
       }
-
-      // Validate and transform connection data if present
       const connection = validateAndTransformConnection(data);
       if (connection) {
         projectParams.initial_connection = connection;
       }
 
-      try {
-        // Create the project using RTK Query mutation
-        const result = await createProject(projectParams).unwrap();
-        toast.dismiss(loadingToastId);
-        toast.success('Project created successfully!');
-        // Navigate to the new project
-        navigate(`/project/${result}`);
-      } catch (error) {
-        const appError = parseError(error);
-        toast.dismiss(loadingToastId);
-        
-        // Handle keychain errors differently
-        if (appError.category === ErrorCategory.ENCRYPTION && 
-            appError.subcategory === KeyringSubcategory.KeyNotFound) {
-          // Navigate to onboarding to set up encryption key
-          // navigate('/onboarding');
-          // a toast with an action to navigate to onboarding
-          toast.error('Encryption Key Error', {
-            description: 'Please set up an encryption key to continue.',
-            duration: Infinity,
-            dismissible: true,
-            action: {
-              label: 'Set Up',
-              onClick: () => {
-                // Set up encryption key
-              },
-            },
-          });
-        } else {
-          // For all other errors, show the error toast
-          showErrorToast(appError);
-        }
-        
-      }
-    } catch (error) {
+      // Reinstate unwrap() to get promise rejection on error
+      const result = await createProject(projectParams).unwrap();
+
       toast.dismiss(loadingToastId);
-      // Handle any other errors that might occur
-      const appError = parseError(error);
-      showErrorToast(appError);
-    } finally {
-      setIsSubmitting(false);
+      toast.success('Project created successfully!');
+      navigate(`/project/${result}`);
+
+    } catch (error) { // This error is thrown by unwrap() and should be the AppError
+      toast.dismiss(loadingToastId);
+
+      // Call handleError. It will call onError.
+      // If onError returns false, handleError shows toast and throws.
+      // We catch the throw here so it doesn't propagate further.
+      try {
+        await handleError(error);
+      } catch (handledError) {
+        // Error was thrown by handleError (because onError returned false),
+        // but we don't need to do anything else with it here.
+        // The toast was already shown by showErrorToast inside handleError.
+      }
     }
+    // No finally block needed
   });
 
   return <>
@@ -248,8 +246,8 @@ const CreateProjectForm = () => {
           <CreateConnectionForm />
 
           <div className="mt-6 flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Project"}
+            <Button type="submit" disabled={isMutationLoading}>
+              {isMutationLoading ? "Creating..." : "Create Project"}
             </Button>
           </div>
 
@@ -257,7 +255,6 @@ const CreateProjectForm = () => {
       </form>
     </Form>
   </>
-    ;
 }
 
 export default CreateProjectForm; 

@@ -51,6 +51,26 @@ export interface AppError {
   message: string;
   severity: ErrorSeverity;
   subcategory?: string;
+  stack?: string;
+  context?: Record<string, any>;
+}
+
+// Utility function to create an AppError
+export function createError(
+  message: string,
+  category: ErrorCategory,
+  severity: ErrorSeverity = ErrorSeverity.Error,
+  subcategory?: string,
+  context?: Record<string, any>
+): AppError {
+  return {
+    message,
+    category,
+    severity,
+    subcategory,
+    context,
+    stack: new Error().stack
+  };
 }
 
 export function parseError(error: any): AppError {
@@ -61,19 +81,47 @@ export function parseError(error: any): AppError {
 
   // Handle Tauri errors
   if (typeof error === 'object' && error !== null) {
+    // Handle backend error format where category is key and subcategory is value
+    const categoryKeys = Object.keys(error).filter(key => 
+      Object.values(ErrorCategory).includes(key as ErrorCategory)
+    );
+    if (categoryKeys.length === 1) {
+      const category = categoryKeys[0] as ErrorCategory;
+      const subcategory = error[category];
+      return createError(
+        `Database error: ${subcategory}`,
+        category,
+        ErrorSeverity.Error,
+        subcategory
+      );
+    }
+
+    // Handle plain objects that might contain AppError JSON in message
+    if (!isAppError(error) && 'message' in error && typeof error.message === 'string') {
+      try {
+        const parsedMessage = JSON.parse(error.message);
+        if (isAppError(parsedMessage)) {
+          return parsedMessage;
+        }
+      } catch (e) {
+        // JSON parsing failed, proceed to other checks
+      }
+    }
+
     // Handle serialized AppError
     if ('message' in error && 'category' in error && 'severity' in error) {
       return {
         category: error.category as ErrorCategory,
         message: error.message,
         severity: error.severity as ErrorSeverity,
-        subcategory: error.subcategory
+        subcategory: error.subcategory,
+        context: error.context,
+        stack: error.stack
       };
     }
 
     // Handle Tauri custom errors
     if (error.status === 'CUSTOM_ERROR' && typeof error.error === 'string') {
-      // Try to parse the error string as JSON
       try {
         const parsedError = JSON.parse(error.error);
         if ('message' in parsedError && 'category' in parsedError && 'severity' in parsedError) {
@@ -81,26 +129,51 @@ export function parseError(error: any): AppError {
             category: parsedError.category as ErrorCategory,
             message: parsedError.message,
             severity: parsedError.severity as ErrorSeverity,
-            subcategory: parsedError.subcategory
+            subcategory: parsedError.subcategory,
+            context: parsedError.context,
+            stack: parsedError.stack
           };
         }
       } catch (e) {
         // If parsing fails, treat it as a plain error message
-        return {
-          category: ErrorCategory.UNKNOWN,
-          message: error.error,
-          severity: ErrorSeverity.Error
-        };
+        return createError(
+          error.error,
+          ErrorCategory.UNKNOWN,
+          ErrorSeverity.Error
+        );
       }
+    }
+
+    // Handle Error objects
+    if (error instanceof Error) {
+      // Attempt to parse the message as JSON representing an AppError
+      try {
+        const parsedMessage = JSON.parse(error.message);
+        if (isAppError(parsedMessage)) {
+          return parsedMessage;
+        }
+      } catch (e) {
+        // Parsing failed, message is likely not JSON or not our AppError structure
+        // Proceed to treat it as a standard error message below
+      }
+
+      // If message wasn't a valid AppError JSON, create a standard UNKNOWN error
+      return createError(
+        error.message,
+        ErrorCategory.UNKNOWN,
+        ErrorSeverity.Error,
+        undefined,
+        { stack: error.stack }
+      );
     }
   }
   
   // If we can't parse the error, return it as unknown
-  return {
-    category: ErrorCategory.UNKNOWN,
-    message: typeof error === 'string' ? error : 'An unknown error occurred',
-    severity: ErrorSeverity.Error
-  };
+  return createError(
+    typeof error === 'string' ? error : 'An unknown error occurred',
+    ErrorCategory.UNKNOWN,
+    ErrorSeverity.Error
+  );
 }
 
 function isAppError(error: any): error is AppError {
@@ -121,12 +194,6 @@ export function showErrorToast(error: AppError) {
   const toastConfig = {
     description: message,
     duration: severity === ErrorSeverity.Critical ? 10000 : 5000,
-    action: category === ErrorCategory.KEYRING || category === ErrorCategory.KEY_GENERATION ? {
-      label: 'Set Up',
-      onClick: () => {
-        window.location.href = '/onboarding';
-      }
-    } : undefined
   };
 
   switch (severity) {
@@ -173,18 +240,5 @@ function getToastTitle(category: ErrorCategory, subcategory?: string): string {
       return 'Encryption Error';
     default:
       return 'Error';
-  }
-}
-
-// Helper function to handle Tauri command errors
-export async function handleTauriCommand<T>(
-  command: () => Promise<T>
-): Promise<T> {
-  try {
-    return await command();
-  } catch (error) {
-    const appError = parseError(error);
-    showErrorToast(appError);
-    throw appError;
   }
 } 

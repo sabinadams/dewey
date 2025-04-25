@@ -16,7 +16,7 @@ import {
 import { ReactComponent as LogoSVG } from '@/assets/dewey.svg';
 import { useEffect, useState } from 'react';
 import { useGetProjectsQuery } from '@/store/api/projects.api';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 import { useOS } from '@/hooks/useOS';
 
 interface NavItemProps {
@@ -88,7 +88,6 @@ function NavItem({ to, label, imageSrc }: NavItemProps) {
 export default function Navigation() {
   const { isMac } = useOS();
   const { userId } = useAuth();
-  const { user } = useUser();
   const navigate = useNavigate();
 
   const { data: projects = [], isLoading } = useGetProjectsQuery(userId || '', {

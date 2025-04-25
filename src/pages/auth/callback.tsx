@@ -2,10 +2,15 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import { LoadingSpinner } from '@/components/ui';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ErrorCategory } from '@/lib/errors';
 
 export default function AuthCallback() {
   const { handleRedirectCallback } = useClerk();
   const navigate = useNavigate();
+  const { handleError } = useErrorHandler({
+    defaultCategory: ErrorCategory.AUTH
+  });
 
   useEffect(() => {
     async function handleCallback() {
@@ -16,12 +21,11 @@ export default function AuthCallback() {
         });
         navigate('/');
       } catch (err) {
-        console.error('Error handling callback:', err);
-        navigate('/auth?mode=signin');
+        await handleError(err);
       }
     }
     handleCallback();
-  }, [handleRedirectCallback, navigate]);
+  }, [handleRedirectCallback, navigate, handleError]);
 
   return (
     <div className="flex-1 flex items-center justify-center">

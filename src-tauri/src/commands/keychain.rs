@@ -42,25 +42,8 @@ pub async fn has_encryption_key() -> AppResult<bool> {
             Ok(true)
         }
         Ok(false) => {
-            // Check fallback file
-            match key_manager.has_key_in_file() {
-                Ok(true) => {
-                    info!("Found encryption key in file");
-                    Ok(true)
-                }
-                Ok(false) => {
-                    info!("No encryption key found");
-                    Ok(false)
-                }
-                Err(e) => {
-                    error!("Failed to check for key in file: {}", e);
-                    Err(AppError::new(
-                        "Failed to check for key in file".to_string(),
-                        ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotFound),
-                        ErrorSeverity::Error,
-                    ))
-                }
-            }
+            info!("No encryption key found");
+            Ok(false)
         }
         Err(e) => {
             error!("Failed to check for key in keyring: {}", e);

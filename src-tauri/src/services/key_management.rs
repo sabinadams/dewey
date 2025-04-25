@@ -4,22 +4,18 @@ use std::path::PathBuf;
 use std::fs;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use tracing::debug;
-use directories::ProjectDirs;
-use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME, FILE_NAME};
+use crate::constants::keys::{SERVICE_NAME, ACCOUNT_NAME};
 use crate::error::{AppError, AppResult, ErrorSeverity};
 use crate::error::categories::{
-    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory, ConfigSubcategory,
+    KeyManagementSubcategory, KeyringSubcategory, IoSubcategory,
     ErrorCategory
 };
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 /// Manages the encryption key, attempting to store it in the system keyring first,
 /// falling back to an encrypted file in the app's config directory if necessary
 pub struct KeyManager {
     keyring_entry: Entry,
     key_file_path: PathBuf,
-    key: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 impl KeyManager {
@@ -36,7 +32,6 @@ impl KeyManager {
         Ok(Self {
             keyring_entry,
             key_file_path,
-            key: Arc::new(Mutex::new(None)),
         })
     }
 
@@ -159,31 +154,8 @@ impl KeyManager {
     }
 
     fn get_key_file_path() -> AppResult<PathBuf> {
-        let proj_dirs = ProjectDirs::from("com", "dewey", "dewey")
-            .ok_or_else(|| AppError::new(
-                "Could not determine project directories",
-                ErrorCategory::Config(ConfigSubcategory::ParseError),
-                ErrorSeverity::Error,
-            ))?;
-        
-        Ok(proj_dirs.config_dir().join(FILE_NAME))
-    }
-
-    pub async fn set_key(&self, key: Vec<u8>) -> AppResult<()> {
-        let mut key_guard = self.key.lock().await;
-        *key_guard = Some(key);
-        Ok(())
-    }
-
-    pub async fn get_key(&self) -> AppResult<Vec<u8>> {
-        self.key
-            .lock()
-            .await
-            .clone()
-            .ok_or_else(|| AppError::new(
-                "Key not initialized".to_string(),
-                ErrorCategory::KeyManagement(KeyManagementSubcategory::KeyNotInitialized),
-                ErrorSeverity::Error,
-            ))
+        let app_dir = crate::services::storage::LocalStorage::get_app_dir();
+        let key_file = app_dir.join("encryption.key");
+        Ok(key_file)
     }
 } 

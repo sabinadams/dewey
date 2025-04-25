@@ -61,8 +61,6 @@ async fn main() {
             // Project commands
             commands::projects::create_project,
             commands::projects::get_user_projects,
-            commands::projects::update_project,
-            commands::projects::delete_project,
             commands::projects::get_project_connections,
             
             // Database commands

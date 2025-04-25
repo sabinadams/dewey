@@ -4,6 +4,7 @@ import { useHasEncryptionKeyQuery, useInitializeEncryptionKeyMutation } from '@/
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { parseError } from '@/lib/errors';
 
 interface KeychainStepProps {
   onNext: () => void;
@@ -47,12 +48,16 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
         if (result.data) {
           setHasCreatedKey(true);
           setShouldCheckKey(true); // This will trigger the useEffect with the new state
-        } else if (result.error && typeof result.error === 'object' && 'error' in result.error) {
-          throw new Error((result.error as { error: string }).error);
+        } else if (result.error) {
+          const appError = parseError(result.error);
+          toast.error(appError.message, {
+            description: appError.category
+          });
         }
       } catch (error: any) {
-        toast.error('Failed to create encryption key', {
-          description: error?.message || 'An unknown error occurred'
+        const appError = parseError(error);
+        toast.error(appError.message, {
+          description: appError.category
         });
       }
     }

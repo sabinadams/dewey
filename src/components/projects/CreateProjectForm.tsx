@@ -34,15 +34,15 @@ const CreateProjectForm = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [createProject] = useCreateProjectMutation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createProject, { isLoading: isMutationLoading }] = useCreateProjectMutation();
   const { form } = useCreateProjectContext();
 
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.PROJECT,
     onError: (error) => {
-      // Handle encryption key errors
-      if (error.category === ErrorCategory.KEYRING && 
+      // Handle encryption key errors specifically
+      console.log('Error passed to onError:', error); // Keep log for verification
+      if (error.category === ErrorCategory.KEYRING &&
           error.subcategory === KeyringSubcategory.KeyNotFound) {
         toast.error('Encryption Key Error', {
           description: 'Please set up an encryption key to continue.',
@@ -51,23 +51,14 @@ const CreateProjectForm = () => {
           action: {
             label: 'Set Up',
             onClick: () => {
-              console.log('Set Up button clicked');
+              console.log('Set Up button clicked'); // TODO: Implement actual navigation/action
             }
           }
         });
-        return true; // Handle this error locally
+        return true; // Indicate this specific error was handled locally
       }
-
-      // Handle non-validation errors
-      if (error.category !== ErrorCategory.VALIDATION) {
-        toast.error('Error', {
-          description: error.message,
-          duration: 5000
-        });
-        return true;
-      }
-
-      return false; // Let React Hook Form handle validation errors
+      // Let useErrorHandler handle other errors (show toast, throw)
+      return false;
     }
   });
 
@@ -131,41 +122,47 @@ const CreateProjectForm = () => {
   };
 
   const onSubmit = form.handleSubmit(async (data: CreateProjectFormData) => {
-    setIsSubmitting(true);
     const loadingToastId = toast.loading('Creating project...', {
       duration: Infinity,
     });
     try {
-      // Create the project params object
       const projectParams: CreateProjectParams = {
         name: data.name,
         user_id: userId || '',
       };
-
-      // If there's a file to upload, add it to the project params
       if (currentFile) {
         const fileBase64 = await fileToBase64(currentFile);
         projectParams.custom_icon_data = fileBase64;
       }
-
-      // Validate and transform connection data if present
       const connection = validateAndTransformConnection(data);
       if (connection) {
         projectParams.initial_connection = connection;
       }
 
-      // Create the project using RTK Query mutation
+      // Reinstate unwrap() to get promise rejection on error
       const result = await createProject(projectParams).unwrap();
+
       toast.dismiss(loadingToastId);
       toast.success('Project created successfully!');
-      // Navigate to the new project
       navigate(`/project/${result}`);
-    } catch (error) {
+
+    } catch (error) { // This error is thrown by unwrap() and should be the AppError
       toast.dismiss(loadingToastId);
-      await handleError(error);
-    } finally {
-      setIsSubmitting(false);
+      console.log("Raw error caught by unwrap().catch():", error); // Log the error received
+
+      // Call handleError. It will call onError.
+      // If onError returns false, handleError shows toast and throws.
+      // We catch the throw here so it doesn't propagate further.
+      try {
+        await handleError(error);
+      } catch (handledError) {
+        // Error was thrown by handleError (because onError returned false),
+        // but we don't need to do anything else with it here.
+        // The toast was already shown by showErrorToast inside handleError.
+        console.error("Project creation failed after handling:", handledError)
+      }
     }
+    // No finally block needed
   });
 
   return <>
@@ -252,8 +249,8 @@ const CreateProjectForm = () => {
           <CreateConnectionForm />
 
           <div className="mt-6 flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Project"}
+            <Button type="submit" disabled={isMutationLoading}>
+              {isMutationLoading ? "Creating..." : "Create Project"}
             </Button>
           </div>
 

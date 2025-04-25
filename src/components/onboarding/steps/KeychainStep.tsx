@@ -11,19 +11,27 @@ interface KeychainStepProps {
 
 const KeychainStep = ({ onNext }: KeychainStepProps) => {
   const [shouldCheckKey, setShouldCheckKey] = useState(false);
+  const [hasCreatedKey, setHasCreatedKey] = useState(false);
   const { data: hasEncryptionKey, isSuccess } = useHasEncryptionKeyQuery(undefined, {
     skip: !shouldCheckKey
   });
 
   useEffect(() => {
-    if (isSuccess && hasEncryptionKey) {
-      toast.success('Encryption key found', {
-        description: 'Your connections will already be secured with an encryption key.',
-        duration: 1500
-      });
+    if (isSuccess && hasEncryptionKey && shouldCheckKey) {
+      if (hasCreatedKey) {
+        toast.success('Encryption key created', {
+          description: 'Your connections will now be secured with an encryption key.',
+          duration: 1500
+        });
+      } else {
+        toast.success('Encryption key found', {
+          description: 'Your connections will already be secured with an encryption key.',
+          duration: 1500
+        });
+      }
       onNext();
     }
-  }, [hasEncryptionKey, isSuccess, onNext]);
+  }, [hasEncryptionKey, isSuccess, onNext, shouldCheckKey, hasCreatedKey]);
 
   const [initializeEncryptionKey] = useInitializeEncryptionKeyMutation();
 
@@ -37,10 +45,8 @@ const KeychainStep = ({ onNext }: KeychainStepProps) => {
       try {
         const result = await initializeEncryptionKey();
         if (result.data) {
-          toast.success('Encryption key created', {
-            description: 'Your connections will now be secured with an encryption key.'
-          });
-          onNext();
+          setHasCreatedKey(true);
+          setShouldCheckKey(true); // This will trigger the useEffect with the new state
         } else if (result.error && typeof result.error === 'object' && 'error' in result.error) {
           throw new Error((result.error as { error: string }).error);
         }

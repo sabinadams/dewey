@@ -73,19 +73,6 @@ export function createError(
   };
 }
 
-// Utility function to check if an error is recoverable
-export function isRecoverableError(error: AppError): boolean {
-  return (
-    error.severity !== ErrorSeverity.Critical &&
-    error.category !== ErrorCategory.UNKNOWN
-  );
-}
-
-// Utility function to check if an error is critical
-export function isCriticalError(error: AppError): boolean {
-  return error.severity === ErrorSeverity.Critical;
-}
-
 export function parseError(error: any): AppError {
   // If it's already an AppError, return it
   if (isAppError(error)) {
@@ -168,13 +155,6 @@ export function showErrorToast(error: AppError) {
   const toastConfig = {
     description: message,
     duration: severity === ErrorSeverity.Critical ? 10000 : 5000,
-    action: isRecoverableError(error) ? {
-      label: 'Retry',
-      onClick: () => {
-        // This will be handled by the error boundary
-        window.location.reload();
-      }
-    } : undefined
   };
 
   switch (severity) {
@@ -221,18 +201,5 @@ function getToastTitle(category: ErrorCategory, subcategory?: string): string {
       return 'Encryption Error';
     default:
       return 'Error';
-  }
-}
-
-// Helper function to handle Tauri command errors
-export async function handleTauriCommand<T>(
-  command: () => Promise<T>
-): Promise<T> {
-  try {
-    return await command();
-  } catch (error) {
-    const appError = parseError(error);
-    showErrorToast(appError);
-    throw appError;
   }
 } 

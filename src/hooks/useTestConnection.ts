@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { prepareConnectionTestParams } from '@/lib/database';
 import { useErrorHandler } from '@/hooks/use-error-handler';
 import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
+import { createError } from '@/lib/errors';
 
 type FormValues = {
     databaseType?: string;
@@ -52,11 +53,7 @@ export function useTestConnection() {
             ]);
 
             if (!signal.aborted) {
-                createAndHandleError(
-                  'Connection successful!',
-                  ErrorCategory.DATABASE,
-                  ErrorSeverity.Info
-                );
+                toast.success('Connection successful!');
                 return true;
             }
             return false;
@@ -64,7 +61,13 @@ export function useTestConnection() {
             if (error instanceof Error && error.message === 'Connection test cancelled') {
                 toast.info('Connection test cancelled');
             } else {
-                await handleError(error);
+                // Create a specific AppError for connection failures
+                const connectionError = createError(
+                    error instanceof Error ? error.message : 'Failed to connect to the database.', // Use original message if available
+                    ErrorCategory.DATABASE,
+                    ErrorSeverity.Error
+                );
+                await handleError(connectionError);
             }
             return false;
         } finally {

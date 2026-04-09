@@ -15,7 +15,8 @@ export function prepareConnectionTestParams(values: {
     return {
         dbType: values.databaseType || "",
         host: isFileSqlite ? "localhost" : (values.host || ""),
-        port: isFileSqlite ? "0" : (values.port || ""),
+        // Tauri expects strings for Rust `String` args; number inputs must not break IPC deserialization.
+        port: isFileSqlite ? "0" : String(values.port ?? ""),
         username: isFileSqlite ? "" : (values.username || ""),
         password: isFileSqlite ? "" : (values.password || ""),
         database: values.database || ""

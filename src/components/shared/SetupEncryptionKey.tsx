@@ -24,16 +24,23 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
   const [shouldCheckKey, setShouldCheckKey] = useState(false);
   const [hasCreatedKey, setHasCreatedKey] = useState(false);
   const hasShownToast = useRef(false);
-  const { data: hasEncryptionKey, isSuccess } = useHasEncryptionKeyQuery(undefined, {
-    skip: !shouldCheckKey
+  const {
+    data: hasEncryptionKey,
+    isSuccess: keyCheckSuccess,
+    isError: keyCheckError,
+    isFetching: keyCheckFetching,
+    refetch: refetchKeyStatus,
+  } = useHasEncryptionKeyQuery(undefined, {
+    skip: !shouldCheckKey,
   });
+  const keyCheckPending = shouldCheckKey && keyCheckFetching;
   const { handleError } = useErrorHandler({
     defaultCategory: ErrorCategory.KEYRING
   });
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (isSuccess && hasEncryptionKey && shouldCheckKey && !hasShownToast.current) {
+    if (keyCheckSuccess && hasEncryptionKey && shouldCheckKey && !hasShownToast.current) {
       hasShownToast.current = true;
       if (hasCreatedKey) {
         showToast(
@@ -53,9 +60,12 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
         return () => clearTimeout(timer);
       }
     }
-  }, [hasEncryptionKey, isSuccess, onSuccess, shouldCheckKey, hasCreatedKey, showToast]);
+  }, [hasEncryptionKey, keyCheckSuccess, onSuccess, shouldCheckKey, hasCreatedKey, showToast]);
 
-  const [initializeEncryptionKey] = useInitializeEncryptionKeyMutation();
+  const [initializeEncryptionKey, { isLoading: initKeyLoading }] =
+    useInitializeEncryptionKeyMutation();
+
+  const actionDisabled = keyCheckPending || initKeyLoading;
 
   const handleAction = async () => {
     if (!shouldCheckKey) {
@@ -63,11 +73,23 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
       return;
     }
 
-    if (!hasEncryptionKey) {
+    if (keyCheckPending) {
+      return;
+    }
+
+    if (keyCheckError) {
+      void refetchKeyStatus();
+      return;
+    }
+
+    if (!keyCheckSuccess) {
+      return;
+    }
+
+    if (hasEncryptionKey === false) {
       try {
         await initializeEncryptionKey().unwrap();
         setHasCreatedKey(true);
-        setShouldCheckKey(true);
       } catch (error: any) {
         await handleError(error);
       }
@@ -78,16 +100,31 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
     if (!shouldCheckKey) {
       return "Click the button below to check if you already have an encryption key.";
     }
+    if (keyCheckPending) {
+      return "Checking your keychain…";
+    }
+    if (keyCheckError) {
+      return "Dewey could not read the keychain status. Try again, or check that the app is allowed to use the keychain.";
+    }
     return hasEncryptionKey
       ? "Your connections will already be secured with an encryption key."
-      : "Dewey needs access to your system keychain to securely store your database credentials.";
+      : "Dewey will store an encryption key in your login keychain (service: dewey). On macOS you usually will not see a system popup for this—access is tied to the app. If the keychain is locked, you may be prompted to unlock it.";
   };
 
   const getButtonText = () => {
     if (!shouldCheckKey) {
       return "Check for Existing Key";
     }
-    return hasEncryptionKey ? "Continue" : "Grant Keychain Access";
+    if (keyCheckPending) {
+      return "Checking…";
+    }
+    if (keyCheckError) {
+      return "Retry";
+    }
+    if (initKeyLoading) {
+      return "Setting up…";
+    }
+    return hasEncryptionKey ? "Continue" : "Create encryption key";
   };
 
   const titleWithTooltip = (
@@ -126,7 +163,7 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
       <div className="flex flex-col gap-4">
         {titleWithTooltip}
         {content}
-        <Button onClick={handleAction} className="mt-2">
+        <Button onClick={handleAction} className="mt-2" disabled={actionDisabled}>
           {getButtonText()}
         </Button>
       </div>
@@ -141,6 +178,7 @@ const SetupEncryptionKey = ({ onSuccess, variant = 'step', onSkip }: SetupEncryp
       description={content}
       buttonText={getButtonText()}
       onAction={handleAction}
+      buttonDisabled={actionDisabled}
       footer={onSkip && (
         <Button
           variant="ghost"

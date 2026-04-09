@@ -1,4 +1,5 @@
-use crate::error::categories::{DatabaseSubcategory, ConnectionSubcategory, ErrorCategory};
+use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
+use crate::error::{AppError, ErrorSeverity};
 use crate::services::database;
 
 #[tauri::command]
@@ -9,7 +10,7 @@ pub async fn test_connection(
     username: String,
     password: String,
     database: String,
-) -> Result<(), ErrorCategory> {
+) -> Result<(), AppError> {
     database::test_connection(
         &db_type,
         &host,
@@ -17,9 +18,13 @@ pub async fn test_connection(
         &username,
         &password,
         &database,
-    ).await.map_err(|e| match e {
-        ErrorCategory::Database(_) => ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
-        ErrorCategory::Connection(_) => ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
-        _ => ErrorCategory::Connection(ConnectionSubcategory::ConnectionFailed),
+    )
+    .await
+    .map_err(|msg| {
+        AppError::new(
+            msg,
+            ErrorCategory::Database(DatabaseSubcategory::ConnectionFailed),
+            ErrorSeverity::Error,
+        )
     })
-} 
+}

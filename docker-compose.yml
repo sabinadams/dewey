@@ -1,0 +1,12 @@
+version: "3.5"
+name: dewey
+services:
+  postgres:
+    image: postgres:latest
+    container_name: dewey-postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=dewey
+      - POSTGRES_PASSWORD=dewey
+      - POSTGRES_DB=dewey

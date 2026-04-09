@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
-import { useRoutes, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
-import { useDispatch } from 'react-redux';
-import { setReturnToPath } from '@/store/slices/ui.slice';
-import { routes } from '@/routes';
-import { LoadingScreen } from '@/components/feedback/LoadingScreen'; // Import LoadingScreen
-import { AppLayout } from '@/components/layouts/AppLayout'; // Import AppLayout
-import { PublicLayout } from '@/components/layouts/PublicLayout'; // Import PublicLayout
-import { useGetProjectsQuery } from '@/store/api/projects.api'; // Re-import project query
-import { useShouldRunOnboardingQuery } from '@/store/api/onboarding.api';
+import { useEffect } from "react";
+import { useRoutes, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
+import { useDispatch } from "react-redux";
+import { setReturnToPath } from "@/store/slices/ui.slice";
+import { routes } from "@/routes";
+import { LoadingScreen } from "@/components/feedback/LoadingScreen"; // Import LoadingScreen
+import { AppLayout } from "@/components/layouts/AppLayout"; // Import AppLayout
+import { PublicLayout } from "@/components/layouts/PublicLayout"; // Import PublicLayout
+import { useGetProjectsQuery } from "@/store/api/projects.api"; // Re-import project query
+import { useShouldRunOnboardingQuery } from "@/store/api/onboarding.api";
 
 export function RouteRenderer() {
   const { isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth(); // Get userId
@@ -23,30 +23,44 @@ export function RouteRenderer() {
     console.log("[RouteRenderer] current path:", location.pathname);
   }, [shouldRunOnboarding, location.pathname]);
   // Fetch projects conditionally
-  const {
-    data: projects,
-    isSuccess: projectsSuccess
-  } = useGetProjectsQuery(userId ?? "", {
-    skip: !isSignedIn || !userId, // Skip if not signed in or userId unknown
-  });
+  const { data: projects, isSuccess: projectsSuccess } = useGetProjectsQuery(
+    userId ?? "",
+    {
+      skip: !isSignedIn || !userId, // Skip if not signed in or userId unknown
+    },
+  );
 
-
-  const publicPaths = ['/auth', '/onboarding'];
+  const publicPaths = ["/auth", "/auth/callback", "/onboarding"];
   const isPublic = publicPaths.includes(location.pathname);
-  const isOnRoot = location.pathname === '/';
+  const isOnRoot = location.pathname === "/";
+  const isAuthCallback = location.pathname === "/auth/callback";
 
-  // --- Determine Redirects --- 
+  // --- Determine Redirects ---
   let shouldRedirectToAuth = false;
   let shouldRedirectToRoot = false;
   let shouldRedirectToProject = false;
-  let targetProjectRoute = '';
+  let targetProjectRoute = "";
   let shouldRedirectToHome = false;
 
   if (isAuthLoaded) {
+    console.log("[RouteRenderer] isAuthLoaded", isAuthLoaded);
+    console.log("[RouteRenderer] isSignedIn", isSignedIn);
+    console.log("[RouteRenderer] userId", userId);
+    console.log("[RouteRenderer] isPublic", isPublic);
+    console.log("[RouteRenderer] location.pathname", location.pathname);
+    console.log("[RouteRenderer] shouldRunOnboarding", shouldRunOnboarding);
+    console.log("[RouteRenderer] projectsSuccess", projectsSuccess);
+    console.log("[RouteRenderer] projects", projects);
     if (isSignedIn && userId) {
-      if (isPublic && location.pathname !== '/onboarding') {
+      // Stay on /auth/callback until AuthCallback runs handleRedirectCallback + navigate;
+      // otherwise we can redirect to / before the OAuth handshake finishes.
+      if (
+        isPublic &&
+        location.pathname !== "/onboarding" &&
+        !isAuthCallback
+      ) {
         shouldRedirectToRoot = true;
-      } else if (location.pathname === '/onboarding' && !shouldRunOnboarding) {
+      } else if (location.pathname === "/onboarding" && !shouldRunOnboarding) {
         shouldRedirectToHome = true;
       } else if (isOnRoot) {
         // Only consider redirecting from root if projects have successfully loaded
@@ -56,64 +70,86 @@ export function RouteRenderer() {
         }
         // If projects are loading, pending, or empty, we will eventually render the AppLayout with HomePage
       }
-    } else { // Not signed in
+    } else {
+      // Not signed in
       if (!isPublic) {
         shouldRedirectToAuth = true;
       }
     }
   }
 
-  // --- Perform Redirects using useEffect --- 
+  // --- Perform Redirects using useEffect ---
   useEffect(() => {
     // Only redirect to onboarding if we're not already there
-    if (shouldRunOnboarding && location.pathname !== '/onboarding') {
+    if (shouldRunOnboarding && location.pathname !== "/onboarding") {
       console.log("[RouteRenderer] Redirecting to onboarding");
-      navigate('/onboarding', { replace: true });
+      navigate("/onboarding", { replace: true });
     } else if (shouldRedirectToHome) {
       console.log("[RouteRenderer] Redirecting to home (onboarding completed)");
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     } else if (shouldRedirectToRoot) {
       // No need to check isAuthLoaded here, decision flags depend on it already
       console.log("[RouteRenderer] Redirecting to / (from public)");
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     } else if (shouldRedirectToAuth) {
       console.log("[RouteRenderer] Redirecting to /auth (from private)");
       dispatch(setReturnToPath(location.pathname));
-      navigate('/auth', { replace: true });
+      navigate("/auth", { replace: true });
     } else if (shouldRedirectToProject) {
-      console.log(`[RouteRenderer] Redirecting to project: ${targetProjectRoute}`);
+      console.log(
+        `[RouteRenderer] Redirecting to project: ${targetProjectRoute}`,
+      );
       navigate(targetProjectRoute, { replace: true });
     }
     // Re-run effect if redirect conditions change
-  }, [shouldRedirectToRoot, shouldRedirectToAuth, shouldRedirectToProject, targetProjectRoute, navigate, dispatch, location.pathname, shouldRunOnboarding, shouldRedirectToHome]);
+  }, [
+    shouldRedirectToRoot,
+    shouldRedirectToAuth,
+    shouldRedirectToProject,
+    targetProjectRoute,
+    navigate,
+    dispatch,
+    location.pathname,
+    shouldRunOnboarding,
+    shouldRedirectToHome,
+  ]);
 
+  // --- Loading State ---
+  // Show loading if auth isn't ready OR
+  // if we are signed in, on root, projects haven't loaded successfully yet, AND we are not already meant to redirect to a project
+  const showLoading =
+    !isAuthLoaded ||
+    (isSignedIn &&
+      userId &&
+      isOnRoot &&
+      !projectsSuccess &&
+      !shouldRedirectToProject);
 
-  // --- Loading State --- 
-  // Show loading if auth isn't ready OR 
-  // if we are signed in, on root, projects haven't loaded successfully yet, AND we are not already meant to redirect to a project 
-  const showLoading = !isAuthLoaded || 
-                     (isSignedIn && userId && isOnRoot && !projectsSuccess && !shouldRedirectToProject);
-  
   if (showLoading) {
     console.log("[RouteRenderer] Auth or initial project loading for root...");
     return <LoadingScreen />;
   }
 
-  // --- Render Null during Redirect --- 
+  // --- Render Null during Redirect ---
   // If any redirect should happen, render null while useEffect handles it
-  if (shouldRedirectToRoot || shouldRedirectToAuth || shouldRedirectToProject || shouldRedirectToHome) {
+  if (
+    shouldRedirectToRoot ||
+    shouldRedirectToAuth ||
+    shouldRedirectToProject ||
+    shouldRedirectToHome
+  ) {
     console.log("[RouteRenderer] Redirect pending, rendering null");
     return null;
   }
 
-  // --- Render Layout + Content --- 
+  // --- Render Layout + Content ---
   // If we reach here, no redirect is needed and nothing critical is loading
   if (isPublic) {
     console.log("[RouteRenderer] Rendering Public Layout");
     return <PublicLayout>{element}</PublicLayout>;
   }
-   
+
   // Signed in, on a private route (could be / or /project/...)
   console.log("[RouteRenderer] Rendering App Layout");
   return <AppLayout>{element}</AppLayout>;
-} 
+}

@@ -1,58 +1,76 @@
-import { useNavigate } from 'react-router-dom';
-import { useStoreOnboardingMutation } from '@/store/api/onboarding.api';
-import { useState, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import AIVectorBackground from '@/components/onboarding/AiVectorBackground';
-import DecorativeBlobs from '@/components/onboarding/DecorativeBlobs';
-import WelcomeStep from '@/components/onboarding/steps/WelcomeStep';
-import AiModelsStep from '@/components/onboarding/steps/AiModelsStep';
-import KeychainStep from '@/components/onboarding/steps/KeychainStep';
-import CompleteStep from '@/components/onboarding/steps/CompleteStep';
-import WizardStepsIndicator from '@/components/onboarding/WizardStepsIndicator';
-import { ThemeToggle } from '@/components/ui';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import { useNavigate } from "react-router-dom";
+import {
+  useShouldRunOnboardingQuery,
+  useStoreOnboardingMutation,
+} from "@/store/api/onboarding.api";
+import { useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import AIVectorBackground from "@/components/onboarding/AiVectorBackground";
+import DecorativeBlobs from "@/components/onboarding/DecorativeBlobs";
+import WelcomeStep from "@/components/onboarding/steps/WelcomeStep";
+import AiModelsStep from "@/components/onboarding/steps/AiModelsStep";
+import KeychainStep from "@/components/onboarding/steps/KeychainStep";
+import CompleteStep from "@/components/onboarding/steps/CompleteStep";
+import WizardStepsIndicator from "@/components/onboarding/WizardStepsIndicator";
+import {
+  ThemeToggle,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui";
 
-type OnboardingStep = 'welcome' | 'ai-models' | 'keychain' | 'complete';
+type OnboardingStep = "welcome" | "ai-models" | "keychain" | "complete";
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const [storeOnboarding] = useStoreOnboardingMutation();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
+  const { refetch: refetchShouldRunOnboarding } = useShouldRunOnboardingQuery();
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
   const steps = [
-    { id: 'welcome', title: 'Welcome to Dewey' },
-    { id: 'ai-models', title: 'AI Models' },
-    { id: 'keychain', title: 'Security' },
-    { id: 'complete', title: 'Complete' },
+    { id: "welcome", title: "Welcome to Dewey" },
+    { id: "ai-models", title: "AI Models" },
+    { id: "keychain", title: "Security" },
+    { id: "complete", title: "Complete" },
   ];
 
   const handleComplete = useCallback(async () => {
-    await storeOnboarding(true);
-    navigate('/');
-  }, [storeOnboarding, navigate]);
+    await storeOnboarding(true).unwrap();
+    // Mutation invalidates the query, but refetch runs async — without awaiting it,
+    // RouteRenderer still sees shouldRunOnboarding === true and sends us back to /onboarding.
+    await refetchShouldRunOnboarding();
+    navigate("/");
+  }, [storeOnboarding, navigate, refetchShouldRunOnboarding]);
 
   const handleDownloadModels = useCallback(async () => {
     setIsDownloading(true);
     // Simulate download progress
     for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       setDownloadProgress(i);
     }
     setIsDownloading(false);
-    setCurrentStep('keychain');
+    setCurrentStep("keychain");
   }, []);
 
   const getStepContent = useCallback(() => {
     switch (currentStep) {
-      case 'welcome':
-        return <WelcomeStep onNext={() => setCurrentStep('ai-models')} />;
-      case 'ai-models':
-        return <AiModelsStep isDownloading={isDownloading} downloadProgress={downloadProgress} onDownload={handleDownloadModels} />;
-      case 'keychain':
-        return <KeychainStep onNext={() => setCurrentStep('complete')} />;
-      case 'complete':
+      case "welcome":
+        return <WelcomeStep onNext={() => setCurrentStep("ai-models")} />;
+      case "ai-models":
+        return (
+          <AiModelsStep
+            isDownloading={isDownloading}
+            downloadProgress={downloadProgress}
+            onDownload={handleDownloadModels}
+          />
+        );
+      case "keychain":
+        return <KeychainStep onNext={() => setCurrentStep("complete")} />;
+      case "complete":
         return <CompleteStep onComplete={handleComplete} />;
     }
   }, [currentStep, handleDownloadModels, isDownloading, downloadProgress]);
@@ -99,7 +117,7 @@ export default function Onboarding() {
             </AnimatePresence>
           </div>
         </div>
-        <div className="flex-1"/>
+        <div className="flex-1" />
         <div className="mx-auto w-full max-w-lg">
           <WizardStepsIndicator
             steps={steps}

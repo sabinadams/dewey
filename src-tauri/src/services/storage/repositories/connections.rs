@@ -1,14 +1,43 @@
 use crate::types::AppResult;
-use crate::services::encryption::encrypt_string;
+use crate::services::encryption::{decrypt_string, encrypt_string};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool, Transaction};
 use std::sync::Arc;
 use tracing::debug;
-use crate::error::{AppError, ErrorSeverity};
-use crate::error::categories::{DatabaseSubcategory, ErrorCategory};
+use crate::error::{AppError, AppResult as ErrorAppResult, ErrorSeverity};
+use crate::error::categories::{
+    DatabaseSubcategory, EncryptionSubcategory, ErrorCategory,
+};
 
-/// Represents a database connection in the application
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+/// Matches the `connections` table (encrypted credential columns per migration).
+#[derive(Debug, FromRow)]
+struct ConnectionRow {
+    id: i64,
+    connection_name: String,
+    project_id: i64,
+    db_type: String,
+    encrypted_host: Vec<u8>,
+    encrypted_port: Vec<u8>,
+    encrypted_username: Vec<u8>,
+    encrypted_password: Vec<u8>,
+    encrypted_database: Option<Vec<u8>>,
+    created_at: i64,
+    updated_at: i64,
+}
+
+fn decrypt_blob_field(label: &str, blob: &[u8]) -> ErrorAppResult<String> {
+    let s = std::str::from_utf8(blob).map_err(|e| {
+        AppError::new(
+            format!("{label} is not valid UTF-8: {e}"),
+            ErrorCategory::Encryption(EncryptionSubcategory::Utf8DecodeFailed),
+            ErrorSeverity::Error,
+        )
+    })?;
+    decrypt_string(s)
+}
+
+/// Represents a database connection in the application (decrypted for API use).
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Connection {
     pub id: i64,
     pub connection_name: String,
@@ -88,23 +117,57 @@ impl ConnectionRepository {
 
     pub async fn get_by_project(&self, project_id: i64) -> AppResult<Vec<Connection>> {
         debug!("Fetching connections for project: {}", project_id);
-        
-        let connections = sqlx::query_as::<_, Connection>(
-            r"
-            SELECT id, project_id, connection_name, db_type, host, port, username, password, database, created_at, updated_at
+
+        let rows = sqlx::query_as::<_, ConnectionRow>(
+            r#"
+            SELECT
+                id,
+                connection_name,
+                project_id,
+                db_type,
+                encrypted_host,
+                encrypted_port,
+                encrypted_username,
+                encrypted_password,
+                encrypted_database,
+                created_at,
+                updated_at
             FROM connections
             WHERE project_id = ?
             ORDER BY created_at ASC
-            "
+            "#,
         )
         .bind(project_id)
         .fetch_all(&*self.pool)
         .await
-        .map_err(|e| AppError::new(
-            e.to_string(),
-            ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
-            ErrorSeverity::Error,
-        ))?;
+        .map_err(|e| {
+            AppError::new(
+                e.to_string(),
+                ErrorCategory::Database(DatabaseSubcategory::QueryFailed),
+                ErrorSeverity::Error,
+            )
+        })?;
+
+        let mut connections = Vec::with_capacity(rows.len());
+        for row in rows {
+            let database = match row.encrypted_database.as_deref() {
+                Some(blob) if !blob.is_empty() => decrypt_blob_field("encrypted_database", blob)?,
+                _ => String::new(),
+            };
+            connections.push(Connection {
+                id: row.id,
+                connection_name: row.connection_name,
+                project_id: row.project_id,
+                db_type: row.db_type,
+                host: decrypt_blob_field("encrypted_host", &row.encrypted_host)?,
+                port: decrypt_blob_field("encrypted_port", &row.encrypted_port)?,
+                username: decrypt_blob_field("encrypted_username", &row.encrypted_username)?,
+                password: decrypt_blob_field("encrypted_password", &row.encrypted_password)?,
+                database,
+                created_at: Some(row.created_at),
+                updated_at: Some(row.updated_at),
+            });
+        }
 
         debug!("Found {} connections", connections.len());
         Ok(connections)

@@ -1,0 +1,1 @@
+const a={parameters:{layout:"padded",controls:{matchers:{color:/(background|color)$/i,date:/Date$/i}},backgrounds:{default:"light",values:[{name:"light",value:"#ffffff"},{name:"dark",value:"rgb(24 24 27)"}]},docs:{toc:!0,canvas:{layout:"padded"}},options:{storySort:{order:["UI",["*"]]}}}};export{a as default};

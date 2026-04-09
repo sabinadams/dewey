@@ -1,5 +1,5 @@
-import { FormControl, FormLabel, FormItem } from "../../ui/form";
 import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
 import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
 import type { CreateProjectFormData } from "@/contexts/create-project.context";
@@ -90,12 +90,12 @@ export default function ConnectionStringTab({
     return (
         <TabsContent value="url" className="pt-4">
             <div className="flex flex-col gap-4">
-                <FormItem>
+                <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                        <FormLabel>Connection URL</FormLabel>
+                        <Label htmlFor="create-project-connection-url">Connection URL</Label>
                         <TooltipProvider>
                             <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger type="button" className="inline-flex">
                                     <HelpCircle className="h-4 w-4 text-muted-foreground" />
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -106,15 +106,14 @@ export default function ConnectionStringTab({
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    <FormControl>
-                        <Input
-                            placeholder="Examples: /path/to/database.sqlite, file:my.db, sqlite://user:pass@host:port/dbname"
-                            value={connectionString}
-                            onChange={handleInputChange}
-                            onBlur={() => triggerTouchedFields(form)}
-                        />
-                    </FormControl>
-                </FormItem>
+                    <Input
+                        id="create-project-connection-url"
+                        placeholder="Examples: /path/to/database.sqlite, file:my.db, sqlite://user:pass@host:port/dbname"
+                        value={connectionString}
+                        onChange={handleInputChange}
+                        onBlur={() => triggerTouchedFields(form)}
+                    />
+                </div>
 
                 {!databaseType && (
                     <p className="text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { Card } from "../../ui/card";
-import { FormControl, FormItem, FormLabel } from "../../ui/form";
+import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 import { Button } from "../../ui/button";
 import { Sparkles, HelpCircle } from "lucide-react";
@@ -32,28 +32,27 @@ export default function ConnectionHelperTab() {
                     </div>
 
                     <div className="space-y-6">
-                        <FormItem>
-                            <FormLabel>Tell Dewey about your database</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Examples:
+                        <div className="space-y-2">
+                            <Label htmlFor="connection-helper-ai-prompt">Tell Dewey about your database</Label>
+                            <Textarea
+                                id="connection-helper-ai-prompt"
+                                placeholder="Examples:
 - I want to connect to my local Postgres database running on port 5432
 - I'm getting this error: 'connection refused on port 3306'
 - I have a MongoDB Atlas cluster and here's my connection string...
 - My database is running in Docker at localhost:27017"
-                                    value={aiQuestion}
-                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                                        setAiQuestion(e.target.value);
-                                        form.trigger();
-                                    }}
-                                    onBlur={() => form.trigger()}
-                                    className="min-h-[120px]"
-                                />
-                            </FormControl>
-                            <p className="text-sm text-muted-foreground mt-2">
+                                value={aiQuestion}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                    setAiQuestion(e.target.value);
+                                    form.trigger();
+                                }}
+                                onBlur={() => form.trigger()}
+                                className="min-h-[120px]"
+                            />
+                            <p className="text-sm text-muted-foreground">
                                 Dewey will analyze your input and help fill out the connection details
                             </p>
-                        </FormItem>
+                        </div>
 
                         <div className="flex flex-col gap-4 p-4 bg-muted/50 rounded-lg">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">

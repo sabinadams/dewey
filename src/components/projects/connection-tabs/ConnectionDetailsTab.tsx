@@ -15,6 +15,12 @@ import { useTestConnection } from "@/hooks/useTestConnection";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { useWatch } from "react-hook-form";
+const connectionFormFieldsToReset = [
+    "connectionName",
+    "connectionString",
+    ...createProjectConnectionDetailFields,
+] as const
+
 const databaseTypes = [
     {
         id: "postgres",
@@ -79,14 +85,19 @@ export default function ConnectionDetailsTab() {
                                 : "border-muted-foreground/20 hover:border-primary",
                         )}
                         onClick={() => {
+                            if (type.id === databaseType) return;
+
                             const o = { shouldDirty: true, shouldValidate: false } as const;
                             form.setValue("databaseType", type.id, o);
+                            form.setValue("connectionName", "", o);
+                            form.setValue("connectionString", "", o);
                             form.setValue("host", "", o);
                             form.setValue("port", "", o);
                             form.setValue("username", "", o);
                             form.setValue("password", "", o);
                             form.setValue("database", "", o);
                             form.setValue("sqliteType", type.id === "sqlite" ? "file" : undefined, o);
+                            form.clearErrors([...connectionFormFieldsToReset, "databaseType"]);
                         }}
                     >
                         {databaseType === type.id && (
@@ -141,12 +152,17 @@ export default function ConnectionDetailsTab() {
                         defaultValue="file"
                         value={sqliteType}
                         onValueChange={(value: "file" | "hosted") => {
-                            form.setValue("sqliteType", value);
-                            form.setValue("host", "");
-                            form.setValue("port", "");
-                            form.setValue("username", "");
-                            form.setValue("password", "");
-                            form.setValue("database", "");
+                            if (value === sqliteType) return;
+                            const o = { shouldDirty: true, shouldValidate: false } as const;
+                            form.setValue("sqliteType", value, o);
+                            form.setValue("connectionName", "", o);
+                            form.setValue("connectionString", "", o);
+                            form.setValue("host", "", o);
+                            form.setValue("port", "", o);
+                            form.setValue("username", "", o);
+                            form.setValue("password", "", o);
+                            form.setValue("database", "", o);
+                            form.clearErrors([...connectionFormFieldsToReset, "databaseType"]);
                         }}
                     >
                         <div className="flex items-center space-x-6">

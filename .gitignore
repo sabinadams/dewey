@@ -33,3 +33,7 @@ Cargo.lock
 
 # Tauri build artifacts
 /src-tauri/target/
+/src-tauri/tauri_err_test
+
+# Storybook artifacts
+storybook-static

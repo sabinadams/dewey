@@ -9,7 +9,11 @@ interface UseErrorHandlerOptions {
   defaultSeverity?: ErrorSeverity;
 }
 
-export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
+// Module-level default: `= {}` in the parameter would create a new object every render when the hook
+// runs with no args, which makes `handleError` unstable and can re-fire effects (e.g. ConnectionStringTab).
+const DEFAULT_USE_ERROR_HANDLER_OPTIONS: UseErrorHandlerOptions = {};
+
+export function useErrorHandler(options: UseErrorHandlerOptions = DEFAULT_USE_ERROR_HANDLER_OPTIONS) {
   const [error, setError] = useState<AppError | null>(null);
   const [isHandlingError, setIsHandlingError] = useState(false);
 

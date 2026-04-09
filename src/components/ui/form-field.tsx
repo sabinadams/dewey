@@ -24,41 +24,45 @@ export function ValidatedFormField({
         throw new Error('ValidatedFormField requires a form prop');
     }
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        form.setValue(name, e.target.value);
-        if (form.formState.touchedFields[name]) {
-            form.trigger(name);
-        }
-    };
+    // Read formState here so RHF tracks subscriptions; reading errors only inside Controller render
+    // can skip re-renders when trigger()/submit sets validation errors.
+    const { touchedFields, isSubmitted } = form.formState;
 
     return (
         <FormField
             control={form.control}
             name={name}
-            render={({ field }) => (
-                <FormItem className={className}>
-                    <FormLabel>{label}</FormLabel>
-                    <FormControl>
-                        <Input
-                            {...inputProps}
-                            {...field}
-                            onChange={handleChange}
-                            onBlur={() => {
-                                field.onBlur();
-                                form.trigger(name);
-                            }}
-                            className={cn(
-                                inputProps.className,
-                                form.formState.errors[name] && "border-destructive"
-                            )}
-                        />
-                    </FormControl>
-                    {description}
-                    {form.formState.touchedFields[name] && (
+            render={({ field, fieldState }) => {
+                const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e);
+                    if (touchedFields[name] || isSubmitted) {
+                        void form.trigger(name);
+                    }
+                };
+
+                return (
+                    <FormItem className={className}>
+                        <FormLabel>{label}</FormLabel>
+                        <FormControl>
+                            <Input
+                                {...inputProps}
+                                {...field}
+                                onChange={handleChange}
+                                onBlur={() => {
+                                    field.onBlur();
+                                    void form.trigger(name);
+                                }}
+                                className={cn(
+                                    inputProps.className,
+                                    fieldState.error && "border-destructive"
+                                )}
+                            />
+                        </FormControl>
+                        {description}
                         <FormMessage />
-                    )}
-                </FormItem>
-            )}
+                    </FormItem>
+                );
+            }}
         />
     );
-} 
+}

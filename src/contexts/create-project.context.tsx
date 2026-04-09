@@ -1,209 +1,184 @@
-import { createContext, useContext } from "react"
+import { createContext, useContext, useMemo } from "react"
 import { useForm, UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
-// Define the database connection schema
 const baseConnectionSchema = z.object({
-  connectionName: z.string().min(1, "Connection name is required").optional(),
-  databaseType: z.string().min(1, "Database type is required").optional(),
+  connectionName: z.string(),
+  databaseType: z.string(),
   sqliteType: z.enum(["file", "hosted"]).optional(),
-  host: z.string().optional(),
-  port: z.string().optional(),
-  username: z.string().optional(),
-  password: z.string().optional(),
-  database: z.string().optional(),
-  connectionString: z.string().optional(),
-});
-
-// Schema for a complete connection that matches the Rust-side expectations
-const completeConnectionSchema = z.object({
-  connectionName: z.string().min(1, "Connection name is required"),
-  databaseType: z.string().min(1, "Database type is required"),
-  sqliteType: z.enum(["file", "hosted"]).optional(),
-  database: z.string().min(1, "Database path/name is required"),
-  // These fields are conditional based on database type
   host: z.string(),
   port: z.string(),
   username: z.string(),
   password: z.string(),
+  database: z.string(),
   connectionString: z.string().optional(),
-}).transform(data => ({
-  // Transform to match NewConnection struct
-  connection_name: data.connectionName,
-  db_type: data.databaseType,
-  host: data.host,
-  port: data.port,
-  username: data.username,
-  password: data.password,
-  database: data.database,
-  // project_id will be added by the backend after project creation
-}));
+})
 
-const connectionSchema = baseConnectionSchema.refine(
-  (data) => {
-    // If any field is filled, database type must be selected
-    const hasAnyField = Object.values(data).some(Boolean);
-    return !hasAnyField || data.databaseType;
-  },
-  {
+type ConnectionFields = z.infer<typeof baseConnectionSchema>
+
+const completeConnectionSchema = z
+  .object({
+    connectionName: z.string().min(1, "Connection name is required"),
+    databaseType: z.string().min(1, "Database type is required"),
+    sqliteType: z.enum(["file", "hosted"]).optional(),
+    database: z.string().min(1, "Database path/name is required"),
+    host: z.string(),
+    port: z.string(),
+    username: z.string(),
+    password: z.string(),
+    connectionString: z.string().optional(),
+  })
+  .transform((data) => ({
+    connection_name: data.connectionName,
+    db_type: data.databaseType,
+    host: data.host,
+    port: data.port,
+    username: data.username,
+    password: data.password,
+    database: data.database,
+  }))
+
+function isNonEmpty(v: unknown): boolean {
+  return v !== undefined && v !== null && String(v).trim() !== ""
+}
+
+function hasNonEmptyDatabaseType(data: ConnectionFields): boolean {
+  return isNonEmpty(data.databaseType)
+}
+
+function hasAnyConnectionFieldBesidesType(data: ConnectionFields): boolean {
+  return (
+    isNonEmpty(data.connectionName) ||
+    isNonEmpty(data.host) ||
+    isNonEmpty(data.port) ||
+    isNonEmpty(data.username) ||
+    isNonEmpty(data.password) ||
+    isNonEmpty(data.database) ||
+    isNonEmpty(data.connectionString)
+  )
+}
+
+function pickConnectionFields(data: ConnectionFields & Record<string, unknown>): ConnectionFields {
+  return {
+    connectionName: data.connectionName,
+    databaseType: data.databaseType,
+    sqliteType: data.sqliteType,
+    host: data.host,
+    port: data.port,
+    username: data.username,
+    password: data.password,
+    database: data.database,
+    connectionString: data.connectionString,
+  }
+}
+
+const NETWORK_FIELD_RULES: { key: keyof ConnectionFields; message: string }[] = [
+  { key: "host", message: "Host is required" },
+  { key: "port", message: "Port is required" },
+  { key: "username", message: "Username is required" },
+  { key: "password", message: "Password is required" },
+  { key: "database", message: "Database name is required" },
+]
+
+function requirePresent(
+  ctx: z.RefinementCtx,
+  data: ConnectionFields,
+  rules: { key: keyof ConnectionFields; message: string }[],
+): void {
+  for (const { key, message } of rules) {
+    if (!data[key] || !String(data[key]).trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: [key] })
+    }
+  }
+}
+
+function validateConnectionDetails(data: ConnectionFields, ctx: z.RefinementCtx): void {
+  if (!data.databaseType?.trim()) return
+
+  if (!data.connectionName?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Connection name is required",
+      path: ["connectionName"],
+    })
+  }
+
+  if (data.databaseType === "sqlite") {
+    if (!data.sqliteType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select a SQLite connection type",
+        path: ["sqliteType"],
+      })
+      return
+    }
+    if (data.sqliteType === "file") {
+      requirePresent(ctx, data, [
+        { key: "database", message: "Database file path is required" },
+      ])
+      return
+    }
+    requirePresent(ctx, data, NETWORK_FIELD_RULES)
+    return
+  }
+
+  requirePresent(ctx, data, NETWORK_FIELD_RULES)
+}
+
+const connectionSchema = baseConnectionSchema
+  .refine((data) => !hasAnyConnectionFieldBesidesType(data) || hasNonEmptyDatabaseType(data), {
     message: "Please select a database type",
-    path: ["databaseType"]
-  }
-).superRefine((data, ctx) => {
-  // If we have a database type selected, validate the required fields
-  if (data.databaseType) {
-    // For SQLite, validate based on connection type
-    if (data.databaseType === 'sqlite') {
-      if (!data.sqliteType) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Please select a SQLite connection type",
-          path: ["sqliteType"]
-        });
-        return;
-      }
+    path: ["databaseType"],
+  })
+  .superRefine(validateConnectionDetails)
 
-      if (data.sqliteType === 'file') {
-        // For file-based SQLite, only validate the database path
-        if (!data.database) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Database file path is required",
-            path: ["database"]
-          });
-        }
-      } else {
-        // For hosted SQLite, validate all connection fields
-        if (!data.host) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Host is required",
-            path: ["host"]
-          });
-        }
-        if (!data.port) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Port is required",
-            path: ["port"]
-          });
-        }
-        if (!data.username) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Username is required",
-            path: ["username"]
-          });
-        }
-        if (!data.password) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Password is required",
-            path: ["password"]
-          });
-        }
-        if (!data.database) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Database name is required",
-            path: ["database"]
-          });
-        }
-      }
-      return;
+const formSchema = z
+  .object({
+    name: z.string().min(1, "Project name is required"),
+    icon: z.string().optional(),
+  })
+  .merge(baseConnectionSchema)
+  .superRefine((data, ctx) => {
+    const slice = pickConnectionFields(data)
+    if (!hasNonEmptyDatabaseType(slice)) return
+
+    const parsed = connectionSchema.safeParse(slice)
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) ctx.addIssue(issue)
     }
+  })
 
-    // For other database types, validate all connection fields
-    if (!data.host) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Host is required",
-        path: ["host"]
-      });
-    }
-    if (!data.port) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Port is required",
-        path: ["port"]
-      });
-    }
-    if (!data.username) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Username is required",
-        path: ["username"]
-      });
-    }
-    if (!data.password) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Password is required",
-        path: ["password"]
-      });
-    }
-    if (!data.database) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Database name is required",
-        path: ["database"]
-      });
-    }
-  }
-});
-
-// Helper function to validate and transform connection data
-export const validateAndTransformConnection = (data: CreateProjectFormData) => {
-  // Check if we have any connection data
-  const hasConnectionData = Object.entries(data)
-    .filter(([key]) => baseConnectionSchema.shape[key as keyof typeof baseConnectionSchema.shape])
-    .some(([_, value]) => Boolean(value));
-
-  if (!hasConnectionData) return null;
-
-  // For SQLite file-based connections, set default values for unused fields
-  if (data.databaseType === 'sqlite' && data.sqliteType === 'file') {
-    data = {
-      ...data,
-      host: 'localhost',
-      port: '0',
-      username: '',
-      password: '',
-    };
-  }
-
-  // Validate and transform the connection data
-  try {
-    return completeConnectionSchema.parse(data);
-  } catch {
-    return null;
-  }
-};
-
-// Define the schema for the combined form
-const formSchema = z.object({
-  // Project details
-  name: z.string().min(1, "Project name is required"),
-  icon: z.string().optional(),
-  
-  // Database connection details - using the connection schema
-}).and(connectionSchema);
-
-// Export types for use in other components
 export type ConnectionData = z.infer<typeof connectionSchema>
 export type CreateProjectFormData = z.infer<typeof formSchema>
 export { formSchema, connectionSchema }
 
+export const validateAndTransformConnection = (data: CreateProjectFormData) => {
+  const slice = pickConnectionFields(data)
+  if (!hasNonEmptyDatabaseType(slice)) return null
+
+  let payload: CreateProjectFormData = { ...data }
+  if (data.databaseType === "sqlite" && data.sqliteType === "file") {
+    payload = {
+      ...payload,
+      host: "localhost",
+      port: "0",
+      username: "",
+      password: "",
+    }
+  }
+
+  const parsed = completeConnectionSchema.safeParse(payload)
+  return parsed.success ? parsed.data : null
+}
+
 const CreateProjectContext = createContext<{
   form: UseFormReturn<CreateProjectFormData>
 }>({
-  form: {} as UseFormReturn<CreateProjectFormData>
+  form: {} as UseFormReturn<CreateProjectFormData>,
 })
 
-export const useCreateProjectContext = () => {
-  return useContext(CreateProjectContext)
-}
+export const useCreateProjectContext = () => useContext(CreateProjectContext)
 
 export const CreateProjectProvider = ({ children }: { children: React.ReactNode }) => {
   const form = useForm<CreateProjectFormData>({
@@ -218,16 +193,27 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       port: "",
       username: "",
       password: "",
-      database: ""
+      database: "",
     },
-    mode: 'onBlur',
-    reValidateMode: 'onBlur',
-    criteriaMode: 'all',
+    mode: "onBlur",
+    // After submit, re-check on change so fixing a field clears errors without requiring blur.
+    reValidateMode: "onChange",
+    criteriaMode: "all",
   })
 
-  return (
-    <CreateProjectContext.Provider value={{ form }}>
-      {children}
-    </CreateProjectContext.Provider>
+  // RHF: formState is a Proxy — reading these in the same component that called useForm()
+  // subscribes to validation/submit updates. Without this, failed submit can leave React state
+  // stale so field errors never paint (especially with context + stable `form` reference).
+  const {
+    errors: formErrors,
+    isSubmitted,
+    submitCount,
+  } = form.formState
+
+  const value = useMemo(
+    () => ({ form }),
+    [form, formErrors, isSubmitted, submitCount],
   )
+
+  return <CreateProjectContext.Provider value={value}>{children}</CreateProjectContext.Provider>
 }

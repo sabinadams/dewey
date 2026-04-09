@@ -1,7 +1,7 @@
-import React from 'react';
-import { ScrollArea, Card } from '@/components/ui';
-import TitleBar from '@/components/navigation/TitleBar';
-import { Navigation } from '@/components/navigation';
+import React from "react";
+import { ScrollArea, Card } from "@/components/ui";
+import TitleBar from "@/components/navigation/TitleBar";
+import { Navigation } from "@/components/navigation";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,12 +11,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Navigation />
         <main className="flex-1 overflow-hidden pr-2 pt-2 pb-2">
           <Card className="h-full rounded-2xl">
-            <ScrollArea className="h-full w-full px-6">
-              {children}
-            </ScrollArea>
+            <ScrollArea className="h-full w-full px-6">{children}</ScrollArea>
           </Card>
         </main>
       </div>
     </div>
   );
-} 
+}

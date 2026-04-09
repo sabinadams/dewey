@@ -26,15 +26,20 @@ export default function CreateConnectionForm() {
                 defaultValue="standard"
                 value={activeTab}
                 onValueChange={(value) => {
-                    setActiveTab(value as "standard" | "url" | "ai");
-                    form.reset({
-                        ...form.getValues(),
-                        host: "",
-                        port: "",
-                        databaseType: "",
-                        username: "",
-                        password: "",
-                        database: ""
+                    const next = value as "standard" | "url" | "ai";
+                    setActiveTab((prev) => {
+                        if (prev === next) return prev;
+                        form.reset({
+                            ...form.getValues(),
+                            host: "",
+                            port: "",
+                            databaseType: "",
+                            username: "",
+                            password: "",
+                            database: "",
+                            sqliteType: undefined,
+                        });
+                        return next;
                     });
                 }}
             >

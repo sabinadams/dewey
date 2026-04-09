@@ -6,6 +6,7 @@ import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { ConnectionString } from "connection-string";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
+import { useWatch } from "react-hook-form";
 import { useDebounce } from "@/hooks/useDebounce";
 import { HelpCircle } from "lucide-react";
 import {
@@ -20,6 +21,10 @@ export default function ConnectionStringTab({
     isActiveTab
 }: { isActiveTab: boolean }) {
     const { form } = useCreateProjectContext();
+    const databaseType = useWatch({ control: form.control, name: "databaseType" }) ?? "";
+    const sqliteType = useWatch({ control: form.control, name: "sqliteType" }) || "file";
+    const showServerCredentials =
+        Boolean(databaseType) && (databaseType !== "sqlite" || sqliteType === "hosted");
     const [connectionString, setConnectionString] = useState("");
     const debouncedConnectionString = useDebounce(connectionString);
     const { handleError } = useErrorHandler();
@@ -80,15 +85,6 @@ export default function ConnectionStringTab({
     return (
         <TabsContent value="url" className="pt-4">
             <div className="flex flex-col gap-4">
-                <ValidatedFormField
-                    form={form}
-                    name="connectionName"
-                    label="Connection Name"
-                    inputProps={{
-                        placeholder: "My Database Connection"
-                    }}
-                />
-
                 <FormItem>
                     <div className="flex items-center gap-2">
                         <FormLabel>Connection URL</FormLabel>
@@ -120,7 +116,46 @@ export default function ConnectionStringTab({
                     </FormControl>
                 </FormItem>
 
-                <DetectedConnectionDetails form={form} />
+                {!databaseType && (
+                    <p className="text-sm text-muted-foreground">
+                        Paste or type a connection URL above. Once a database type is detected, you can name the connection and review the parsed fields.
+                    </p>
+                )}
+
+                {databaseType && (
+                    <>
+                        <ValidatedFormField
+                            form={form}
+                            name="connectionName"
+                            label="Connection Name"
+                            inputProps={{
+                                placeholder: "My Database Connection"
+                            }}
+                        />
+                        {showServerCredentials && (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <ValidatedFormField
+                                    form={form}
+                                    name="username"
+                                    label="Username"
+                                    inputProps={{
+                                        placeholder: "username",
+                                    }}
+                                />
+                                <ValidatedFormField
+                                    form={form}
+                                    name="password"
+                                    label="Password"
+                                    inputProps={{
+                                        type: "password",
+                                        placeholder: "••••••••",
+                                    }}
+                                />
+                            </div>
+                        )}
+                        <DetectedConnectionDetails form={form} />
+                    </>
+                )}
             </div>
         </TabsContent>
     );

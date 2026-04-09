@@ -5,11 +5,13 @@ import { Button } from "../../ui/button";
 import { Sparkles, HelpCircle } from "lucide-react";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { useState } from "react";
+import { useWatch } from "react-hook-form";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { TabsContent } from "../../ui/tabs";
 
 export default function ConnectionHelperTab() {
     const { form } = useCreateProjectContext();
+    const databaseType = useWatch({ control: form.control, name: "databaseType" }) ?? "";
     const [aiQuestion, setAiQuestion] = useState("");
 
     return (
@@ -81,7 +83,7 @@ export default function ConnectionHelperTab() {
                             </Button>
                         </div>
 
-                        <DetectedConnectionDetails form={form} />
+                        {databaseType && <DetectedConnectionDetails form={form} />}
                     </div>
                 </div>
             </Card>

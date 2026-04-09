@@ -10,7 +10,9 @@ import { Label } from "../../ui/label";
 import { Button } from "../../ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useWatch } from "react-hook-form";
+import { CONNECTION_DETAIL_FIELD_NAMES } from "@/components/projects/connection-field-names";
 
 const databaseTypes = [
     {
@@ -41,38 +43,19 @@ const databaseTypes = [
 
 export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
-    const watchDatabaseType = form.watch("databaseType");
-    const watchSqliteType = form.watch("sqliteType") || "file";
+    const values = useWatch({ control: form.control, name: [...CONNECTION_DETAIL_FIELD_NAMES] }) ?? [];
+    const databaseType = values[0] ?? "";
+    const sqliteType = values[6] || "file";
     const { testConnection, isLoading, cancelTest } = useTestConnection();
+    const isLoadingRef = useRef(isLoading);
+    isLoadingRef.current = isLoading;
 
-    // Watch form values and cancel test if they change during testing
     useEffect(() => {
-        if (isLoading) {
-            cancelTest();
-        }
-    }, [
-        form.watch("databaseType"),
-        form.watch("host"),
-        form.watch("port"),
-        form.watch("username"),
-        form.watch("password"),
-        form.watch("database"),
-        form.watch("sqliteType")
-    ]);
+        if (isLoadingRef.current) cancelTest();
+    }, [values]);
 
     const handleTestConnection = async () => {
-        // Validate all fields except connectionName
-        const fieldsToValidate = [
-            "databaseType",
-            "host",
-            "port",
-            "username",
-            "password",
-            "database",
-            "sqliteType"
-        ] as const;
-        
-        const result = await form.trigger(fieldsToValidate);
+        const result = await form.trigger([...CONNECTION_DETAIL_FIELD_NAMES]);
         
         if (!result) {
             toast.error("Please fill in all fields before testing the connection.");
@@ -84,55 +67,30 @@ export default function ConnectionDetailsTab() {
 
     return (
         <TabsContent value="standard" className="space-y-6 pt-4">
-            <div className="flex justify-between items-center">
-                <ValidatedFormField
-                    form={form}
-                    name="connectionName"
-                    label="Connection Name"
-                    inputProps={{
-                        placeholder: "My Database Connection"
-                    }}
-                />
-                {watchDatabaseType && (
-                    <Button
-                        variant="outline"
-                        onClick={handleTestConnection}
-                        disabled={isLoading}
-                        className="mt-8"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                            <Server className="w-4 h-4 mr-2" />
-                        )}
-                        {isLoading ? "Testing..." : "Test Connection"}
-                    </Button>
-                )}
-            </div>
-
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {databaseTypes.map((type) => (
                     <Card
                         key={type.id}
                         className={cn(
-                            "relative cursor-pointer p-4 transition-all hover:border-primary flex flex-col gap-1",
-                            watchDatabaseType === type.id && "border-2 border-primary",
+                            "relative flex cursor-pointer flex-col gap-1 border-2 p-4 transition-colors",
+                            databaseType === type.id
+                                ? "border-primary"
+                                : "border-muted-foreground/20 hover:border-primary",
                         )}
                         onClick={() => {
-                            form.setValue("databaseType", type.id);
-                            form.trigger("databaseType");
-                            // Reset connection fields when changing database type
-                            form.setValue("host", "");
-                            form.setValue("port", "");
-                            form.setValue("username", "");
-                            form.setValue("password", "");
-                            form.setValue("database", "");
-                            form.setValue("sqliteType", type.id === "sqlite" ? "file" : undefined);
+                            const o = { shouldDirty: true, shouldValidate: false } as const;
+                            form.setValue("databaseType", type.id, o);
+                            form.setValue("host", "", o);
+                            form.setValue("port", "", o);
+                            form.setValue("username", "", o);
+                            form.setValue("password", "", o);
+                            form.setValue("database", "", o);
+                            form.setValue("sqliteType", type.id === "sqlite" ? "file" : undefined, o);
                         }}
                     >
-                        {watchDatabaseType === type.id && (
-                            <div className="absolute right-2 top-2 h-5 w-5 rounded-full bg-primary text-primary-foreground">
-                                <Check className="h-5 w-5 p-1" />
+                        {databaseType === type.id && (
+                            <div className="pointer-events-none absolute right-2 top-2 z-10 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                <Check className="size-3" strokeWidth={3} />
                             </div>
                         )}
                         <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -144,14 +102,46 @@ export default function ConnectionDetailsTab() {
                 ))}
             </div>
 
-            {watchDatabaseType === "sqlite" && (
+            {!databaseType && (
+                <p className="text-sm text-muted-foreground">
+                    Select a database type to enter connection details.
+                </p>
+            )}
+
+            {databaseType && (
+                <>
+            <div className="flex justify-between items-center">
+                <ValidatedFormField
+                    form={form}
+                    name="connectionName"
+                    label="Connection Name"
+                    inputProps={{
+                        placeholder: "My Database Connection"
+                    }}
+                />
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestConnection}
+                    disabled={isLoading}
+                    className="mt-8"
+                >
+                    {isLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <Server className="w-4 h-4 mr-2" />
+                    )}
+                    {isLoading ? "Testing..." : "Test Connection"}
+                </Button>
+            </div>
+
+            {databaseType === "sqlite" && (
                 <div className="space-y-6">
                     <RadioGroup
                         defaultValue="file"
-                        value={watchSqliteType}
+                        value={sqliteType}
                         onValueChange={(value: "file" | "hosted") => {
                             form.setValue("sqliteType", value);
-                            // Reset fields when changing SQLite type
                             form.setValue("host", "");
                             form.setValue("port", "");
                             form.setValue("username", "");
@@ -171,7 +161,7 @@ export default function ConnectionDetailsTab() {
                         </div>
                     </RadioGroup>
 
-                    {watchSqliteType === "file" && (
+                    {sqliteType === "file" && (
                         <div className="grid grid-cols-1 gap-4">
                             <ValidatedFormField
                                 form={form}
@@ -190,7 +180,8 @@ export default function ConnectionDetailsTab() {
                 </div>
             )}
 
-            {(watchDatabaseType !== "sqlite" || watchSqliteType === "hosted") && (
+            {databaseType &&
+                (databaseType !== "sqlite" || sqliteType === "hosted") && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ValidatedFormField
                         form={form}
@@ -240,6 +231,8 @@ export default function ConnectionDetailsTab() {
                         }}
                     />
                 </div>
+            )}
+                </>
             )}
         </TabsContent>
     );

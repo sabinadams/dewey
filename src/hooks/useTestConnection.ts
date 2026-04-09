@@ -65,8 +65,12 @@ export function useTestConnection() {
             }
             return false;
         } catch (error) {
-            if (error instanceof Error && error.message === 'Connection test cancelled') {
-                // This is an expected cancellation, no need to handle as error
+            let msg = '';
+            if (error instanceof Error) msg = error.message;
+            else if (typeof error === 'object' && error !== null && 'message' in error) {
+                msg = String((error as { message: string }).message);
+            }
+            if (msg === 'Connection test cancelled') {
                 return false;
             }
             // The backend already sends properly structured errors, just pass it through

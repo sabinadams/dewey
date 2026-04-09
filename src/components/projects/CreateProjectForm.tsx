@@ -185,7 +185,7 @@ const CreateProjectForm = () => {
     </Dialog>
 
     <Form {...form}>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} noValidate>
         <div className="flex flex-col gap-6">
           <Card className="p-6">
             <div className="flex flex-row gap-6">
@@ -255,7 +255,10 @@ const CreateProjectForm = () => {
 
           <CreateConnectionForm />
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isMutationLoading}>
               {isMutationLoading ? "Creating..." : "Create Project"}
             </Button>

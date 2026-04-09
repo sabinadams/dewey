@@ -4,7 +4,10 @@ import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
 import { Check, Server, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCreateProjectContext } from "@/contexts/create-project.context";
+import {
+    createProjectConnectionDetailFields,
+    useCreateProjectContext,
+} from "@/contexts/create-project.context";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import { Label } from "../../ui/label";
 import { Button } from "../../ui/button";
@@ -12,8 +15,6 @@ import { useTestConnection } from "@/hooks/useTestConnection";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { useWatch } from "react-hook-form";
-import { CONNECTION_DETAIL_FIELD_NAMES } from "@/components/projects/connection-field-names";
-
 const databaseTypes = [
     {
         id: "postgres",
@@ -43,19 +44,19 @@ const databaseTypes = [
 
 export default function ConnectionDetailsTab() {
     const { form } = useCreateProjectContext();
-    const values = useWatch({ control: form.control, name: [...CONNECTION_DETAIL_FIELD_NAMES] }) ?? [];
-    const databaseType = values[0] ?? "";
-    const sqliteType = values[6] || "file";
+    const row = useWatch({ control: form.control, name: [...createProjectConnectionDetailFields] }) ?? [];
+    const databaseType = row[0] ?? "";
+    const sqliteType = row[6] || "file";
     const { testConnection, isLoading, cancelTest } = useTestConnection();
     const isLoadingRef = useRef(isLoading);
     isLoadingRef.current = isLoading;
 
     useEffect(() => {
         if (isLoadingRef.current) cancelTest();
-    }, [values]);
+    }, [row]);
 
     const handleTestConnection = async () => {
-        const result = await form.trigger([...CONNECTION_DETAIL_FIELD_NAMES]);
+        const result = await form.trigger([...createProjectConnectionDetailFields]);
         
         if (!result) {
             toast.error("Please fill in all fields before testing the connection.");
@@ -112,7 +113,6 @@ export default function ConnectionDetailsTab() {
                 <>
             <div className="flex justify-between items-center">
                 <ValidatedFormField
-                    form={form}
                     name="connectionName"
                     label="Connection Name"
                     inputProps={{
@@ -164,7 +164,6 @@ export default function ConnectionDetailsTab() {
                     {sqliteType === "file" && (
                         <div className="grid grid-cols-1 gap-4">
                             <ValidatedFormField
-                                form={form}
                                 name="database"
                                 label="Database File Path"
                                 className="col-span-1"
@@ -184,7 +183,6 @@ export default function ConnectionDetailsTab() {
                 (databaseType !== "sqlite" || sqliteType === "hosted") && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ValidatedFormField
-                        form={form}
                         name="host"
                         label="Host"
                         inputProps={{
@@ -193,7 +191,6 @@ export default function ConnectionDetailsTab() {
                     />
 
                     <ValidatedFormField
-                        form={form}
                         name="port"
                         label="Port"
                         inputProps={{
@@ -203,7 +200,6 @@ export default function ConnectionDetailsTab() {
                     />
 
                     <ValidatedFormField
-                        form={form}
                         name="username"
                         label="Username"
                         inputProps={{
@@ -212,7 +208,6 @@ export default function ConnectionDetailsTab() {
                     />
 
                     <ValidatedFormField
-                        form={form}
                         name="password"
                         label="Password"
                         inputProps={{
@@ -222,7 +217,6 @@ export default function ConnectionDetailsTab() {
                     />
 
                     <ValidatedFormField
-                        form={form}
                         name="database"
                         label="Database Name"
                         className="md:col-span-2"

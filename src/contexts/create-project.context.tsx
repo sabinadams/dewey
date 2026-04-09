@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from "react"
+import { createContext, useContext } from "react"
 import { useForm, UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -153,6 +153,17 @@ export type ConnectionData = z.infer<typeof connectionSchema>
 export type CreateProjectFormData = z.infer<typeof formSchema>
 export { formSchema, connectionSchema }
 
+/** Field order for batched watch/trigger (see DetectedConnectionDetails). */
+export const createProjectConnectionDetailFields = [
+  "databaseType",
+  "host",
+  "port",
+  "username",
+  "password",
+  "database",
+  "sqliteType",
+] as const satisfies ReadonlyArray<keyof CreateProjectFormData>
+
 export const validateAndTransformConnection = (data: CreateProjectFormData) => {
   const slice = pickConnectionFields(data)
   if (!hasNonEmptyDatabaseType(slice)) return null
@@ -196,24 +207,9 @@ export const CreateProjectProvider = ({ children }: { children: React.ReactNode 
       database: "",
     },
     mode: "onBlur",
-    // After submit, re-check on change so fixing a field clears errors without requiring blur.
     reValidateMode: "onChange",
     criteriaMode: "all",
   })
 
-  // RHF: formState is a Proxy — reading these in the same component that called useForm()
-  // subscribes to validation/submit updates. Without this, failed submit can leave React state
-  // stale so field errors never paint (especially with context + stable `form` reference).
-  const {
-    errors: formErrors,
-    isSubmitted,
-    submitCount,
-  } = form.formState
-
-  const value = useMemo(
-    () => ({ form }),
-    [form, formErrors, isSubmitted, submitCount],
-  )
-
-  return <CreateProjectContext.Provider value={value}>{children}</CreateProjectContext.Provider>
+  return <CreateProjectContext.Provider value={{ form }}>{children}</CreateProjectContext.Provider>
 }

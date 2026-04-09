@@ -45,12 +45,11 @@ const useFormField = () => {
   const itemContext = React.useContext(FormItemContext)
   const { getFieldState, control } = useFormContext()
 
-  // Use field-scoped formState so labels/messages track resolver + onChange updates. Root `formState`
-  // from context can lag behind `control._formState` after zodResolver clears or sets field errors.
+  // Field-scoped state: root `formState` from FormProvider can lag zodResolver updates.
   const fieldFormState = useFormState({ control, name: fieldContext.name, exact: true })
   const fieldState = getFieldState(fieldContext.name, fieldFormState)
 
-  if (!fieldContext) {
+  if (!fieldContext?.name) {
     throw new Error("useFormField should be used within <FormField>")
   }
 

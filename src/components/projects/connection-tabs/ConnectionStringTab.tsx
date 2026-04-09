@@ -2,10 +2,12 @@ import { FormControl, FormLabel, FormItem } from "../../ui/form";
 import { Input } from "../../ui/input";
 import { ValidatedFormField } from "../../ui/form-field";
 import { TabsContent } from "../../ui/tabs";
+import type { CreateProjectFormData } from "@/contexts/create-project.context";
 import { useCreateProjectContext } from "@/contexts/create-project.context";
 import { ConnectionString } from "connection-string";
 import DetectedConnectionDetails from "../DetectedConnectionDetails";
 import { useEffect, useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import { useDebounce } from "@/hooks/useDebounce";
 import { HelpCircle } from "lucide-react";
@@ -16,6 +18,13 @@ import {
     TooltipTrigger,
 } from "../../ui/tooltip";
 import { useErrorHandler } from '@/hooks/use-error-handler';
+
+function triggerTouchedFields(form: UseFormReturn<CreateProjectFormData>) {
+    const names = Object.keys(form.formState.touchedFields);
+    if (names.length) {
+        void form.trigger(names as (keyof CreateProjectFormData)[]);
+    }
+}
 
 export default function ConnectionStringTab({
     isActiveTab
@@ -39,40 +48,36 @@ export default function ConnectionStringTab({
         if (!debouncedConnectionString.trim()) return;
 
         try {
-            // Check if it's a SQLite file path
-            if (debouncedConnectionString.endsWith('.sqlite') || debouncedConnectionString.endsWith('.db') || debouncedConnectionString.startsWith('file:')) {
-                const dbPath = debouncedConnectionString.startsWith('file:') ? debouncedConnectionString.slice(5) : debouncedConnectionString;
+            if (
+                debouncedConnectionString.endsWith(".sqlite") ||
+                debouncedConnectionString.endsWith(".db") ||
+                debouncedConnectionString.startsWith("file:")
+            ) {
+                const dbPath = debouncedConnectionString.startsWith("file:")
+                    ? debouncedConnectionString.slice(5)
+                    : debouncedConnectionString;
                 form.setValue("databaseType", "sqlite");
                 form.setValue("sqliteType", "file");
                 form.setValue("database", dbPath);
-                return;
+            } else {
+                const parsed = new ConnectionString(debouncedConnectionString);
+                let dbType = parsed.protocol || "";
+                if (parsed.protocol === "postgresql") dbType = "postgres";
+                else if (parsed.protocol === "mongodb+srv") dbType = "mongodb";
+                else if (parsed.protocol === "sqlite") dbType = "sqlite";
+
+                form.setValue("databaseType", dbType);
+                if (dbType === "sqlite") {
+                    form.setValue("sqliteType", "hosted");
+                }
+                form.setValue("host", parsed.hostname || "");
+                form.setValue("port", parsed.port ? String(parsed.port) : "");
+                form.setValue("username", parsed.user || "");
+                form.setValue("password", parsed.password || "");
+                form.setValue("database", parsed.path?.[0] || "");
             }
 
-            // Handle SQLite connection strings and other database types
-            const parsed = new ConnectionString(debouncedConnectionString);
-            const dbType = parsed.protocol === "postgresql" ? "postgres" :
-                parsed.protocol === "mongodb+srv" ? "mongodb" :
-                parsed.protocol === "sqlite" ? "sqlite" :
-                    parsed.protocol || "";
-
-            form.setValue("databaseType", dbType);
-
-            // Handle hosted SQLite connections
-            if (dbType === "sqlite") {
-                form.setValue("sqliteType", "hosted");
-            }
-
-            form.setValue("host", parsed.hostname || "");
-            form.setValue("port", parsed.port ? String(parsed.port) : "");
-            form.setValue("username", parsed.user || "");
-            form.setValue("password", parsed.password || "");
-            form.setValue("database", parsed.path?.[0] || "");
-
-            // Trigger validation after setting all values
-            const touchedFields = Object.keys(form.formState.touchedFields);
-            if (touchedFields.length > 0) {
-                form.trigger(touchedFields as any);
-            }
+            triggerTouchedFields(form);
         } catch (error) {
             handleError(error);
         }
@@ -106,12 +111,7 @@ export default function ConnectionStringTab({
                             placeholder="Examples: /path/to/database.sqlite, file:my.db, sqlite://user:pass@host:port/dbname"
                             value={connectionString}
                             onChange={handleInputChange}
-                            onBlur={() => {
-                                const touchedFields = Object.keys(form.formState.touchedFields);
-                                if (touchedFields.length > 0) {
-                                    form.trigger(touchedFields as any);
-                                }
-                            }}
+                            onBlur={() => triggerTouchedFields(form)}
                         />
                     </FormControl>
                 </FormItem>
@@ -125,7 +125,6 @@ export default function ConnectionStringTab({
                 {databaseType && (
                     <>
                         <ValidatedFormField
-                            form={form}
                             name="connectionName"
                             label="Connection Name"
                             inputProps={{
@@ -135,7 +134,6 @@ export default function ConnectionStringTab({
                         {showServerCredentials && (
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <ValidatedFormField
-                                    form={form}
                                     name="username"
                                     label="Username"
                                     inputProps={{
@@ -143,7 +141,6 @@ export default function ConnectionStringTab({
                                     }}
                                 />
                                 <ValidatedFormField
-                                    form={form}
                                     name="password"
                                     label="Password"
                                     inputProps={{

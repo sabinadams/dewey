@@ -2,8 +2,7 @@ import { useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { prepareConnectionTestParams } from '@/lib/database';
 import { useErrorHandler } from '@/hooks/use-error-handler';
-import { ErrorCategory, ErrorSeverity } from '@/lib/errors';
-import { createError } from '@/lib/errors';
+import { createError, ErrorCategory, ErrorSeverity } from '@/lib/errors';
 import { useToast } from '@/hooks/use-toast';
 
 type FormValues = {

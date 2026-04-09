@@ -1,10 +1,9 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
-    form?: UseFormReturn<any>;
     name: string;
     label: string;
     description?: React.ReactNode;
@@ -12,57 +11,37 @@ interface FormFieldProps {
     inputProps?: React.ComponentPropsWithoutRef<typeof Input>;
 }
 
+/** Must be rendered under `<Form>` (FormProvider) from the same react-hook-form instance. */
 export function ValidatedFormField({
-    form,
     name,
     label,
     description,
     className,
     inputProps = {},
 }: FormFieldProps) {
-    if (!form) {
-        throw new Error('ValidatedFormField requires a form prop');
-    }
-
-    // Read formState here so RHF tracks subscriptions; reading errors only inside Controller render
-    // can skip re-renders when trigger()/submit sets validation errors.
-    const { touchedFields, isSubmitted } = form.formState;
+    const { control } = useFormContext();
 
     return (
         <FormField
-            control={form.control}
+            control={control}
             name={name}
-            render={({ field, fieldState }) => {
-                const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                    field.onChange(e);
-                    if (touchedFields[name] || isSubmitted) {
-                        void form.trigger(name);
-                    }
-                };
-
-                return (
-                    <FormItem className={className}>
-                        <FormLabel>{label}</FormLabel>
-                        <FormControl>
-                            <Input
-                                {...inputProps}
-                                {...field}
-                                onChange={handleChange}
-                                onBlur={() => {
-                                    field.onBlur();
-                                    void form.trigger(name);
-                                }}
-                                className={cn(
-                                    inputProps.className,
-                                    fieldState.error && "border-destructive"
-                                )}
-                            />
-                        </FormControl>
-                        {description}
-                        <FormMessage />
-                    </FormItem>
-                );
-            }}
+            render={({ field, fieldState }) => (
+                <FormItem className={className}>
+                    <FormLabel>{label}</FormLabel>
+                    <FormControl>
+                        <Input
+                            {...inputProps}
+                            {...field}
+                            className={cn(
+                                inputProps.className,
+                                fieldState.error && "border-destructive"
+                            )}
+                        />
+                    </FormControl>
+                    {description}
+                    <FormMessage />
+                </FormItem>
+            )}
         />
     );
 }

@@ -26,7 +26,7 @@ const StoryForm = (Story: any, { args }: any) => {
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <Story args={{ ...args, form }} />
+        <Story args={{ ...args }} />
       </form>
     </Form>
   );

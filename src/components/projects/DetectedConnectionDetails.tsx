@@ -1,6 +1,8 @@
 import { UseFormReturn, useWatch } from "react-hook-form";
-import { CreateProjectFormData } from "@/contexts/create-project.context";
-import { CONNECTION_DETAIL_FIELD_NAMES } from "@/components/projects/connection-field-names";
+import {
+    CreateProjectFormData,
+    createProjectConnectionDetailFields,
+} from "@/contexts/create-project.context";
 import { Button } from "@/components/ui/button";
 import { useTestConnection } from "@/hooks/useTestConnection";
 import { Server, Loader2 } from "lucide-react";
@@ -11,14 +13,9 @@ interface DetectedConnectionDetailsProps {
 }
 
 export default function DetectedConnectionDetails({ form }: DetectedConnectionDetailsProps) {
-    const v = useWatch({ control: form.control, name: [...CONNECTION_DETAIL_FIELD_NAMES] }) ?? [];
-    const databaseType = v[0] ?? "";
-    const host = v[1] ?? "";
-    const port = v[2] ?? "";
-    const username = v[3] ?? "";
-    const password = v[4] ?? "";
-    const database = v[5] ?? "";
-    const sqliteType = v[6] || "file";
+    const row = useWatch({ control: form.control, name: [...createProjectConnectionDetailFields] }) ?? [];
+    const [databaseType = "", host = "", port = "", username = "", password = "", database = ""] = row;
+    const sqliteType = row[6] || "file";
     const isSQLite = databaseType === "sqlite";
     const isSqliteFile = isSQLite && sqliteType === "file";
     const { testConnection, isLoading, cancelTest } = useTestConnection();
@@ -27,10 +24,10 @@ export default function DetectedConnectionDetails({ form }: DetectedConnectionDe
 
     useEffect(() => {
         if (isLoadingRef.current) cancelTest();
-    }, [v]);
+    }, [row]);
 
     const handleTestConnection = async () => {
-        const result = await form.trigger([...CONNECTION_DETAIL_FIELD_NAMES]);
+        const result = await form.trigger([...createProjectConnectionDetailFields]);
 
         if (!result) {
             return;
